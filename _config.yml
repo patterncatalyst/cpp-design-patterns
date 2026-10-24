@@ -91,6 +91,7 @@ exclude:
     - .gitignore
     - LICENSE
     - CLAUDE.md
+    - build/
     - scripts/
     - CMakeLists.txt
     - CMakePresets.json

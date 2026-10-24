@@ -126,3 +126,27 @@
     A singleton's clients reach into one global instance directly; the DI
     alternative routes the same capability through an abstraction a composition
     root wires, swappable with a test double.
+
+- name: 15-adapter-facade-bridge
+  section: "Ch. 15"
+  title: Adapter, Facade, and Bridge side by side
+  caption: >-
+    Adapter wraps a legacy API behind a target interface; Facade fronts three
+    subsystems with one call; Bridge crosses an abstraction axis of refined
+    notification kinds with an implementation axis of transports.
+
+- name: 16-decorator-proxy
+  section: "Ch. 16"
+  title: Decorator stack and access-controlling proxy
+  caption: >-
+    A decorator stack (surcharge, caching, logging) wraps a core rate source,
+    next to a proxy controlling access to a real manifest store. Both wrap the
+    same interface their subject implements; only the intent differs.
+
+- name: 17-composite-flyweight
+  section: "Ch. 17"
+  title: Composite tree and flyweight pool
+  caption: >-
+    A composite tree (pallet, cartons, items) sharing one interface on the
+    left, and a flyweight pool of SKU descriptors referenced by many line items
+    on the right.

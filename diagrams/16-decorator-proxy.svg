@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="20" width="430" height="440" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="40" font-size="12" font-weight="700" fill="#888">Decorator: stack of same-interface wrappers</text>
+<rect x="490" y="20" width="450" height="440" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="502" y="40" font-size="12" font-weight="700" fill="#888">Proxy: same-interface access control</text>
+<rect x="50" y="125" width="370" height="295" rx="12" fill="#f1f5f9" stroke="#ddd"/>
+<text x="62" y="145" font-size="12" font-weight="700" fill="#888">implements RateSource</text>
+<rect x="520" y="180" width="390" height="180" rx="12" fill="#f1f5f9" stroke="#ddd"/>
+<text x="532" y="200" font-size="12" font-weight="700" fill="#888">implements ManifestStore</text>
+<rect x="60" y="55" width="350" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="235.0" y="78.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Client</text>
+<text x="235.0" y="95.0" font-size="11.5" fill="#555555" text-anchor="middle">checkout code requesting a quote</text>
+<rect x="70" y="155" width="330" height="55" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="235.0" y="180.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">SurchargeRateSource</text>
+<text x="235.0" y="197.5" font-size="11.5" fill="#555555" text-anchor="middle">adds surcharge for declared value</text>
+<rect x="70" y="220" width="330" height="55" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="235.0" y="245.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">CachingRateSource</text>
+<text x="235.0" y="262.5" font-size="11.5" fill="#555555" text-anchor="middle">memoizes a repeat quote</text>
+<rect x="70" y="285" width="330" height="55" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="235.0" y="310.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">LoggingRateSource</text>
+<text x="235.0" y="327.5" font-size="11.5" fill="#555555" text-anchor="middle">records each quote call</text>
+<rect x="70" y="350" width="330" height="55" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="235.0" y="375.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">TariffTableRateSource (core)</text>
+<text x="235.0" y="392.5" font-size="11.5" fill="#555555" text-anchor="middle">undecorated per-zone lookup</text>
+<rect x="530" y="55" width="370" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="715.0" y="78.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Client</text>
+<text x="715.0" y="95.0" font-size="11.5" fill="#555555" text-anchor="middle">warehouse scanning app</text>
+<rect x="540" y="210" width="350" height="60" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="715.0" y="238.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">AccessControlledManifestProxy</text>
+<text x="715.0" y="255.0" font-size="11.5" fill="#555555" text-anchor="middle">checks clearance before forwarding</text>
+<rect x="540" y="300" width="350" height="60" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="715.0" y="328.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">ArchivedManifestStore (real subject)</text>
+<text x="715.0" y="345.0" font-size="11.5" fill="#555555" text-anchor="middle">expensive load, built lazily</text>
+<path d="M235,105 L235,155" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M235,210 L235,220" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M235,275 L235,285" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M235,340 L235,350" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M715,105 L715,210" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M715,270 L715,300" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="775.0" y="279.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">controls access</text>
+<text x="775.0" y="279.0" font-size="11" fill="#b8650a" text-anchor="middle">controls access</text>
+<text x="235" y="445" font-size="11" fill="#555555" text-anchor="middle">Order changes behavior: swapping two layers changes what gets cached or logged.</text>
+<text x="715" y="385" font-size="11" fill="#555555" text-anchor="middle">A LazyManifestStoreProxy can sit here too, deferring construction until first lookup.</text>
+<text x="715" y="445" font-size="11" fill="#555555" text-anchor="middle">Proxy gates one subject; it adds no new behavior to what a lookup returns.</text>
+</svg>
