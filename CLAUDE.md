@@ -56,9 +56,9 @@ content executors.
 
 ## Diagrams
 
-- Diagrams are heavy — most chapters get at least one — and carry
-  **no UML**: no class diagrams, no arrows-with-stereotypes notation.
-  Trend toward a **C4-style** standard instead.
+- Diagrams are heavy — most chapters get at least one — and follow a
+  **C4-style** standard going forward: context and component framing,
+  not class diagrams or stereotype-arrow notation.
 - Every diagram ships as a paired `diagrams/<name>.svg` +
   `diagrams/<name>.excalidraw`, generated with `lgtm-diagram-generator`.
 - Emphasis/ink boxes are **light fill with dark text**, never a dark-filled
