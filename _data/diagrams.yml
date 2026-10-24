@@ -1,0 +1,30 @@
+# Diagram gallery data for /diagrams/ (name, section, title, caption).
+# One entry per paired diagrams/<name>.svg + diagrams/<name>.excalidraw file.
+
+- name: 00-build-and-test-loop
+  section: "Ch. 0"
+  title: The local build-and-test loop
+  caption: >-
+    Every example in this book follows the same loop: edit source, resolve
+    dependencies with conan install, configure with cmake --preset,
+    build with clang, and verify with ctest, then observe the behavior a
+    chapter claims. A failing test sends you back to the source. Both
+    presets, cpp23 (default) and cpp20 (compat), run this identical loop
+    on the host, no containers.
+
+- name: 01-forces-and-decisions
+  section: "Ch. 1"
+  title: Patterns as decisions under forces
+  caption: >-
+    The book's arc: recognize the forces, name a candidate pattern (or
+    non-pattern), choose the idiomatic C++ expression, test it with gtest,
+    and know when not to use it. Forces and trade-offs run under every step.
+
+- name: 08-strategy-forces
+  section: "Ch. 8"
+  title: Strategy as a decision under forces
+  caption: >-
+    A checkout Context holds one interchangeable shipping-cost strategy at
+    a time, expressed as runtime polymorphism, a value-semantic
+    std::function, or a compile-time concept policy, trading runtime
+    flexibility against zero overhead.
