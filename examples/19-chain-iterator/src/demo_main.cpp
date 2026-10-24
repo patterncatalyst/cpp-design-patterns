@@ -84,8 +84,13 @@ int main() {
         manifest | std::views::filter([](const Package& package) { return package.zone == DestinationZone::National; }) |
         std::views::transform([](const Package& package) { return package.weight_kg; });
     std::cout << "National-zone weights (kg): ";
+    bool first_weight = true;
     for (double weight : national_weights) {
-        std::cout << weight << ' ';
+        if (!first_weight) {
+            std::cout << ' ';
+        }
+        std::cout << weight;
+        first_weight = false;
     }
     std::cout << '\n';
 
@@ -96,8 +101,13 @@ int main() {
         std::views::transform([](const Package& package) { return package.tracking_number; }) |
         std::ranges::to<std::vector>();
     std::cout << "National tracking numbers: ";
+    bool first_tracking = true;
     for (const auto& tracking_number : national_tracking_numbers) {
-        std::cout << tracking_number << ' ';
+        if (!first_tracking) {
+            std::cout << ' ';
+        }
+        std::cout << tracking_number;
+        first_tracking = false;
     }
     std::cout << '\n';
 #endif
