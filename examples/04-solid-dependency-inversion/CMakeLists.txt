@@ -1,26 +1,27 @@
-# examples/04-solid-dependency-inversion — ISP + DIP: order notifications.
+# examples/04-solid-dependency-inversion - ISP + DIP: order notifications.
 #
 # A fat "gateway" interface split into three focused role interfaces
 # (Interface Segregation), plus two high-level policies that depend on
 # those abstractions rather than on a concrete email or SMS gateway
 # (Dependency Inversion), wired together by hand in demo_main.cpp's
-# composition root — no DI container anywhere:
-#   - MessageSender, TemplateRenderer, DeliveryStatusProvider — role
+# composition root, with no DI container anywhere:
+#   - MessageSender, TemplateRenderer, DeliveryStatusProvider: role
 #     interfaces (gateway_interfaces.hpp)
-#   - EmailGateway   — implements all three (it has all three
+#   - EmailGateway: implements all three (it has all three
 #     capabilities)
-#   - SmsGateway     — implements only MessageSender
-#   - OrderNotificationPolicy  — high-level policy, depends on MessageSender
-#   - TemplatedOrderNotifier   — high-level policy, depends on
+#   - SmsGateway: implements only MessageSender
+#   - OrderNotificationPolicy: high-level policy, depends on MessageSender
+#   - TemplatedOrderNotifier: high-level policy, depends on
 #     TemplateRenderer + MessageSender
-#   - DeliveryAuditor          — high-level policy, depends on
+#   - DeliveryAuditor: high-level policy, depends on
 #     DeliveryStatusProvider
 #
 # Target names are prefixed solid2_ so this example's targets never
 # collide with another example's targets in the repo root's superbuild.
 #
-# Standalone-buildable from this directory (no containers, same local
-# tools as the rest of the book):
+# Standalone-buildable from this directory (no containers; local clang +
+# CMake + Ninja + Conan only, the same tooling every example in this repo
+# uses):
 #   conan install . --output-folder=build/cpp23 --build=missing \
 #       -s compiler.cppstd=23 -s build_type=Release
 #   cmake --preset cpp23

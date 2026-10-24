@@ -28,7 +28,7 @@ TEST(WeightBasedCarrierTest, RoundsFractionalCentsUpNeverDown) {
     const Shipment shipment{0.333, DestinationZone::Local, 0};
 
     // 0.333 kg * 100 cents/kg = 33.3 cents, must round up to 34, never
-    // truncate to 33 — a carrier never rounds a quote in its own favor
+    // truncate to 33, since a carrier never rounds a quote in its own favor
     // against the customer.
     EXPECT_EQ(carrier.quote(shipment), 34);
 }

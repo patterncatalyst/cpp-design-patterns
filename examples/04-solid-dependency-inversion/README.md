@@ -1,4 +1,4 @@
-# 04 — Interface Segregation + Dependency Inversion: order notifications
+# 04 - Interface Segregation + Dependency Inversion: order notifications
 
 An order fulfillment system needs to tell a customer when an order ships,
 runs late, or arrives, and it needs to do that over whichever channel that
@@ -11,9 +11,9 @@ container anywhere.
 
 ## The domain
 
-- `OrderEvent` — `order_id`, `customer_contact` (an email address or a
+- `OrderEvent`: `order_id`, `customer_contact` (an email address or a
   phone number, the struct does not care which), and `message_body`.
-- `DispatchResult` — a `DispatchStatus` (`Sent` or `Failed`) plus a
+- `DispatchResult`: a `DispatchStatus` (`Sent` or `Failed`) plus a
   `dispatch_id`.
 - `format_message()` in `src/notification_domain.cpp` is the one shared
   formatting rule both gateways below call into, so an identical event
@@ -27,9 +27,9 @@ container anywhere.
 one `NotificationGateway` interface with every method any channel might
 ever need:
 
-- `MessageSender` — `send(const OrderEvent&) -> DispatchResult`.
-- `TemplateRenderer` — `render(template_id, const OrderEvent&) -> string`.
-- `DeliveryStatusProvider` — `status_of(dispatch_id) -> DispatchStatus`.
+- `MessageSender`: `send(const OrderEvent&) -> DispatchResult`.
+- `TemplateRenderer`: `render(template_id, const OrderEvent&) -> string`.
+- `DeliveryStatusProvider`: `status_of(dispatch_id) -> DispatchStatus`.
 
 Two concrete gateways implement different subsets:
 
@@ -81,7 +81,7 @@ it was given, which is the point this example exists to demonstrate.
 
 ## Build, run, observe
 
-No containers — local clang + CMake + Ninja + Conan only (see the
+No containers: local clang + CMake + Ninja + Conan only (see the
 prerequisites chapter and `scripts/check-prereqs.sh` at the repo root).
 
 This example is standalone-buildable from this directory:
@@ -95,7 +95,7 @@ cmake --build --preset cpp23
 ctest --preset cpp23 --output-on-failure
 ```
 
-It is also picked up by the repo root's superbuild — from the repo root:
+It is also picked up by the repo root's superbuild, from the repo root:
 
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23

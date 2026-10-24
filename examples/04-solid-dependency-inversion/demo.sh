@@ -3,7 +3,7 @@
 #
 # Builds examples/04-solid-dependency-inversion standalone (conan install +
 # cmake preset + build) and runs the order-notification demo. Run from
-# this directory. No containers — local clang + CMake + Ninja + Conan only.
+# this directory. No containers: local clang + CMake + Ninja + Conan only.
 
 set -eu
 

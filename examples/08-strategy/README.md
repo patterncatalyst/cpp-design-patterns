@@ -1,4 +1,4 @@
-# 08 — Strategy: shipping-rate estimation
+# 08 - Strategy: shipping-rate estimation
 
 A checkout needs to compute a delivery cost, and the carrier rate rule is
 chosen at runtime: flat-rate, weight-based, or a distance-and-weight
@@ -8,30 +8,30 @@ select behavior without changing the pricing rules themselves.
 
 ## The domain
 
-- `Shipment` — `weight_kg`, a `DestinationZone` (`Local`, `Regional`,
+- `Shipment`: `weight_kg`, a `DestinationZone` (`Local`, `Regional`,
   `National`, `International`), and `declared_value_cents`.
 - Money is tracked as integer `Cents`, never floating point, so a quote is
   exact and reproducible in a test assertion.
-- The pricing math itself — `flat_rate_cost`, `weight_based_cost`,
-  `tiered_zone_cost` in `src/shipping_domain.cpp` — is shared by all three
+- The pricing math itself, `flat_rate_cost`, `weight_based_cost`, and
+  `tiered_zone_cost` in `src/shipping_domain.cpp`, is shared by all three
   Strategy expressions below. Only the dispatch mechanism differs; an
   identical shipment prices identically no matter which one quoted it.
 
 ## The three Strategy expressions
 
-1. **Runtime polymorphism** (`src/runtime_strategy.hpp`) — an abstract
+1. **Runtime polymorphism** (`src/runtime_strategy.hpp`): an abstract
    `RateStrategy` interface with `FlatRateCarrier`, `WeightBasedCarrier`,
    and `TieredZoneCarrier` implementations. `RateEstimator` owns one
    carrier at a time as a `std::unique_ptr<RateStrategy>`, injected at
    construction and swappable later with `use_strategy()`.
-2. **Value-semantic callable** (`src/function_strategy.hpp`) — a strategy
+2. **Value-semantic callable** (`src/function_strategy.hpp`): a strategy
    is just a `std::function<Cents(const Shipment&)>` (`RateFn`). `flat_rate`,
    `weight_based`, and `tiered_zone` are factory functions that return one.
    `QuoteBook` holds a `RateFn` by value and can be reassigned at runtime.
    `with_insurance_surcharge()` composes a new `RateFn` on top of an
-   existing one — a capability a class hierarchy would need a decorator
-   class for, but a callable gets for free.
-3. **Compile-time policy** (`src/policy_strategy.hpp`) — a `RatePolicy`
+   existing one: a class hierarchy would need a decorator class for that
+   capability, but a callable gets it without extra code.
+3. **Compile-time policy** (`src/policy_strategy.hpp`): a `RatePolicy`
    concept constrains a template parameter to anything with a
    `quote(const Shipment&) -> Cents` method. `FlatRatePolicy`,
    `WeightBasedPolicy`, and `TieredZonePolicy` satisfy it.
@@ -52,7 +52,7 @@ the same way.
 
 ## Build, run, observe
 
-No containers — local clang + CMake + Ninja + Conan only (see the
+No containers: local clang + CMake + Ninja + Conan only (see the
 prerequisites chapter and `scripts/check-prereqs.sh` at the repo root).
 
 This example is standalone-buildable from this directory:
@@ -66,7 +66,7 @@ cmake --build --preset cpp23
 ctest --preset cpp23 --output-on-failure
 ```
 
-It is also picked up by the repo root's superbuild — from the repo root:
+It is also picked up by the repo root's superbuild, from the repo root:
 
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23
@@ -74,7 +74,7 @@ scripts/build.sh cpp20 && scripts/verify.sh cpp20
 ```
 
 Either path discovers the same 18 gtest cases under `cpp23` (16 under
-`cpp20` — the two `std::expected` cases are compiled out) via
+`cpp20`: the two `std::expected` cases are compiled out) via
 `gtest_discover_tests`. Observed locally on Fedora 44 / clang 22.1.8:
 
 ```
