@@ -2,8 +2,7 @@
 
 Figures for this book are pairs of files in this directory:
 `<name>.svg` (rendered, embedded in the site) and `<name>.excalidraw`
-(editable source). No diagrams exist yet: this phase only documents the
-conventions so later figures stay consistent.
+(editable source).
 
 ## Style
 
@@ -33,5 +32,6 @@ doesn't break. Add a matching entry to `_data/diagrams.yml` so the
 
 Drive `scripts/generate_diagram.py` from `lgtm-diagram-generator` for
 every figure so the whole set stays visually consistent. The first two
-figures land with chapters 1 and 8 (r01): ch1's "the arc" (patterns as
-decisions under forces) and ch8's Strategy forces diagram.
+figures landed with chapters 1 and 8 (r01): `01-forces-and-decisions`
+(patterns as decisions under forces) and `08-strategy-forces` (Strategy
+expressed as a choice under forces, not a UML class diagram).

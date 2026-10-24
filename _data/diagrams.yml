@@ -1,4 +1,19 @@
 # Diagram gallery data for /diagrams/ (name, section, title, caption).
 # One entry per paired diagrams/<name>.svg + diagrams/<name>.excalidraw file.
-# Empty until the first diagrams land (ch1 "the arc" + ch8 "strategy forces",
-# per the r01 build plan step board).
+
+- name: 01-forces-and-decisions
+  section: "Ch. 1"
+  title: Patterns as decisions under forces
+  caption: >-
+    The book's arc: recognize the forces, name a candidate pattern (or
+    non-pattern), choose the idiomatic C++ expression, test it with gtest,
+    and know when not to use it. Forces and trade-offs run under every step.
+
+- name: 08-strategy-forces
+  section: "Ch. 8"
+  title: Strategy as a decision under forces
+  caption: >-
+    A checkout Context holds one interchangeable shipping-cost strategy at
+    a time, expressed as runtime polymorphism, a value-semantic
+    std::function, or a compile-time concept policy, trading runtime
+    flexibility against zero overhead.
