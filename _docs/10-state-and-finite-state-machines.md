@@ -95,6 +95,7 @@ The order of operations in each one-liner is what makes this version exception-s
 
 The GoF version puts the rule "a paid shipment can be shipped or cancelled" inside `PaidState`'s source code. A transition table puts the identical rule in a value instead:
 
+{% raw %}
 ```cpp
 using ShipmentTransitionTable =
     std::unordered_map<ShipmentTransitionKey, ShipmentStatus, ShipmentTransitionKeyHash>;
@@ -110,6 +111,7 @@ const ShipmentTransitionTable& shipment_transition_table() {
     return table;
 }
 ```
+{% endraw %}
 
 `TableShipmentMachine::apply()` does nothing but look up `(status_, event)` and throw `IllegalTransition` when the lookup misses:
 
