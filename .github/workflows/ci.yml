@@ -49,11 +49,6 @@ jobs:
 
       # No C++26 leg: the headline features are prerelease. Revisit per the
       # Appendix A hook once the toolchain settles.
-
-      - name: Professional-voice scan (soft gate)
-        run: |
-          if [ -f scripts/voice-scan.sh ]; then
-            bash scripts/voice-scan.sh || echo "::warning::voice scan reported findings (soft gate, not failing the build yet)"
-          else
-            echo "scripts/voice-scan.sh not vendored yet; skipping (see lgtm-professional-voice)."
-          fi
+      #
+      # Prose voice is gated in the authoring/review workflow via
+      # lgtm-professional-voice, not in CI.
