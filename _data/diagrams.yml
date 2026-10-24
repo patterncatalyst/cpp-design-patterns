@@ -45,6 +45,23 @@
     abstraction into role interfaces a concrete type implements only where it
     has the capability.
 
+- name: 05-raii-lifecycle
+  section: "Ch. 5"
+  title: "RAII lifecycle: acquire in the constructor, release in the destructor"
+  caption: >-
+    A thrown exception during use still funnels into the same release point as
+    a normal return: the DockBayLease destructor runs during stack unwinding
+    exactly as it would on a clean exit, so the resource never stays held past
+    the scope that acquired it.
+
+- name: 06-ownership-model
+  section: "Ch. 6"
+  title: Three ownership kinds in one object graph
+  caption: >-
+    unique_ptr as a sole owner, shared_ptr as a ref-counted shared owner, and
+    weak_ptr observing without owning to break what would otherwise be a
+    reference cycle.
+
 - name: 08-strategy-forces
   section: "Ch. 8"
   title: Strategy as a decision under forces
