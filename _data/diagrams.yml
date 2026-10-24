@@ -87,6 +87,13 @@
     hooks in a fixed order; concrete exporters override the hooks without
     touching the sequence or the validate and trailer invariants.
 
+- name: 10-state-transitions
+  section: "Ch. 10"
+  title: Shipment states and a stochastic outlet
+  caption: >-
+    A shipment's legal states and transitions, plus the weighted-probability
+    outlet the stochastic machine draws from out of InTransit.
+
 - name: 11-command-undo
   section: "Ch. 11"
   title: Command queue and undo/redo stack
