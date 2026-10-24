@@ -78,3 +78,11 @@
     a time, expressed as runtime polymorphism, a value-semantic
     std::function, or a compile-time concept policy, trading runtime
     flexibility against zero overhead.
+
+- name: 09-template-method-skeleton
+  section: "Ch. 9"
+  title: Template Method's fixed skeleton and its hooks
+  caption: >-
+    An order-export pipeline runs a fixed sequence and calls private virtual
+    hooks in a fixed order; concrete exporters override the hooks without
+    touching the sequence or the validate and trailer invariants.

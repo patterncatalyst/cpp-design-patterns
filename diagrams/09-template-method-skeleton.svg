@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="40" width="845" height="110" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="60" font-size="12" font-weight="700" fill="#888">OrderExportPipeline::export_order() — fixed skeleton, non-virtual</text>
+<rect x="20" y="250" width="360" height="110" rx="12" fill="#fff8ef" stroke="#ddd"/>
+<text x="32" y="270" font-size="12" font-weight="700" fill="#888">CsvManifestExporter</text>
+<rect x="450" y="250" width="415" height="110" rx="12" fill="#fff8ef" stroke="#ddd"/>
+<text x="462" y="270" font-size="12" font-weight="700" fill="#888">JsonManifestExporter</text>
+<rect x="35" y="70" width="150" height="70" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="110.0" y="103.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">validate()</text>
+<text x="110.0" y="120.0" font-size="11.5" fill="#555555" text-anchor="middle">fixed: always runs first</text>
+<rect x="205" y="70" width="150" height="70" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="280.0" y="103.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">render_header()</text>
+<text x="280.0" y="120.0" font-size="11.5" fill="#555555" text-anchor="middle">hook: varies per format</text>
+<rect x="375" y="70" width="150" height="70" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="450.0" y="103.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">render_line()</text>
+<text x="450.0" y="120.0" font-size="11.5" fill="#555555" text-anchor="middle">hook: varies per format</text>
+<rect x="545" y="70" width="150" height="70" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="620.0" y="103.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">render_footer()</text>
+<text x="620.0" y="120.0" font-size="11.5" fill="#555555" text-anchor="middle">hook: varies per format</text>
+<rect x="715" y="70" width="150" height="70" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="790.0" y="103.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">trailer_for()</text>
+<text x="790.0" y="120.0" font-size="11.5" fill="#555555" text-anchor="middle">fixed: always runs last</text>
+<rect x="40" y="280" width="110" height="65" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="95.0" y="310.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">render_header</text>
+<text x="95.0" y="327.5" font-size="11.5" fill="#555555" text-anchor="middle">&quot;order_id,customer_name&quot;</text>
+<rect x="165" y="280" width="110" height="65" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="220.0" y="310.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">render_line</text>
+<text x="220.0" y="327.5" font-size="11.5" fill="#555555" text-anchor="middle">&quot;sku,quantity&quot;</text>
+<rect x="290" y="280" width="110" height="65" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="345.0" y="310.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">render_footer</text>
+<text x="345.0" y="327.5" font-size="11.5" fill="#555555" text-anchor="middle">(empty)</text>
+<rect x="470" y="280" width="110" height="65" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="525.0" y="310.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">render_header</text>
+<text x="525.0" y="327.5" font-size="11.5" fill="#555555" text-anchor="middle">NDJSON order line</text>
+<rect x="595" y="280" width="110" height="65" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="650.0" y="310.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">render_line</text>
+<text x="650.0" y="327.5" font-size="11.5" fill="#555555" text-anchor="middle">NDJSON per-line object</text>
+<rect x="720" y="280" width="110" height="65" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="775.0" y="310.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">render_footer</text>
+<text x="775.0" y="327.5" font-size="11.5" fill="#555555" text-anchor="middle">(empty)</text>
+<path d="M185,105 L205,105" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M355,105 L375,105" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M525,105 L545,105" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M695,105 L715,105" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M260,140 L95,280" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<path d="M280,140 L525,280" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<path d="M430,140 L220,280" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<path d="M450,140 L650,280" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<path d="M600,140 L345,280" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<path d="M620,140 L775,280" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<text x="445" y="30" font-size="11" fill="#888" text-anchor="middle" font-weight="700">Template Method + the Non-Virtual Interface idiom</text>
+<text x="445" y="400" font-size="13" fill="#888" text-anchor="middle">validate() and trailer_for() are not hooks: every variant runs them unchanged, in the same order, with no way to skip either one.</text>
+</svg>
