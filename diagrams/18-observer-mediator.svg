@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 440" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="20" width="460" height="400" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="40" font-size="12" font-weight="700" fill="#888">Observer: ShipmentTracker fans out a status change</text>
+<rect x="520" y="20" width="460" height="290" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="532" y="40" font-size="12" font-weight="700" fill="#888">Mediator: DispatchCoordinator routes between collaborators</text>
+<rect x="520" y="330" width="460" height="90" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="532" y="350" font-size="12" font-weight="700" fill="#888">Without a mediator: the direct mesh it replaces</text>
+<rect x="40" y="185" width="170" height="70" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="125.0" y="218.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">ShipmentTracker</text>
+<text x="125.0" y="235.0" font-size="11.5" fill="#555555" text-anchor="middle">(subject)</text>
+<rect x="340" y="70" width="120" height="55" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="400.0" y="103.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">DashboardView</text>
+<rect x="340" y="185" width="120" height="55" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="400.0" y="218.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">AlertingService</text>
+<rect x="340" y="300" width="120" height="55" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="400.0" y="325.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">AuditLog</text>
+<text x="400.0" y="342.5" font-size="11.5" fill="#555555" text-anchor="middle">(callback slot)</text>
+<rect x="670" y="120" width="160" height="70" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="750.0" y="153.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">DispatchCoordinator</text>
+<text x="750.0" y="170.0" font-size="11.5" fill="#555555" text-anchor="middle">(mediator)</text>
+<rect x="540" y="50" width="150" height="50" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="615.0" y="80.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">WarehouseStation</text>
+<rect x="810" y="50" width="150" height="50" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="885.0" y="80.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">CarrierStation</text>
+<rect x="675" y="240" width="170" height="50" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="760.0" y="270.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">CustomerNotificationStation</text>
+<rect x="695" y="345" width="130" height="35" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="760.0" y="368.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Notification</text>
+<rect x="540" y="385" width="130" height="35" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="605.0" y="408.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Warehouse</text>
+<rect x="850" y="385" width="130" height="35" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="915.0" y="408.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Carrier</text>
+<path d="M210,220 L340,97" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M210,220 L340,212" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="281.0" y="210.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">notify()</text>
+<text x="281.0" y="210.0" font-size="11" fill="#b8650a" text-anchor="middle">notify()</text>
+<path d="M210,220 L340,327" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M615,100 L690,120" fill="none" stroke="#b8650a" stroke-width="2" marker-start="url(#am)" marker-end="url(#am)"/>
+<path d="M885,100 L810,120" fill="none" stroke="#b8650a" stroke-width="2" marker-start="url(#am)" marker-end="url(#am)"/>
+<path d="M760,240 L750,190" fill="none" stroke="#b8650a" stroke-width="2" marker-start="url(#am)" marker-end="url(#am)"/>
+<path d="M710,380 L655,385" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M810,380 L865,385" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M670,402 L850,402" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="750" y="40" font-size="11" fill="#888" text-anchor="middle">every colleague calls notify(); only the coordinator knows who responds</text>
+</svg>
