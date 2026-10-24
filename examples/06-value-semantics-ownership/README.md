@@ -1,4 +1,4 @@
-# 06 — Value semantics, ownership, and smart pointers: a warehouse dispatch system
+# 06 - Value semantics, ownership, and smart pointers: a warehouse dispatch system
 
 A parcel moving through a regional warehouse touches four different
 ownership shapes: a value that gets copied freely, a resource one dock
@@ -10,28 +10,28 @@ as interchangeable ways to hold a pointer.
 
 ## The domain
 
-- `Parcel` (`src/parcel.hpp`) — a plain value type (`std::string`,
+- `Parcel` (`src/parcel.hpp`): a plain value type (`std::string`,
   `double`), following the Rule of Zero: no custom destructor, copy, or
   move, because every member already has correct ones.
-- `DockSlot` (`src/dock_slot.hpp/.cpp`) — holds at most one `Parcel` as a
+- `DockSlot` (`src/dock_slot.hpp/.cpp`): holds at most one `Parcel` as a
   `std::unique_ptr<Parcel>`. `transfer_parcel()` moves a parcel from one
   slot to another; the source slot is empty afterward.
-- `CarrierContract` (`src/carrier_contract.hpp/.cpp`) — a resource-owning
+- `CarrierContract` (`src/carrier_contract.hpp/.cpp`): a resource-owning
   type following the Rule of Five: it owns a raw, heap-allocated per-tier
   rate table (`Cents*`) with a hand-written destructor, copy constructor,
   copy assignment, move constructor, and move assignment.
-- `ShippingRoute` (`src/shipping_route.hpp/.cpp`) — holds a
+- `ShippingRoute` (`src/shipping_route.hpp/.cpp`): holds a
   `std::shared_ptr<CarrierContract>`. Two routes built from the same
   pointer share one contract: renegotiating a rate through either route is
   visible to both.
-- `ManifestNode` (`src/manifest_tree.hpp/.cpp`) — a parent/child tree. A
+- `ManifestNode` (`src/manifest_tree.hpp/.cpp`): a parent/child tree. A
   parent owns its children via `std::shared_ptr`; each child holds its
   parent via `std::weak_ptr`, breaking what would otherwise be a reference
   cycle. `make_root_manifest()` is the only way to create a root, since
   `shared_from_this()` requires the object already be owned by a
   `shared_ptr`.
-- `legacy_rate_table.h/.cpp` + `rate_table_adapter.hpp/.cpp` — a
-  deliberately C-style factory/free pair (`legacy_open_rate_table()` /
+- `legacy_rate_table.h/.cpp` + `rate_table_adapter.hpp/.cpp`: a C-style
+  factory/free pair (`legacy_open_rate_table()` /
   `legacy_close_rate_table()`) and the adapter that wraps its raw pointer
   in a `std::unique_ptr<CRateTable, RateTableDeleter>`.
 
@@ -45,7 +45,7 @@ named local `CRateTable*` passed by address under C++20
 
 ## Build, run, observe
 
-No containers — local clang + CMake + Ninja + Conan only (see the
+No containers: local clang + CMake + Ninja + Conan only (see the
 prerequisites chapter and `scripts/check-prereqs.sh` at the repo root).
 
 This example is standalone-buildable from this directory:
@@ -59,7 +59,7 @@ cmake --build --preset cpp23
 ctest --preset cpp23 --output-on-failure
 ```
 
-It is also picked up by the repo root's superbuild — from the repo root:
+It is also picked up by the repo root's superbuild, from the repo root:
 
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23
@@ -67,7 +67,7 @@ scripts/build.sh cpp20 && scripts/verify.sh cpp20
 ```
 
 Either path discovers the same 22 gtest cases under both `cpp23` and
-`cpp20` via `gtest_discover_tests` — `open_rate_table()` compiles to a
+`cpp20` via `gtest_discover_tests`: `open_rate_table()` compiles to a
 different implementation per standard but keeps the same signature, so no
 test is compiled out between them. Observed locally on Fedora 44 / clang
 22.1.8:

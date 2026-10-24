@@ -1,15 +1,16 @@
-# examples/05-raii-lifetimes — RAII and deterministic lifetimes: a dock
+# examples/05-raii-lifetimes - RAII and deterministic lifetimes: a dock
 # bay lease at a warehouse loading dock, plus a general-purpose
 # scope-exit utility.
 #
-#   1. DockBayLease  — acquire-in-constructor, release-in-destructor guard
-#                       over one dock bay; move-only, survives an
-#                       exception thrown mid-batch.
-#   2. ScopeGuard     — a general lambda-on-destruction utility, used here
-#                       to roll back a partial label count on failure.
+#   1. DockBayLease: acquire-in-constructor, release-in-destructor guard
+#                     over one dock bay; move-only, survives an
+#                     exception thrown mid-batch.
+#   2. ScopeGuard:    a general lambda-on-destruction utility, used here
+#                     to roll back a partial label count on failure.
 #
-# Standalone-buildable from this directory (no containers, same local
-# tools as the rest of the book):
+# Standalone-buildable from this directory (no containers; local clang +
+# CMake + Ninja + Conan only, the same tooling every example in this repo
+# uses):
 #   conan install . --output-folder=build/cpp23 --build=missing \
 #       -s compiler.cppstd=23 -s build_type=Release
 #   cmake --preset cpp23

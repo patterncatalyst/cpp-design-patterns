@@ -3,7 +3,7 @@
 #
 # Builds examples/08-strategy standalone (conan install + cmake preset +
 # build) and runs the three-strategy shipping-rate demo. Run from this
-# directory. No containers — local clang + CMake + Ninja + Conan only.
+# directory. No containers: local clang + CMake + Ninja + Conan only.
 
 set -eu
 

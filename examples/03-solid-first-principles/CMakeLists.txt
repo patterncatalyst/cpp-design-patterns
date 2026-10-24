@@ -1,16 +1,17 @@
-# examples/03-solid-first-principles — SRP, OCP, LSP: billing an invoice.
+# examples/03-solid-first-principles - SRP, OCP, LSP: billing an invoice.
 #
 # Three SOLID principles made concrete against one small billing domain:
-#   SRP — InvoiceCalculator / InvoiceFormatter / InMemoryInvoiceRepository
-#         each have exactly one reason to change.
-#   OCP — InvoiceRule is the extension point; new rule types (and the test
-#         suite's own RoundUpToWholeDollarRule) join InvoiceCalculator
-#         without editing it.
-#   LSP — LoyaltyDiscountRule is substitutable anywhere a
-#         PercentageDiscountRule or an InvoiceRule is expected.
+#   SRP: InvoiceCalculator / InvoiceFormatter / InMemoryInvoiceRepository
+#        each have exactly one reason to change.
+#   OCP: InvoiceRule is the extension point; new rule types (and the test
+#        suite's own RoundUpToWholeDollarRule) join InvoiceCalculator
+#        without editing it.
+#   LSP: LoyaltyDiscountRule is substitutable anywhere a
+#        PercentageDiscountRule or an InvoiceRule is expected.
 #
-# Standalone-buildable from this directory (no containers, same local
-# tools as the rest of the book):
+# Standalone-buildable from this directory (no containers; local clang +
+# CMake + Ninja + Conan only, the same tooling every example in this repo
+# uses):
 #   conan install . --output-folder=build/cpp23 --build=missing \
 #       -s compiler.cppstd=23 -s build_type=Release
 #   cmake --preset cpp23

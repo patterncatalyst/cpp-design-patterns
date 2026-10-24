@@ -1,4 +1,4 @@
-# 03 — SOLID I: billing an invoice
+# 03 - SOLID I: billing an invoice
 
 A small business billing system needs to total an invoice, show it to a
 customer, and remember it between runs. This example builds that system
@@ -9,8 +9,8 @@ rule substitutable everywhere its parent is expected.
 
 ## The domain
 
-- `LineItem` — a description, a quantity, and a per-unit price.
-- `Invoice` — an id, a customer name, and a list of `LineItem`s.
+- `LineItem`: a description, a quantity, and a per-unit price.
+- `Invoice`: an id, a customer name, and a list of `LineItem`s.
 - Money is tracked as integer `Cents`, never floating point, so a total is
   exact and reproducible in a test assertion.
 - `invoice_subtotal()` in `src/billing_domain.cpp` is the one place line
@@ -19,19 +19,19 @@ rule substitutable everywhere its parent is expected.
 
 ## Single Responsibility: three types, three jobs
 
-- **`InvoiceCalculator`** (`src/invoice_calculator.hpp`) — turns an
+- **`InvoiceCalculator`** (`src/invoice_calculator.hpp`): turns an
   `Invoice` plus a set of rules into `Totals` (a subtotal and a total). It
   has no idea how a total is displayed or whether it is ever saved.
-- **`InvoiceFormatter`** (`src/invoice_formatter.hpp`) — turns an `Invoice`
+- **`InvoiceFormatter`** (`src/invoice_formatter.hpp`): turns an `Invoice`
   and its already-computed `Totals` into receipt text. It never computes a
   total itself.
-- **`InMemoryInvoiceRepository`** (`src/invoice_repository.hpp`) —
+- **`InMemoryInvoiceRepository`** (`src/invoice_repository.hpp`):
   remembers invoices by id and hands them back. It never computes or
   renders anything.
 
 Each type has exactly one reason to change: a new tax rate changes
 `InvoiceCalculator`, a new receipt layout changes `InvoiceFormatter`, a new
-storage backend changes `InMemoryInvoiceRepository` — never all three for
+storage backend changes `InMemoryInvoiceRepository`, never all three for
 one requirement.
 
 ## Open/Closed: `InvoiceRule` as the extension point
@@ -40,11 +40,11 @@ one requirement.
 instead of editing: anything that turns a subtotal into an adjustment is a
 rule, and `InvoiceCalculator` never changes to pick up a new one.
 
-- `PercentageTaxRule` — adds a percentage of the subtotal.
-- `PercentageDiscountRule` — subtracts a percentage, with its rate clamped
+- `PercentageTaxRule`: adds a percentage of the subtotal.
+- `PercentageDiscountRule`: subtracts a percentage, with its rate clamped
   to `[0, 1]` so no caller can push it into discounting more than the
   subtotal.
-- `FlatServiceFeeRule` — a fixed addition unrelated to the subtotal at all,
+- `FlatServiceFeeRule`: a fixed addition unrelated to the subtotal at all,
   added after the two rules above already existed, with zero changes to
   `InvoiceCalculator` or to either of them.
 - `tests/invoice_calculator_test.cpp` goes one step further: it defines a
@@ -62,7 +62,7 @@ times the subtotal" instead of reimplementing it.
 `LoyaltyDiscountRule` refines `PercentageDiscountRule` for repeat customers
 (a 1%-per-year bonus, capped at 10 years) by overriding only the protected
 `discount_rate()` hook. It is substitutable anywhere a
-`PercentageDiscountRule` or an `InvoiceRule` is expected —
+`PercentageDiscountRule` or an `InvoiceRule` is expected:
 `tests/invoice_lsp_test.cpp` calls both through a single function written
 against the `InvoiceRule` base class and shows the invariant holds for both,
 even when a loyalty bonus would otherwise push the combined rate above 100%.
@@ -79,7 +79,7 @@ never needs `std::expected`. The matching gtest cases in
 
 ## Build, run, observe
 
-No containers — local clang + CMake + Ninja + Conan only (see the
+No containers: local clang + CMake + Ninja + Conan only (see the
 prerequisites chapter and `scripts/check-prereqs.sh` at the repo root).
 
 This example is standalone-buildable from this directory:
@@ -93,7 +93,7 @@ cmake --build --preset cpp23
 ctest --preset cpp23 --output-on-failure
 ```
 
-It is also picked up by the repo root's superbuild — from the repo root:
+It is also picked up by the repo root's superbuild, from the repo root:
 
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23
@@ -101,7 +101,7 @@ scripts/build.sh cpp20 && scripts/verify.sh cpp20
 ```
 
 Either path discovers the same 17 gtest cases under `cpp23` (15 under
-`cpp20` — the two `std::expected` cases are compiled out) via
+`cpp20`: the two `std::expected` cases are compiled out) via
 `gtest_discover_tests`. Observed locally on Fedora 44 / clang 22.1.8:
 
 ```

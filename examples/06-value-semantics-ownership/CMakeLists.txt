@@ -1,24 +1,26 @@
-# examples/06-value-semantics-ownership — Value semantics, ownership, and
+# examples/06-value-semantics-ownership - Value semantics, ownership, and
 # smart pointers: a warehouse dispatch system.
 #
-# Four ownership shapes, each a real contrast rather than a syntax demo:
-#   1. Parcel            — a value type following the Rule of Zero; a copy
-#                           is independent of the original.
-#   2. DockSlot           — sole ownership of a Parcel via unique_ptr, with
-#                           ownership transferred between slots by move.
-#   3. CarrierContract    — a resource-owning type following the Rule of
-#                           Five, shared by more than one ShippingRoute via
-#                           shared_ptr (shared reference semantics).
-#   4. ManifestNode       — a parent/child object graph where the parent
-#                           owns children via shared_ptr and a child
-#                           observes its parent via weak_ptr, breaking what
-#                           would otherwise be a reference cycle.
+# Four ownership shapes, each a contrast between pointer kinds rather than
+# a syntax demo:
+#   1. Parcel:         a value type following the Rule of Zero; a copy is
+#                       independent of the original.
+#   2. DockSlot:        sole ownership of a Parcel via unique_ptr, with
+#                       ownership transferred between slots by move.
+#   3. CarrierContract: a resource-owning type following the Rule of
+#                       Five, shared by more than one ShippingRoute via
+#                       shared_ptr (shared reference semantics).
+#   4. ManifestNode:    a parent/child object graph where the parent
+#                       owns children via shared_ptr and a child
+#                       observes its parent via weak_ptr, breaking what
+#                       would otherwise be a reference cycle.
 # Plus a C++23 refinement: adopting a raw pointer from a C-style legacy
 # factory function into a unique_ptr with std::out_ptr, contrasted with the
 # manual C++20 way.
 #
-# Standalone-buildable from this directory (no containers, same local
-# tools as the rest of the book):
+# Standalone-buildable from this directory (no containers; local clang +
+# CMake + Ninja + Conan only, the same tooling every example in this repo
+# uses):
 #   conan install . --output-folder=build/cpp23 --build=missing \
 #       -s compiler.cppstd=23 -s build_type=Release
 #   cmake --preset cpp23

@@ -3,7 +3,7 @@
 #
 # Builds examples/06-value-semantics-ownership standalone (conan install +
 # cmake preset + build) and runs the ownership-model demo. Run from this
-# directory. No containers — local clang + CMake + Ninja + Conan only.
+# directory. No containers: local clang + CMake + Ninja + Conan only.
 
 set -eu
 

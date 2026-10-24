@@ -3,7 +3,7 @@
 #
 # Builds examples/03-solid-first-principles standalone (conan install +
 # cmake preset + build) and runs the SRP/OCP/LSP billing demo. Run from
-# this directory. No containers — local clang + CMake + Ninja + Conan only.
+# this directory. No containers: local clang + CMake + Ninja + Conan only.
 
 set -eu
 

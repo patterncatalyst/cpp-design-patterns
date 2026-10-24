@@ -1,4 +1,4 @@
-# 05 — RAII and deterministic lifetimes: a warehouse dock bay lease
+# 05 - RAII and deterministic lifetimes: a warehouse dock bay lease
 
 A distribution center has a fixed number of loading-dock bays, and only
 one labeling station can use a bay at a time. This example ties the
@@ -9,17 +9,17 @@ return, and an exception.
 
 ## The domain
 
-- `DockBayRegistry` — a fixed number of dock bays, each either free or
+- `DockBayRegistry`: a fixed number of dock bays, each either free or
   leased. `try_lease()`/`release()` are plain, non-throwing bookkeeping;
   the registry itself has no notion of RAII.
-- `DockBayLease` (`src/dock_bay_lease.hpp`) — the RAII guard. Acquires a
+- `DockBayLease` (`src/dock_bay_lease.hpp`): the RAII guard. Acquires a
   bay in its constructor (or throws `BayUnavailableError`), releases it in
   its destructor unconditionally. Copy is deleted; move transfers
   ownership and leaves the source with nothing to release.
-- `ScopeGuard` (`src/scope_guard.hpp`) — a general-purpose, domain-free
+- `ScopeGuard` (`src/scope_guard.hpp`): a general-purpose, domain-free
   lambda-on-destruction utility, with a `dismiss()` escape hatch for a
   commit path that no longer needs its rollback to run.
-- `label_shipment_batch()` (`src/labeling_station.hpp`) — the piece that
+- `label_shipment_batch()` (`src/labeling_station.hpp`): the piece that
   uses both together: it leases a bay for a whole batch of shipments and
   uses a `ScopeGuard` to roll a label counter back to zero if a bad
   barcode throws partway through.
@@ -36,7 +36,7 @@ return, and an exception.
   (`ScopeGuard`) rolls back a counter on the same unwind
   (`labeling_station_test.cpp`).
 - **No double release.** `DockBayRegistry::release_count()` counts only
-  genuine leased-to-free transitions. After a move (`MoveConstructionTransfers...`)
+  leased-to-free transitions. After a move (`MoveConstructionTransfers...`)
   or a move-assignment onto an already-owning lease
   (`MoveAssignmentReleasesTheTargetsPriorBayBeforeAdoptingTheNewOne`), two
   destructors run on the same `bay_id`, but `release_count()` advances by
@@ -57,7 +57,7 @@ gtest cases in `tests/dock_bay_lease_test.cpp` are guarded the same way.
 
 ## Build, run, observe
 
-No containers — local clang + CMake + Ninja + Conan only (see the
+No containers: local clang + CMake + Ninja + Conan only (see the
 prerequisites chapter and `scripts/check-prereqs.sh` at the repo root).
 
 This example is standalone-buildable from this directory:
@@ -71,7 +71,7 @@ cmake --build --preset cpp23
 ctest --preset cpp23 --output-on-failure
 ```
 
-It is also picked up by the repo root's superbuild — from the repo root:
+It is also picked up by the repo root's superbuild, from the repo root:
 
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23
@@ -79,7 +79,7 @@ scripts/build.sh cpp20 && scripts/verify.sh cpp20
 ```
 
 Either path discovers the same 15 gtest cases under `cpp23` (13 under
-`cpp20` — the two `std::expected` cases are compiled out) via
+`cpp20`: the two `std::expected` cases are compiled out) via
 `gtest_discover_tests`. Observed locally on Fedora 44 / clang 22.1.8:
 
 ```

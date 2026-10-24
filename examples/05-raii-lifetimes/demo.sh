@@ -3,7 +3,7 @@
 #
 # Builds examples/05-raii-lifetimes standalone (conan install + cmake
 # preset + build) and runs the dock-bay-lease demo. Run from this
-# directory. No containers — local clang + CMake + Ninja + Conan only.
+# directory. No containers: local clang + CMake + Ninja + Conan only.
 
 set -eu
 

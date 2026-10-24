@@ -1,14 +1,15 @@
-# examples/08-strategy — Strategy pattern: shipping-rate estimation.
+# examples/08-strategy - Strategy pattern: shipping-rate estimation.
 #
 # Three idiomatic C++ expressions of the same Strategy intent, all pricing
 # an identical Shipment identically because they share the pure rate math
 # in shipping_domain.cpp:
-#   1. Runtime polymorphism   — RateStrategy interface + unique_ptr injection
-#   2. Value-semantic callable — std::function-based swappable/composable strategy
-#   3. Compile-time policy    — concept-constrained template, chosen at compile time
+#   1. Runtime polymorphism:    RateStrategy interface + unique_ptr injection
+#   2. Value-semantic callable: std::function-based swappable/composable strategy
+#   3. Compile-time policy:     concept-constrained template, chosen at compile time
 #
-# Standalone-buildable from this directory (no containers, same local
-# tools as the rest of the book):
+# Standalone-buildable from this directory (no containers; local clang +
+# CMake + Ninja + Conan only, the same tooling every example in this repo
+# uses):
 #   conan install . --output-folder=build/cpp23 --build=missing \
 #       -s compiler.cppstd=23 -s build_type=Release
 #   cmake --preset cpp23

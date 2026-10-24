@@ -6,11 +6,11 @@ class ValueSemanticsOwnershipDemoConan(ConanFile):
     """Standalone Conan recipe for examples/06-value-semantics-ownership.
 
     Mirrors the repo root's conanfile.py so this example builds on its own,
-    without configuring the rest of the book:
+    without configuring anything else in the repo:
     `cd examples/06-value-semantics-ownership && conan install . && cmake
     --preset cpp23 && cmake --build --preset cpp23`. When this example is
     built as part of the repo root's superbuild instead, this file is
-    never invoked — the root conanfile.py's own gtest/1.17.0 requirement
+    never invoked: the root conanfile.py's own gtest/1.17.0 requirement
     already satisfies this example's find_package(GTest REQUIRED) call.
     """
 
