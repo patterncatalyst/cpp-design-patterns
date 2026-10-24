@@ -20,6 +20,14 @@
     non-pattern), choose the idiomatic C++ expression, test it with gtest,
     and know when not to use it. Forces and trade-offs run under every step.
 
+- name: 02-shared-vocabulary
+  section: "Ch. 2"
+  title: A pattern name as shared vocabulary
+  caption: >-
+    A pattern name sits between three readers, a teammate, a future-you, and
+    an AI assistant, compressing a cluster of forces and a chosen structure
+    into one word all three can act on the same way.
+
 - name: 08-strategy-forces
   section: "Ch. 8"
   title: Strategy as a decision under forces
