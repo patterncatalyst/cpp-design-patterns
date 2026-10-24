@@ -435,6 +435,8 @@ Carton CTN-A: 14800g, 52 units
 Carton CTN-C: 7200g, 8 units
 Carton CTN-B: 7200g, 8 units
 Pallet PAL-9: 22000g, 60 units
+(Pallet's totals are Carton CTN-A's and Carton CTN-B's totals added together,
+ and Carton CTN-B's total is Carton CTN-C's total, recursed through two levels.)
 
 == Flyweight: a few descriptors, many line items ==
 Distinct SKUs registered in the catalog: 3
@@ -447,6 +449,9 @@ Two separate get("WIDGET-100") calls return the same instance: true
 Carton CTN-A (default, unhandled) checked against a 500g limit:
   (no output above: the default NullShipmentExceptionHandler ran and did nothing)
   Carton CTN-A (logged) is 14300g over its weight limit
+
+== C++23 refinement: typed error for an unregistered SKU ==
+Rejected lookup: unregistered SKU code: CRATE-999
 ```
 
 Notice that Carton CTN-B's total, 7200 grams and 8 units, is exactly Carton
