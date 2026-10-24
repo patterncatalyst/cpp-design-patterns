@@ -166,3 +166,12 @@
     A request flows down a chain of handlers that each handle or pass, next to
     an aggregate traversed by a hand-written forward iterator and by a filter
     plus transform ranges pipeline over the same data.
+
+- name: 20-visitor-memento-interpreter
+  section: "Ch. 20"
+  title: Visitor and Interpreter over a shared AST, plus Memento
+  caption: >-
+    A shared rule-node AST walked two ways, a classic double-dispatch visitor
+    and a std::variant plus std::visit visitor producing the same result, with
+    an interpreter walking the same AST, next to an editor whose memento
+    captures and restores its whole state.
