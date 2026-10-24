@@ -12,8 +12,10 @@ content executors.
   purely as CI substrate (see `.github/workflows/ci.yml`'s header comment);
   that is not something a chapter ever tells a reader to do.
 - Every example builds with **cmake + conan + clang** and is tested with
-  **GoogleTest + CTest**. A test must verify *behavior* (the pattern does
-  what it claims), not just that the binary exits 0.
+  the **GoogleTest suite, including GoogleMock**. (`ctest` is only CMake's
+  runner for the gtest binaries, not a separate framework.) A test must
+  verify *behavior* (the pattern does what it claims), not just that the
+  binary exits 0.
 - Pinned toolchain (see `_plans/r01-build-plan.md` for the verified
   versions): clang, CMake >= 3.28, Ninja, Conan 2.x, GoogleTest 1.17.0 via
   Conan. `scripts/check-prereqs.sh` verifies the floor versions;
@@ -54,9 +56,9 @@ content executors.
 
 ## Diagrams
 
-- Diagrams are heavy — most chapters get at least one — and carry
-  **no UML**: no class diagrams, no arrows-with-stereotypes notation.
-  Trend toward a **C4-style** standard instead.
+- Diagrams are heavy — most chapters get at least one — and follow a
+  **C4-style** standard going forward: context and component framing,
+  not class diagrams or stereotype-arrow notation.
 - Every diagram ships as a paired `diagrams/<name>.svg` +
   `diagrams/<name>.excalidraw`, generated with `lgtm-diagram-generator`.
 - Emphasis/ink boxes are **light fill with dark text**, never a dark-filled

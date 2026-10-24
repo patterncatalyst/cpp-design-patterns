@@ -21,8 +21,10 @@ never on reader-facing pages.
 - Diagrams: heavy, **no UML**, trending toward a C4-style standard. Paired
   SVG + `.excalidraw`; emphasis boxes light fill / dark text.
 - No containers. Local tools only, with a prerequisites chapter.
-- Everything tested with GoogleTest + CTest. Reference: *googletest in practice*
-  (Hyuk Myeong) and the official GoogleTest docs.
+- Everything tested with the **GoogleTest suite, including GoogleMock**. `ctest` is
+  only CMake's test runner for the gtest binaries (registered via
+  `gtest_discover_tests`), not a separate requirement. Reference: *googletest in
+  practice* (Hyuk Myeong) and the official GoogleTest docs.
 
 ## Verified toolchain (Fedora 44, 2026-10-24)
 
