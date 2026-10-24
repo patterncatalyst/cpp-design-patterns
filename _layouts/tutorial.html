@@ -33,7 +33,7 @@ layout: default
             {%- endif -%}
             <p class="tutorial__meta">
                 {%- if page.duration -%}<span class="tutorial__pill">⏱ {{ page.duration }}</span>{%- endif -%}
-                <span class="tutorial__pill">Section {{ page.order }}</span>
+                <span class="tutorial__pill">Chapter {{ page.order }}</span>
             </p>
         </header>
 
@@ -41,7 +41,7 @@ layout: default
             {{ content }}
         </div>
 
-        <nav class="tutorial__pager" aria-label="Section pagination">
+        <nav class="tutorial__pager" aria-label="Chapter pagination">
             {%- if prev_doc -%}
             <a class="is-prev" href="{{ prev_doc.url | relative_url }}">
                 <span class="label">← §{{ prev_doc.order }}</span>
