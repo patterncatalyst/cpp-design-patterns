@@ -101,3 +101,11 @@
     An invoker drains a FIFO command queue into a receiver, and a
     CommandHistory moves a command between a done stack and an undone stack as
     undo and redo run.
+
+- name: 14-singleton-vs-di
+  section: "Ch. 14"
+  title: Singleton versus dependency injection
+  caption: >-
+    A singleton's clients reach into one global instance directly; the DI
+    alternative routes the same capability through an abstraction a composition
+    root wires, swappable with a test double.
