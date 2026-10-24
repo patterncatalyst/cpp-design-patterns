@@ -142,3 +142,11 @@
     A decorator stack (surcharge, caching, logging) wraps a core rate source,
     next to a proxy controlling access to a real manifest store. Both wrap the
     same interface their subject implements; only the intent differs.
+
+- name: 17-composite-flyweight
+  section: "Ch. 17"
+  title: Composite tree and flyweight pool
+  caption: >-
+    A composite tree (pallet, cartons, items) sharing one interface on the
+    left, and a flyweight pool of SKU descriptors referenced by many line items
+    on the right.
