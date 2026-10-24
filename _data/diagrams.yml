@@ -20,6 +20,31 @@
     non-pattern), choose the idiomatic C++ expression, test it with gtest,
     and know when not to use it. Forces and trade-offs run under every step.
 
+- name: 02-shared-vocabulary
+  section: "Ch. 2"
+  title: A pattern name as shared vocabulary
+  caption: >-
+    A pattern name sits between three readers, a teammate, a future-you, and
+    an AI assistant, compressing a cluster of forces and a chosen structure
+    into one word all three can act on the same way.
+
+- name: 03-solid-before-after
+  section: "Ch. 3"
+  title: A billing engine before and after SOLID
+  caption: >-
+    One Invoice type doing three jobs, split by SRP into three focused types,
+    extended by OCP through an InvoiceRule abstraction, and refined by LSP
+    without breaking the base contract.
+
+- name: 04-solid-dependency-inversion
+  section: "Ch. 4"
+  title: Dependency inversion and interface segregation
+  caption: >-
+    DIP routes a high-level policy through an abstraction instead of straight
+    to a concrete gateway, inverting the dependency arrow. ISP splits that
+    abstraction into role interfaces a concrete type implements only where it
+    has the capability.
+
 - name: 08-strategy-forces
   section: "Ch. 8"
   title: Strategy as a decision under forces
