@@ -175,3 +175,11 @@
     and a std::variant plus std::visit visitor producing the same result, with
     an interpreter walking the same AST, next to an editor whose memento
     captures and restores its whole state.
+
+- name: 21-crtp-policy
+  section: "Ch. 21"
+  title: CRTP and policy-based composition at compile time
+  caption: >-
+    CRTP resolves a derived type at compile time instead of through a vtable,
+    and a policy host is composed from interchangeable compile-time policies the
+    same way.
