@@ -102,6 +102,14 @@
     CommandHistory moves a command between a done stack and an undone stack as
     undo and redo run.
 
+- name: 12-abstract-factory-families
+  section: "Ch. 12"
+  title: An abstract factory producing two matching carrier families
+  caption: >-
+    CarrierIntegrationFactory declares a family of three abstract products;
+    the FastShip and SummitFreight factories each implement and create their
+    own matching family, and the client depends only on the abstractions.
+
 - name: 14-singleton-vs-di
   section: "Ch. 14"
   title: Singleton versus dependency injection
