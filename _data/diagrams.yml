@@ -151,6 +151,14 @@
     left, and a flyweight pool of SKU descriptors referenced by many line items
     on the right.
 
+- name: 18-observer-mediator
+  section: "Ch. 18"
+  title: Observer fan-out and a mediator hub
+  caption: >-
+    A subject fans a status change out to independent observers, next to a
+    mediator routing between collaborators that never reference each other
+    directly, shown against the tangled direct mesh it replaces.
+
 - name: 19-chain-iterator
   section: "Ch. 19"
   title: A handler chain and an iterator or ranges traversal
