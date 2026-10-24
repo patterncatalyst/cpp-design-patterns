@@ -61,19 +61,21 @@ All code new. Every pattern chapter ends with "when NOT to use it" + an AI sideb
 |---|------|-------|--------|
 | 0 | Create public repo + branch release/r01 | main | DONE |
 | 1 | Write this plan checkpoint | main | DONE |
-| 2 | Scaffold Jekyll site (lgtm-jekyll): _config, layouts, includes incl. codetabs (C++20/23), index/chapters/examples/diagrams/bibliography, _parts stubs, CLAUDE.md | exec | TODO |
-| 3 | Build/test harness: root CMakeLists superbuild, conanfile.py (gtest 1.17.0), CMakePresets (cpp20/cpp23), scripts/ (check-prereqs, build, verify) | exec | TODO |
-| 4 | CI: pages.yml + ci.yml (conan install + cpp23/cpp20 presets + ctest; voice scan gate) | exec | TODO |
-| 5 | .gitattributes (Linguist → repo card reads C++) | exec | TODO |
-| 6 | examples/08-strategy: NEW domain example, three Strategy expressions, gtest, README build/run/observe, demo.sh | exec | TODO |
-| 7 | Chapter 0 Prerequisites | exec | TODO |
-| 8 | Chapter 1 Patterns as decisions under forces | exec | TODO |
-| 9 | Chapter 8 Strategy (codetabs C++20/23, when-not, AI sidebar, build/run/observe) | exec | TODO |
-| 10 | Diagrams: ch1 (the arc) + ch8 (strategy forces), paired SVG+excalidraw, no UML | exec | TODO |
-| 11 | Validate r01 against acceptance criteria (voice + idiomatic-review gates) | validate | TODO |
-| 12 | Hub PR: new "GoF Design Patterns and SOLID Principles" section + card + books | main | TODO |
-| 13 | Squash-merge PR, tag r01.x, notes-only release, enable Pages | main | TODO |
-| 14 | Notion PRD rewrite (C++-only) + Java/.NET/Python sibling stubs | main | TODO |
+| 2 | Scaffold Jekyll site (lgtm-jekyll): _config, layouts, includes incl. codetabs (C++20/23), index/chapters/examples/diagrams/bibliography, _parts stubs, CLAUDE.md | exec | DONE (114d0d0) |
+| 3 | Build/test harness: root CMakeLists superbuild, conanfile.py (gtest 1.17.0), CMakePresets (cpp20/cpp23), scripts/ (check-prereqs, build, verify) | exec | DONE (114d0d0; +compile_commands 646a350) |
+| 4 | CI: pages.yml + ci.yml (conan install + cpp23/cpp20 presets + ctest) | exec | DONE (114d0d0; dead voice step dropped 02164f2) |
+| 5 | .gitattributes (Linguist → repo card reads C++) | exec | DONE (114d0d0) |
+| 6 | examples/08-strategy: NEW domain example, three Strategy expressions, gtest, README build/run/observe, demo.sh | exec | DONE (3708a6c) — 18/16 tests pass |
+| 7 | Chapter 0 Prerequisites | exec | DONE (2237b7f) |
+| 8 | Chapter 1 Patterns as decisions under forces | exec | DONE (2237b7f) |
+| 9 | Chapter 8 Strategy (codetabs C++20/23, when-not, AI sidebar, build/run/observe) | exec | DONE (e42cb41) |
+| 10 | Diagrams: ch0 (build/test loop) + ch1 (the arc) + ch8 (strategy forces), paired SVG+excalidraw, no UML | exec | DONE (31bcdcf, af80bd5) |
+| 10b | examples gallery card for 08-strategy | main | DONE (02164f2) |
+| 11 | Validate r01 against acceptance criteria (voice + idiomatic-review gates) | validate | DONE — all 6 criteria MET, gates pass, verdict ready-to-merge |
+| -- | Push release/r01, open PR #1, enable Pages | main | DONE (PR #1) |
+| 12 | Hub PR: new "GoF Design Patterns and SOLID Principles" section + card + books | main | HOLD — needs user go (existing shared repo) |
+| 13 | Squash-merge PR #1, tag r01.x, notes-only release | main | HOLD — needs user go (outward-facing) |
+| 14 | Notion PRD rewrite (C++-only) + Java/.NET/Python sibling stubs | main | HOLD — needs user go (overwrites existing page) |
 
 ## r01 acceptance criteria
 
