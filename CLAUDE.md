@@ -46,6 +46,11 @@ content executors.
 - References for testing idiom: *GoogleTest in Practice* (Hyuk Myeong) and
   the official GoogleTest documentation. Use `gtest_discover_tests` so
   CTest sees every case.
+- **Liquid gotcha:** Jekyll parses `{{ ... }}` as a Liquid tag even inside a
+  fenced code block. If a C++ snippet contains adjacent braces (for example a
+  map or nested initializer list like `{{a, b}, c}`), wrap that whole fenced
+  block in `{% raw %}` / `{% endraw %}`, or the site build fails. Verify with a
+  real `bundle exec jekyll build`, not just a standalone compile.
 
 ## Diagrams
 
