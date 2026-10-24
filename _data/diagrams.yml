@@ -183,3 +183,12 @@
     CRTP resolves a derived type at compile time instead of through a vtable,
     and a policy host is composed from interchangeable compile-time policies the
     same way.
+
+- name: 22-type-erasure-pimpl
+  section: "Ch. 22"
+  title: Type erasure and a PImpl compilation firewall
+  caption: >-
+    A value-semantic wrapper erases unrelated concrete types behind a
+    hand-written concept and model with no shared base class, next to a class
+    that exposes only its header across a PImpl firewall, its implementation
+    reachable through nothing but a pointer.
