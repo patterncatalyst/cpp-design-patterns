@@ -1,0 +1,60 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 28, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "cpp23",
+      "displayName": "C++23 (default)",
+      "description": "Default build standard for the book's codetabs. Requires: conan install . --output-folder=build/cpp23 --build=missing -s compiler.cppstd=23 -s build_type=Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/cpp23",
+      "toolchainFile": "${sourceDir}/build/cpp23/generators/conan_toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_STANDARD": "23",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "cpp20",
+      "displayName": "C++20 (compat)",
+      "description": "Compatibility build standard for the book's codetabs. Requires: conan install . --output-folder=build/cpp20 --build=missing -s compiler.cppstd=20 -s build_type=Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/cpp20",
+      "toolchainFile": "${sourceDir}/build/cpp20/generators/conan_toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_STANDARD": "20",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "cpp23",
+      "configurePreset": "cpp23"
+    },
+    {
+      "name": "cpp20",
+      "configurePreset": "cpp20"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "cpp23",
+      "configurePreset": "cpp23",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "cpp20",
+      "configurePreset": "cpp20",
+      "output": { "outputOnFailure": true }
+    }
+  ]
+}

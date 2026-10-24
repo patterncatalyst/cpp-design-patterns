@@ -150,3 +150,11 @@
     A composite tree (pallet, cartons, items) sharing one interface on the
     left, and a flyweight pool of SKU descriptors referenced by many line items
     on the right.
+
+- name: 19-chain-iterator
+  section: "Ch. 19"
+  title: A handler chain and an iterator or ranges traversal
+  caption: >-
+    A request flows down a chain of handlers that each handle or pass, next to
+    an aggregate traversed by a hand-written forward iterator and by a filter
+    plus transform ranges pipeline over the same data.
