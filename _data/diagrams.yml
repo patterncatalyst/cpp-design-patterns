@@ -175,3 +175,28 @@
     and a std::variant plus std::visit visitor producing the same result, with
     an interpreter walking the same AST, next to an editor whose memento
     captures and restores its whole state.
+
+- name: 21-crtp-policy
+  section: "Ch. 21"
+  title: CRTP and policy-based composition at compile time
+  caption: >-
+    CRTP resolves a derived type at compile time instead of through a vtable,
+    and a policy host is composed from interchangeable compile-time policies the
+    same way.
+
+- name: 22-type-erasure-pimpl
+  section: "Ch. 22"
+  title: Type erasure and a PImpl compilation firewall
+  caption: >-
+    A value-semantic wrapper erases unrelated concrete types behind a
+    hand-written concept and model with no shared base class, next to a class
+    that exposes only its header across a PImpl firewall, its implementation
+    reachable through nothing but a pointer.
+
+- name: 23-expression-templates
+  section: "Ch. 23"
+  title: Lazy expression template versus eager evaluation
+  caption: >-
+    An expression template defers a weighted sum into a tree of scaled and sum
+    nodes that evaluates once into a single result, against the eager version
+    that builds a new object at every operator.

@@ -50,7 +50,7 @@ Presets: `cpp23` (default) and `cpp20` (compat). No `cpp26` preset yet.
 - Part 8 Idiomatic C++ expressions: 21 CRTP + policy-based design · 22 Type erasure + PImpl · 23 Expression templates, serialization, prototype registries
 - Part 9 Patterns in the wild: 24 Resource pools (connection/thread/object, monitor & active object) · 25 Shortcut patterns (fn-pointer tables & dispatch maps) · 26 Anti-patterns & pattern misuse
 - Part 10 Changing inherited code (modernized Feathers): 27 Seams & the test safety net · 28 The 24 dependency-breaking techniques for C++20/23 · 29 Fowler vs Feathers contrasted + combined · 30 Refactor or rewrite
-- Part 11 Putting it together: 31 Capstone · 32 Working with AI & LLM tools
+- Part 11 Putting it together: 31 Final project · 32 Working with AI & LLM tools
 - Appendix A Build & toolchain reference (+ C++26 revisit hook) · Appendix B Pattern-to-force quick reference (completeness ledger)
 
 All code new. Every pattern chapter ends with "when NOT to use it" + an AI sidebar.
