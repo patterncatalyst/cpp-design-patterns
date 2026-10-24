@@ -62,6 +62,14 @@
     weak_ptr observing without owning to break what would otherwise be a
     reference cycle.
 
+- name: 07-test-styles
+  section: "Ch. 7"
+  title: Five GoogleTest and GoogleMock styles
+  caption: >-
+    Each style, fixture, parameterized, typed, mock-interaction, and death
+    test, answers a different question, and all of them funnel into the same
+    CTest discovery and run flow.
+
 - name: 08-strategy-forces
   section: "Ch. 8"
   title: Strategy as a decision under forces
