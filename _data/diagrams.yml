@@ -101,3 +101,28 @@
     An invoker drains a FIFO command queue into a receiver, and a
     CommandHistory moves a command between a done stack and an undone stack as
     undo and redo run.
+
+- name: 12-abstract-factory-families
+  section: "Ch. 12"
+  title: An abstract factory producing two matching carrier families
+  caption: >-
+    CarrierIntegrationFactory declares a family of three abstract products;
+    the FastShip and SummitFreight factories each implement and create their
+    own matching family, and the client depends only on the abstractions.
+
+- name: 13-builder-prototype
+  section: "Ch. 13"
+  title: Builder, prototype registry, and a serialization round trip
+  caption: >-
+    A builder assembles a manifest behind a fluent interface and validates it
+    once at build(); a prototype registry clones a named template into an
+    independent copy; and serialize then deserialize round-trips the result
+    through plain text.
+
+- name: 14-singleton-vs-di
+  section: "Ch. 14"
+  title: Singleton versus dependency injection
+  caption: >-
+    A singleton's clients reach into one global instance directly; the DI
+    alternative routes the same capability through an abstraction a composition
+    root wires, swappable with a test double.
