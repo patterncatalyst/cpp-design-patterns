@@ -1,0 +1,68 @@
+---
+layout: default
+title: Example demos
+description: Runnable companion demos for Design Patterns with C++. Each builds locally with cmake + conan + GoogleTest, no containers.
+permalink: /examples/
+---
+
+<section class="hero hero--compact">
+    <div class="container">
+        <span class="hero__eyebrow">Example demos</span>
+        <h1>Runnable companions to the book.</h1>
+        <p class="hero__lead">
+            Every pattern chapter has a demo behind it. Each demo is a
+            self-contained, standalone-buildable CMake project with its
+            own Conan recipe and a GoogleTest suite run through CTest —
+            no containers. Read the matching chapter for context, then
+            build the demo from its directory with the same local tools
+            the prerequisites chapter installs.
+        </p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <h2 class="section-heading">Runnable examples</h2>
+        <p class="section-lead">
+            Each example makes a single pattern concrete and runnable with
+            one command. Every card links to the demo's page on this site
+            (a rendering of the README with cross-references), and each
+            page links to the source on GitHub. Each demo also stands
+            alone, so you can build it without reading the book first if
+            you'd rather poke at it directly.
+        </p>
+        <div class="cards">
+        {%- assign sorted_examples = site.examples | sort: "order" -%}
+        {%- for e in sorted_examples -%}
+            <a class="card" href="{{ e.url | relative_url }}">
+                <div class="card__eyebrow">{{ e.card_eyebrow }}</div>
+                <h3 class="card__title">{{ e.card_title }}</h3>
+                <p class="card__desc">{{ e.card_blurb }}</p>
+                <div class="card__meta"><span>Read page &rarr;</span></div>
+            </a>
+        {%- endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section" style="background: var(--bg-soft);">
+    <div class="container container-prose">
+        <h2 class="section-heading">Building every demo</h2>
+        <p>
+            Clone the repo and build each example from its directory with
+            the pinned local toolchain (clang, CMake, Ninja, Conan 2.x —
+            see the prerequisites chapter and <code>scripts/check-prereqs.sh</code>).
+        </p>
+<pre><code>git clone https://github.com/{{ site.github_username }}/{{ site.github_repo }}.git
+cd {{ site.github_repo }}
+./scripts/build.sh
+./scripts/verify.sh cpp23
+</code></pre>
+        <p>
+            Every example is also standalone-buildable from its own
+            directory with <code>conan install</code> and
+            <code>cmake --preset cpp23</code>, without configuring the
+            whole repo.
+        </p>
+    </div>
+</section>

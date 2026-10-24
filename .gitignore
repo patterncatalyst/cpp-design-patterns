@@ -1,0 +1,70 @@
+# ── Jekyll ────────────────────────────────────────────────────────────────────
+_site/
+.jekyll-cache/
+.jekyll-metadata
+.sass-cache/
+
+# ── C++ build artifacts ────────────────────────────────────────────────────────
+build/
+build-*/
+*.a
+*.app
+*.d
+*.dll
+*.dylib
+*.exe
+*.lib
+*.lo
+*.o
+*.obj
+*.so
+*.so.*
+out/
+
+# ── CMake ───────────────────────────────────────────────────────────────────────
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+CMakeUserPresets.json
+cmake_install.cmake
+compile_commands.json
+install_manifest.txt
+Testing/
+
+# ── Conan ─────────────────────────────────────────────────────────────────────
+.conan2/
+conanbuildinfo.*
+conaninfo.txt
+conan_paths.cmake
+conan_toolchain.cmake
+
+# ── Test / analysis output ─────────────────────────────────────────────────────
+*.junit.xml
+test-results/
+reports/
+default.profraw
+*.profraw
+*.profdata
+*.gcda
+*.gcno
+
+# ── Diagrams editor scratch ─────────────────────────────────────────────────────
+*.excalidraw.lock
+
+# ── OS / IDE ────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.direnv/
+.envrc
+*~
+*.swo
+*.swp
+
+# ── Vendoring / scratch ──────────────────────────────────────────────────────────
+vendor/
+node_modules/
+.venv/
+__pycache__/
+*.pyc

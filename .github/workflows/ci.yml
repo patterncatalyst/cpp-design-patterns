@@ -1,0 +1,59 @@
+# CI substrate only: the book's TAUGHT workflow is local tools (clang +
+# CMake + Ninja + Conan on the host, per _docs/00-prerequisites.md), never
+# containers. The fedora:44 job container below exists purely so CI has a
+# reproducible, pinned Fedora userspace to install that same local
+# toolchain into — it is not a "run examples in a container" pattern, and
+# no chapter should ever tell a reader to build this way.
+
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:44
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Install toolchain (clang, cmake, ninja, conan)
+        run: |
+          dnf install -y clang cmake ninja-build python3-pip git findutils which
+          pip3 install --no-cache-dir "conan>=2,<3"
+
+      - name: Versions
+        run: |
+          clang++ --version
+          cmake --version
+          ninja --version
+          conan --version
+
+      - name: Conan profile detect
+        run: conan profile detect --force
+
+      - name: Build + test under C++23 (default standard)
+        run: |
+          ./scripts/build.sh cpp23
+          ./scripts/verify.sh cpp23
+
+      - name: Build + test under C++20 (compat standard)
+        run: |
+          ./scripts/build.sh cpp20
+          ./scripts/verify.sh cpp20
+
+      # No C++26 leg: the headline features are prerelease. Revisit per the
+      # Appendix A hook once the toolchain settles.
+
+      - name: Professional-voice scan (soft gate)
+        run: |
+          if [ -f scripts/voice-scan.sh ]; then
+            bash scripts/voice-scan.sh || echo "::warning::voice scan reported findings (soft gate, not failing the build yet)"
+          else
+            echo "scripts/voice-scan.sh not vendored yet; skipping (see lgtm-professional-voice)."
+          fi

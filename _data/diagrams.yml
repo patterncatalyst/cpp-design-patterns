@@ -1,0 +1,4 @@
+# Diagram gallery data for /diagrams/ (name, section, title, caption).
+# One entry per paired diagrams/<name>.svg + diagrams/<name>.excalidraw file.
+# Empty until the first diagrams land (ch1 "the arc" + ch8 "strategy forces",
+# per the r01 build plan step board).
