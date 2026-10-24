@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 570" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="10" y="15" width="450" height="520" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="22" y="35" font-size="12" font-weight="700" fill="#888">Expression templates (lazy evaluation)</text>
+<rect x="470" y="15" width="450" height="520" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="482" y="35" font-size="12" font-weight="700" fill="#888">Eager operators (plain + and *)</text>
+<rect x="30" y="55" width="120" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="90.0" y="78.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">leg_one</text>
+<text x="90.0" y="95.0" font-size="11.5" fill="#555555" text-anchor="middle">RouteMetrics leaf</text>
+<rect x="170" y="55" width="120" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="230.0" y="78.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">leg_two</text>
+<text x="230.0" y="95.0" font-size="11.5" fill="#555555" text-anchor="middle">RouteMetrics leaf</text>
+<rect x="310" y="55" width="120" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="370.0" y="78.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">leg_three</text>
+<text x="370.0" y="95.0" font-size="11.5" fill="#555555" text-anchor="middle">RouteMetrics leaf</text>
+<rect x="30" y="135" width="120" height="45" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="90.0" y="155.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">RouteScaled</text>
+<text x="90.0" y="172.5" font-size="11.5" fill="#555555" text-anchor="middle">0.5 x leg_one</text>
+<rect x="170" y="135" width="120" height="45" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="230.0" y="155.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">RouteScaled</text>
+<text x="230.0" y="172.5" font-size="11.5" fill="#555555" text-anchor="middle">0.3 x leg_two</text>
+<rect x="310" y="135" width="120" height="45" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="370.0" y="155.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">RouteScaled</text>
+<text x="370.0" y="172.5" font-size="11.5" fill="#555555" text-anchor="middle">0.2 x leg_three</text>
+<rect x="100" y="215" width="120" height="45" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="160.0" y="235.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">RouteSum</text>
+<text x="160.0" y="252.5" font-size="11.5" fill="#555555" text-anchor="middle">scaled1 + scaled2</text>
+<rect x="190" y="295" width="140" height="45" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="260.0" y="315.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">RouteSum</text>
+<text x="260.0" y="332.5" font-size="11.5" fill="#555555" text-anchor="middle">sum1 + scaled3</text>
+<rect x="130" y="375" width="220" height="70" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="240.0" y="408.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">RouteMetrics result</text>
+<text x="240.0" y="425.0" font-size="11.5" fill="#555555" text-anchor="middle">ONE object constructed</text>
+<rect x="490" y="55" width="120" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="550.0" y="78.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">naive_one</text>
+<text x="550.0" y="95.0" font-size="11.5" fill="#555555" text-anchor="middle">NaiveRouteMetrics leaf</text>
+<rect x="630" y="55" width="120" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="690.0" y="78.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">naive_two</text>
+<text x="690.0" y="95.0" font-size="11.5" fill="#555555" text-anchor="middle">NaiveRouteMetrics leaf</text>
+<rect x="770" y="55" width="120" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="830.0" y="78.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">naive_three</text>
+<text x="830.0" y="95.0" font-size="11.5" fill="#555555" text-anchor="middle">NaiveRouteMetrics leaf</text>
+<rect x="490" y="135" width="120" height="45" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="550.0" y="155.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">0.5 x naive_one</text>
+<text x="550.0" y="172.5" font-size="11.5" fill="#555555" text-anchor="middle">built: #1</text>
+<rect x="630" y="135" width="120" height="45" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="690.0" y="155.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">0.3 x naive_two</text>
+<text x="690.0" y="172.5" font-size="11.5" fill="#555555" text-anchor="middle">built: #2</text>
+<rect x="770" y="135" width="120" height="45" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="830.0" y="155.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">0.2 x naive_three</text>
+<text x="830.0" y="172.5" font-size="11.5" fill="#555555" text-anchor="middle">built: #3</text>
+<rect x="560" y="215" width="120" height="45" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="620.0" y="235.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">t1 + t2</text>
+<text x="620.0" y="252.5" font-size="11.5" fill="#555555" text-anchor="middle">built: #4</text>
+<rect x="615" y="295" width="220" height="70" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="725.0" y="328.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">NaiveRouteMetrics result</text>
+<text x="725.0" y="345.0" font-size="11.5" fill="#555555" text-anchor="middle">built: #5 (5 total)</text>
+<path d="M90,105 L90,135" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M230,105 L230,135" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M370,105 L370,135" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M90,180 L130,215" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M230,180 L190,215" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M160,260 L220,295" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M370,180 L300,295" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M260,340 L240,375" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="256.0" y="351.5" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">evaluate once</text>
+<text x="256.0" y="351.5" font-size="11" fill="#b8650a" text-anchor="middle">evaluate once</text>
+<path d="M550,105 L550,135" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M690,105 L690,135" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M830,105 L830,135" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M550,180 L590,215" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M690,180 L650,215" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M620,260 L680,295" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M830,180 L780,295" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="470" y="545" font-size="11" fill="#888" text-anchor="middle" font-weight="700">Same weighted sum a + b + c: lazy pays for one construction, eager pays for one per operator.</text>
+</svg>

@@ -192,3 +192,11 @@
     hand-written concept and model with no shared base class, next to a class
     that exposes only its header across a PImpl firewall, its implementation
     reachable through nothing but a pointer.
+
+- name: 23-expression-templates
+  section: "Ch. 23"
+  title: Lazy expression template versus eager evaluation
+  caption: >-
+    An expression template defers a weighted sum into a tree of scaled and sum
+    nodes that evaluates once into a single result, against the eager version
+    that builds a new object at every operator.
