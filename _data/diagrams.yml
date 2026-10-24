@@ -127,6 +127,14 @@
     alternative routes the same capability through an abstraction a composition
     root wires, swappable with a test double.
 
+- name: 15-adapter-facade-bridge
+  section: "Ch. 15"
+  title: Adapter, Facade, and Bridge side by side
+  caption: >-
+    Adapter wraps a legacy API behind a target interface; Facade fronts three
+    subsystems with one call; Bridge crosses an abstraction axis of refined
+    notification kinds with an implementation axis of transports.
+
 - name: 16-decorator-proxy
   section: "Ch. 16"
   title: Decorator stack and access-controlling proxy
