@@ -65,8 +65,11 @@ int main() {
     stochastic.ship();
     const auto sequence = stochastic.run_to_terminal();
     std::cout << "Seed 38, InTransit outcomes: ";
-    for (const auto status : sequence) {
-        std::cout << to_string(status) << ' ';
+    for (std::size_t i = 0; i < sequence.size(); ++i) {
+        if (i != 0) {
+            std::cout << ' ';
+        }
+        std::cout << to_string(sequence[i]);
     }
     std::cout << "\nFinal status: " << to_string(stochastic.status()) << '\n';
 
