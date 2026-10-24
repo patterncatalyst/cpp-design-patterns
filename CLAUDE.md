@@ -12,8 +12,10 @@ content executors.
   purely as CI substrate (see `.github/workflows/ci.yml`'s header comment);
   that is not something a chapter ever tells a reader to do.
 - Every example builds with **cmake + conan + clang** and is tested with
-  **GoogleTest + CTest**. A test must verify *behavior* (the pattern does
-  what it claims), not just that the binary exits 0.
+  the **GoogleTest suite, including GoogleMock**. (`ctest` is only CMake's
+  runner for the gtest binaries, not a separate framework.) A test must
+  verify *behavior* (the pattern does what it claims), not just that the
+  binary exits 0.
 - Pinned toolchain (see `_plans/r01-build-plan.md` for the verified
   versions): clang, CMake >= 3.28, Ninja, Conan 2.x, GoogleTest 1.17.0 via
   Conan. `scripts/check-prereqs.sh` verifies the floor versions;
