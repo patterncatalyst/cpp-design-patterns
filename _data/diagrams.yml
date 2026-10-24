@@ -86,3 +86,11 @@
     An order-export pipeline runs a fixed sequence and calls private virtual
     hooks in a fixed order; concrete exporters override the hooks without
     touching the sequence or the validate and trailer invariants.
+
+- name: 11-command-undo
+  section: "Ch. 11"
+  title: Command queue and undo/redo stack
+  caption: >-
+    An invoker drains a FIFO command queue into a receiver, and a
+    CommandHistory moves a command between a done stack and an undone stack as
+    undo and redo run.
