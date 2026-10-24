@@ -17,9 +17,10 @@ CarrierContract::CarrierContract(const CarrierContract& other) {
 
 CarrierContract& CarrierContract::operator=(const CarrierContract& other) {
     if (this != &other) {
-        // Deep copy: allocate a new tier table before releasing this
-        // object's own, so a self-assignment edge case or an exception
-        // mid-allocation never leaves this contract half-destroyed.
+        // Release this object's tier table, then deep-copy the other's.
+        // The self-assignment guard above makes the release safe; if the
+        // allocation in copy_from throws, this contract is left empty but
+        // valid (null pointer, zero size), never half-destroyed.
         release();
         copy_from(other);
     }

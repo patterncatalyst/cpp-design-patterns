@@ -219,7 +219,7 @@ To see the lease, the exception path, and the `ScopeGuard` rollback run side by 
 examples/05-raii-lifetimes/demo.sh cpp23
 ```
 
-It leases and releases a bay normally, rejects a second lease on a bay that is already held, moves a lease and shows the registry's `release_count()` advance by exactly one rather than two, labels a batch successfully, then labels a second batch with a bad barcode and shows both the label count rolling back to zero and the bay releasing during the exception:
+It leases and releases a bay normally, rejects a second lease on a bay that is already held, moves a lease and shows the registry's `release_count()` advance by exactly one rather than two, labels a batch successfully, labels a second batch with a bad barcode and shows both the label count rolling back to zero and the bay releasing during the exception, and finally acquires a bay through the C++23 `std::expected` path that reports a conflict as a value instead of an exception:
 
 ```
 == Acquire in the constructor, release in the destructor ==
@@ -247,6 +247,10 @@ It leases and releases a bay normally, rejects a second lease on a bay that is a
 
 == ScopeGuard runs its actions in LIFO order, like stack destructors ==
   Run order (expect 3, 2, 1): 3 2 1 
+
+== C++23 refinement: acquiring a bay without throwing ==
+  Rejected: dock bay 1 is already leased
+  Acquired bay 2 without an exception.
 ```
 
 Running `examples/05-raii-lifetimes/demo.sh cpp20` prints the same output minus the final `std::expected` block, which only compiles under the `cpp23` preset.
