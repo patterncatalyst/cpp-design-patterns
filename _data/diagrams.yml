@@ -368,3 +368,13 @@
     implementation, and a verification gate of behavior tests and an idiomatic
     review decides whether the draft is accepted or sent back, keeping
     responsibility for correctness with the engineer.
+
+- name: 38-principle-families
+  section: "Appendix F"
+  title: The programming-principle vocabulary, grouped into six families
+  caption: >-
+    Six families of principle: a tight SOLID recap, simplicity and scope,
+    structure and change, coupling and cohesion, interoperability and
+    resilience, and a process family with no code shape at all, each a
+    different angle on the same question of what force justifies a given
+    design.
