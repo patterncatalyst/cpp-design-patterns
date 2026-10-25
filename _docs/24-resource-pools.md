@@ -148,7 +148,7 @@ write; there is no release method to forget.
 }  // lease destructor runs here: the connection returns to the pool
 ```
 
-This is the same RAII discipline Chapter 5 introduced for memory and file
+This is the same RAII discipline that governs memory and file
 handles, applied to something with a bound on how many can exist at once.
 The bound is what makes a pool more than a cache: a cache grows to fit
 demand, while a pool's whole purpose is to cap demand at a number the
@@ -213,7 +213,7 @@ if (!lease.has_value()) {
 waits, it either hands back a `Lease` immediately or reports failure.
 Under C++20 that failure collapses "every connection is leased" and "the
 pool was shut down" into the same empty `std::optional`, mirroring the
-exact narrowing Chapter 23 walked through for a registry lookup. Under
+exact narrowing a bare `std::optional` forces on any failed lookup. Under
 C++23, `PoolAcquireError` distinguishes `Exhausted` from `Closed`, and
 `tests/resource_pool_test.cpp`'s `TryAcquireReportsWhyItFailedUnderCpp23`
 case proves both values are reachable and distinct, guarded behind
@@ -409,7 +409,7 @@ blocks on submission.
 ## Build, run, observe
 
 Every command below runs with the local clang, CMake, Ninja, and Conan
-toolchain Chapter 0 installs; there is no container anywhere in this loop.
+toolchain from the prerequisites; there is no container anywhere in this loop.
 From the repository root, the root superbuild picks up
 `examples/24-resource-pools` automatically:
 
@@ -502,7 +502,7 @@ on a thread pool with no ordering requirement between tasks, and it adds
 a queue, a future, and a dedicated thread's lifetime to manage for what a
 synchronous call would have done in one line if blocking the caller were
 acceptable. Across all five shapes, the test that justifies the pattern is
-the same one Chapter 1 trained: name the plain alternative, a direct
+the same one the forces framing teaches: name the plain alternative, a direct
 constructor call, a single worker thread, an ordinary method call, next to
 the pattern, and let a real bound, a real measured cost, or a real
 concurrent-access bug decide between them.
