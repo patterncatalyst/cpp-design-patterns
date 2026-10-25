@@ -256,3 +256,21 @@
     Callers reach a stable pricing interface; a router sends traffic to the legacy
     implementation, the new one, or both in compare mode, shifting customer by
     customer until the new implementation passes the same characterization suite.
+
+- name: 31-final-project
+  section: "Ch. 31"
+  title: Five patterns composed into one shipment system
+  caption: >-
+    A shipment dispatcher composes Factory, Strategy, State, Command with undo, and
+    Observer, with the events and calls flowing between them: a state transition
+    fires observer notifications, a command invokes the factory-built strategy, and
+    an undo restores the prior snapshot.
+
+- name: 32-ai-and-llm-tools
+  section: "Ch. 32"
+  title: The human-AI loop with a verification gate
+  caption: >-
+    The engineer names the forces and the candidate pattern, an AI drafts an
+    implementation, and a verification gate of behavior tests and an idiomatic
+    review decides whether the draft is accepted or sent back, keeping
+    responsibility for correctness with the engineer.
