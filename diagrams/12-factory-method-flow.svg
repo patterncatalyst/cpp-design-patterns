@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="30" width="920" height="150" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="50" font-size="12" font-weight="700" fill="#888">onboard() sequence, fixed in CarrierOnboarder</text>
+<rect x="40" y="80" width="190" height="60" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="135.0" y="108.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">validate account id</text>
+<text x="135.0" y="125.0" font-size="11.5" fill="#555555" text-anchor="middle">throws if empty</text>
+<rect x="270" y="80" width="220" height="60" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="380.0" y="108.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">create_test_suite() hook</text>
+<text x="380.0" y="125.0" font-size="11.5" fill="#555555" text-anchor="middle">open slot, overridden by subclass</text>
+<rect x="530" y="80" width="170" height="60" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="615.0" y="108.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">run suite</text>
+<text x="615.0" y="125.0" font-size="11.5" fill="#555555" text-anchor="middle">suite-&gt;run(account)</text>
+<rect x="740" y="80" width="180" height="60" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="830.0" y="108.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">judge pass/fail</text>
+<text x="830.0" y="125.0" font-size="11.5" fill="#555555" text-anchor="middle">from suite&#x27;s own log</text>
+<rect x="140" y="250" width="230" height="55" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="255.0" y="275.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">SandboxOnboarder</text>
+<text x="255.0" y="292.5" font-size="11.5" fill="#555555" text-anchor="middle">overrides create_test_suite()</text>
+<rect x="140" y="335" width="230" height="55" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="255.0" y="360.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">SandboxTestSuite</text>
+<text x="255.0" y="377.5" font-size="11.5" fill="#555555" text-anchor="middle">skips webhook delivery check</text>
+<rect x="590" y="250" width="240" height="55" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="710.0" y="275.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">ProductionOnboarder</text>
+<text x="710.0" y="292.5" font-size="11.5" fill="#555555" text-anchor="middle">overrides create_test_suite()</text>
+<rect x="580" y="335" width="260" height="55" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="710.0" y="360.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">ProductionSmokeTestSuite</text>
+<text x="710.0" y="377.5" font-size="11.5" fill="#555555" text-anchor="middle">requires webhook check</text>
+<rect x="110" y="420" width="340" height="70" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="280.0" y="453.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">one product decided by environment</text>
+<text x="280.0" y="470.0" font-size="11.5" fill="#555555" text-anchor="middle">Factory Method</text>
+<rect x="510" y="420" width="340" height="70" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="680.0" y="453.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">a whole family per call</text>
+<text x="680.0" y="470.0" font-size="11.5" fill="#555555" text-anchor="middle">Abstract Factory (Figure 12.1)</text>
+<path d="M230,110 L270,110" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M490,110 L530,110" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M700,110 L740,110" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M330,140 L255,250" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="298.5" y="189.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">plugs into the hook</text>
+<text x="298.5" y="189.0" font-size="11" fill="#b8650a" text-anchor="middle">plugs into the hook</text>
+<path d="M430,140 L710,250" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="576.0" y="189.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">plugs into the hook</text>
+<text x="576.0" y="189.0" font-size="11" fill="#b8650a" text-anchor="middle">plugs into the hook</text>
+<path d="M255,305 L255,335" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="261.0" y="314.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">returns</text>
+<text x="261.0" y="314.0" font-size="11" fill="#555" text-anchor="middle">returns</text>
+<path d="M710,305 L710,335" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="716.0" y="314.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">returns</text>
+<text x="716.0" y="314.0" font-size="11" fill="#555" text-anchor="middle">returns</text>
+<text x="480" y="410" font-size="11" fill="#888888" text-anchor="middle" font-weight="700">same chapter, two different shapes of variation</text>
+</svg>

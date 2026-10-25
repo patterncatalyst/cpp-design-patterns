@@ -215,6 +215,8 @@ gets, not how the caller happens to write the assignment. The
 `shared_ptr` referencing it goes out of scope or is reset, whichever route
 that happens to be.
 
+{% include excalidraw.html name="06-value-vs-reference" caption="Figure 6.2: a Parcel copy staying independent under value semantics against two routes sharing one CarrierContract under reference semantics." %}
+
 ## Breaking a cycle: weak_ptr observes without owning
 
 A warehouse's manifest tree adds a third ownership direction: a parent

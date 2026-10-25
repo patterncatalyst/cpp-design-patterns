@@ -386,6 +386,8 @@ a pool of workers, and reach for an active object when one narrow request
 type needs its own private, serialized timeline and a caller who never
 blocks on submission.
 
+{% include excalidraw.html name="24-threadpool-vs-active-object" caption="Figure 24.2: the thread pool's shared queue serving concurrent workers against the active object's private queue serving one dedicated worker in order." %}
+
 > **AI sidebar.** Ask an LLM pairing partner for a "thread-safe connection
 > pool" and a frequent result returns a raw pointer or reference from
 > `acquire()` with a separate `release(connection)` method the caller must

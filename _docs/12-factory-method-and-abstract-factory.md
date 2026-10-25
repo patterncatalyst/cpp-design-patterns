@@ -199,6 +199,8 @@ the account is a sandbox account or a production account. The sequence
 that runs the check never changes: validate the account id, run a suite,
 decide pass or fail from the suite's own log.
 
+{% include excalidraw.html name="12-factory-method-flow" caption="Figure 12.2: onboard() runs a fixed sequence around one varying hook, create_test_suite(), which SandboxOnboarder and ProductionOnboarder each plug a different test suite into." %}
+
 ```cpp
 class CarrierOnboarder {
 public:

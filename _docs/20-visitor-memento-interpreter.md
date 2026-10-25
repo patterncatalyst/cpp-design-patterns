@@ -171,6 +171,8 @@ public:
 
 A caretaker, the admin screen's controller code in this example, can hold a `Snapshot`, move it into a local variable, and hand it back to `restore()` later, but it cannot read a single field inside one; the friendship that would let it do so is granted to `RuleSetEditor` and nobody else. That is Memento's defining property, stated precisely rather than loosely: capture an object's state in a form a caretaker can store and return, without exposing that state to the caretaker along the way.
 
+{% include excalidraw.html name="20-memento-save-restore" caption="Figure 20.2: RuleSetEditor saves its whole state into an opaque Snapshot that a caretaker can hold and return, and restore() replaces that state in one call." %}
+
 `save()` does one thing beyond copying three fields: it deep-clones every rule's `RuleExpr` tree with the `clone()` function this chapter's variant form also ships, the same role Chapter 13's Prototype played for a single concrete object.
 
 ```cpp

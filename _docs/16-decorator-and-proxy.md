@@ -179,6 +179,8 @@ or goes unnoticed until a different shipment comes through. This book's
 one shipment, confirming the order dependency is a property of the design
 and not an artifact of one particular test run.
 
+{% include excalidraw.html name="16-decorator-ordering" caption="Figure 16.2: the same two decorators, reordered. Moving Cache outside Surcharge changes which total a repeat call returns, because a cache hit now short-circuits before Surcharge ever runs again." %}
+
 This is the fact about Decorator worth carrying forward past this
 chapter's specific rate pipeline: stacking order changes *what each layer
 sees*, not merely what order some log lines print in. A layer only
