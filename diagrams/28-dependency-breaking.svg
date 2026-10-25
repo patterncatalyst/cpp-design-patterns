@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 420" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="40" width="400" height="340" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="60" font-size="12" font-weight="700" fill="#888">BEFORE: hard-wired dependency</text>
+<rect x="500" y="40" width="400" height="340" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="512" y="60" font-size="12" font-weight="700" fill="#888">AFTER: Extract Interface + Parameterize Constructor</text>
+<rect x="60" y="90" width="320" height="80" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="220.0" y="128.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">ShipmentAlertNotifier</text>
+<text x="220.0" y="145.0" font-size="11.5" fill="#555555" text-anchor="middle">flag_for_manual_review()</text>
+<rect x="60" y="280" width="320" height="80" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="220.0" y="318.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">SmtpAlertSender</text>
+<text x="220.0" y="335.0" font-size="11.5" fill="#555555" text-anchor="middle">concrete, built with new</text>
+<rect x="540" y="90" width="320" height="70" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="700.0" y="123.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">ShipmentAlertNotifier</text>
+<text x="700.0" y="140.0" font-size="11.5" fill="#555555" text-anchor="middle">constructor takes an AlertChannel</text>
+<rect x="540" y="200" width="320" height="60" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="700.0" y="228.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">AlertChannel</text>
+<text x="700.0" y="245.0" font-size="11.5" fill="#555555" text-anchor="middle">interface (the seam)</text>
+<rect x="540" y="300" width="150" height="60" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="615.0" y="328.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">SmtpAlertSender</text>
+<text x="615.0" y="345.0" font-size="11.5" fill="#555555" text-anchor="middle">production</text>
+<rect x="710" y="300" width="150" height="60" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="785.0" y="328.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">RecordingAlertChannel</text>
+<text x="785.0" y="345.0" font-size="11.5" fill="#555555" text-anchor="middle">test double</text>
+<path d="M220,170 L220,280" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="226.0" y="219.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">direct call, no seam</text>
+<text x="226.0" y="219.0" font-size="11" fill="#555" text-anchor="middle">direct call, no seam</text>
+<path d="M700,160 L700,200" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="706.0" y="174.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">depends on</text>
+<text x="706.0" y="174.0" font-size="11" fill="#b8650a" text-anchor="middle">depends on</text>
+<path d="M615,300 L615,260" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="621.0" y="274.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">implements</text>
+<text x="621.0" y="274.0" font-size="11" fill="#555" text-anchor="middle">implements</text>
+<path d="M785,300 L785,260" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="791.0" y="274.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">implements (test-only)</text>
+<text x="791.0" y="274.0" font-size="11" fill="#555" text-anchor="middle">implements (test-only)</text>
+<text x="460.0" y="405" font-size="12" fill="#555555" text-anchor="middle">Six techniques, one shape: isolate the troublesome dependency behind a seam a test can occupy.</text>
+</svg>
