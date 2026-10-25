@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 400" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="30" width="430" height="330" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="50" font-size="12" font-weight="700" fill="#888">Value semantics: Parcel</text>
+<rect x="470" y="30" width="430" height="330" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="482" y="50" font-size="12" font-weight="700" fill="#888">Reference semantics: CarrierContract</text>
+<rect x="50" y="80" width="160" height="60" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="130.0" y="108.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Parcel original</text>
+<text x="130.0" y="125.0" font-size="11.5" fill="#555555" text-anchor="middle">tracking_id, weight_kg</text>
+<rect x="280" y="80" width="160" height="60" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="360.0" y="108.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Parcel copy</text>
+<text x="360.0" y="125.0" font-size="11.5" fill="#555555" text-anchor="middle">mutate weight_kg</text>
+<rect x="50" y="200" width="390" height="65" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="245.0" y="230.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Original unchanged</text>
+<text x="245.0" y="247.5" font-size="11.5" fill="#555555" text-anchor="middle">two independent objects</text>
+<rect x="500" y="65" width="170" height="55" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="585.0" y="90.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">ShippingRoute</text>
+<text x="585.0" y="107.5" font-size="11.5" fill="#555555" text-anchor="middle">north-corridor</text>
+<rect x="500" y="155" width="170" height="55" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="585.0" y="180.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">ShippingRoute</text>
+<text x="585.0" y="197.5" font-size="11.5" fill="#555555" text-anchor="middle">south-corridor</text>
+<rect x="730" y="105" width="150" height="70" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="805.0" y="138.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">CarrierContract</text>
+<text x="805.0" y="155.0" font-size="11.5" fill="#555555" text-anchor="middle">one shared object</text>
+<rect x="500" y="250" width="380" height="65" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="690.0" y="280.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Both quotes change</text>
+<text x="690.0" y="297.5" font-size="11.5" fill="#555555" text-anchor="middle">one shared object</text>
+<path d="M210,110 L280,110" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="251.0" y="104.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">copy</text>
+<text x="251.0" y="104.0" font-size="11" fill="#555" text-anchor="middle">copy</text>
+<path d="M130,140 L160,200" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="151.0" y="164.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">unchanged</text>
+<text x="151.0" y="164.0" font-size="11" fill="#555" text-anchor="middle">unchanged</text>
+<path d="M360,140 L330,200" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="351.0" y="164.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">mutated</text>
+<text x="351.0" y="164.0" font-size="11" fill="#555" text-anchor="middle">mutated</text>
+<path d="M670,97 L730,128" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="706.0" y="106.5" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">shared_ptr</text>
+<text x="706.0" y="106.5" font-size="11" fill="#555" text-anchor="middle">shared_ptr</text>
+<path d="M670,187 L730,157" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="706.0" y="166.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">shared_ptr</text>
+<text x="706.0" y="166.0" font-size="11" fill="#555" text-anchor="middle">shared_ptr</text>
+<path d="M805,175 L690,250" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="753.5" y="206.5" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">renegotiate once</text>
+<text x="753.5" y="206.5" font-size="11" fill="#b8650a" text-anchor="middle">renegotiate once</text>
+<text x="460" y="20" font-size="12" fill="#888" text-anchor="middle" font-weight="700">Figure 6.2: the same mutation, independent under value semantics, shared under reference semantics.</text>
+</svg>

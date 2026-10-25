@@ -130,6 +130,8 @@ LSP's statement is short: a subtype must be substitutable for its base type ever
 
 `PercentageDiscountRule::adjustment_for()` is declared `final` specifically to protect that promise:
 
+{% include excalidraw.html name="03-lsp-clamp" caption="Figure 3.2: subtotal flows through the overridable discount_rate() hook into a clamp that adjustment_for() owns and never exposes for override, so every subtype's rate is bounded before it reaches the subtotal." %}
+
 ```cpp
 class PercentageDiscountRule : public InvoiceRule {
 public:

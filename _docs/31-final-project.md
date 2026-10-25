@@ -324,6 +324,8 @@ toolchain from the prerequisites; there's no container anywhere in this
 loop. From the repository root, the root superbuild picks up
 `examples/31-final-project` automatically:
 
+{% include excalidraw.html name="31-final-project-sequence" caption="Figure 31.2: The time-ordered sequence of one shipment's run, with the same RateStrategy instance quoting the opening rate at step 2 and the corrected rate at step 5." %}
+
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23
 scripts/build.sh cpp20 && scripts/verify.sh cpp20

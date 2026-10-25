@@ -107,6 +107,8 @@ The second idiom in this chapter answers a different question: given a handful o
 
 This chapter's `CarrierPolicyRegistry` solves registration the same way the clone half is already solved, through a method the concrete type itself owns rather than a method a caller has to remember:
 
+{% include excalidraw.html name="23-prototype-registry" caption="Figure 23.2: each carrier policy's translation unit registers its own prototype at static init, so a caller resolves a key through CarrierPolicyRegistry and gets back a fresh clone without any file naming the concrete type." %}
+
 ```cpp
 template <typename Concrete>
 class CarrierPolicyRegistrar {

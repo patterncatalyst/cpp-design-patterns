@@ -36,6 +36,14 @@
     extended by OCP through an InvoiceRule abstraction, and refined by LSP
     without breaking the base contract.
 
+- name: 03-lsp-clamp
+  section: "Ch. 3"
+  title: The Liskov clamp, an overridable hook inside a sealed sequence
+  caption: >-
+    A subtotal flows through the overridable discount_rate() hook into a clamp the
+    base method owns and never exposes, so every subtype's rate is bounded before
+    it reaches the subtotal.
+
 - name: 04-solid-dependency-inversion
   section: "Ch. 4"
   title: Dependency inversion and interface segregation
@@ -54,6 +62,14 @@
     exactly as it would on a clean exit, so the resource never stays held past
     the scope that acquired it.
 
+- name: 05-move-ownership-transfer
+  section: "Ch. 5"
+  title: Move transfers ownership between two guards
+  caption: >-
+    A move hands ownership from one dock-bay lease to another and flips the source
+    to owning nothing, so both objects destruct but the registry releases exactly
+    once.
+
 - name: 06-ownership-model
   section: "Ch. 6"
   title: Three ownership kinds in one object graph
@@ -61,6 +77,13 @@
     unique_ptr as a sole owner, shared_ptr as a ref-counted shared owner, and
     weak_ptr observing without owning to break what would otherwise be a
     reference cycle.
+
+- name: 06-value-vs-reference
+  section: "Ch. 6"
+  title: Value semantics versus reference semantics
+  caption: >-
+    A copied Parcel stays independent of its original, while two routes sharing one
+    CarrierContract both see the change when it is renegotiated once.
 
 - name: 07-test-styles
   section: "Ch. 7"
@@ -94,6 +117,14 @@
     A shipment's legal states and transitions, plus the weighted-probability
     outlet the stochastic machine draws from out of InTransit.
 
+- name: 10-fsm-representations
+  section: "Ch. 10"
+  title: One rule set, four finite-state-machine representations
+  caption: >-
+    The same shipment transition rules as a GoF state hierarchy, a transition
+    table, a std::variant with std::visit, and a stochastic machine that draws its
+    own next state.
+
 - name: 11-command-undo
   section: "Ch. 11"
   title: Command queue and undo/redo stack
@@ -109,6 +140,14 @@
     CarrierIntegrationFactory declares a family of three abstract products;
     the FastShip and SummitFreight factories each implement and create their
     own matching family, and the client depends only on the abstractions.
+
+- name: 12-factory-method-flow
+  section: "Ch. 12"
+  title: Factory Method, a fixed sequence around one varying hook
+  caption: >-
+    onboard() runs a fixed sequence around the create_test_suite() hook, which the
+    sandbox and production onboarders each fill with a different test suite, one
+    product decided by environment.
 
 - name: 13-builder-prototype
   section: "Ch. 13"
@@ -135,6 +174,14 @@
     subsystems with one call; Bridge crosses an abstraction axis of refined
     notification kinds with an implementation axis of transports.
 
+- name: 15-bridge-matrix
+  section: "Ch. 15"
+  title: Bridge, two axes giving N plus M classes instead of N times M
+  caption: >-
+    Two notification kinds crossed with two transports give four live combinations
+    from two small hierarchies, not the class-per-combination explosion a single
+    hierarchy would need.
+
 - name: 16-decorator-proxy
   section: "Ch. 16"
   title: Decorator stack and access-controlling proxy
@@ -142,6 +189,14 @@
     A decorator stack (surcharge, caching, logging) wraps a core rate source,
     next to a proxy controlling access to a real manifest store. Both wrap the
     same interface their subject implements; only the intent differs.
+
+- name: 16-decorator-ordering
+  section: "Ch. 16"
+  title: Decorator order changes the result
+  caption: >-
+    Reordering the cache and surcharge decorators changes which total a repeat call
+    returns, because a cache hit short-circuits before the layer beneath it runs
+    again.
 
 - name: 17-composite-flyweight
   section: "Ch. 17"
@@ -176,6 +231,13 @@
     an interpreter walking the same AST, next to an editor whose memento
     captures and restores its whole state.
 
+- name: 20-memento-save-restore
+  section: "Ch. 20"
+  title: Memento, save and restore a whole state through an opaque token
+  caption: >-
+    The editor saves its whole state into a snapshot a caretaker can hold and
+    return but cannot read, and restore() swaps that state back in a single call.
+
 - name: 21-crtp-policy
   section: "Ch. 21"
   title: CRTP and policy-based composition at compile time
@@ -201,6 +263,14 @@
     nodes that evaluates once into a single result, against the eager version
     that builds a new object at every operator.
 
+- name: 23-prototype-registry
+  section: "Ch. 23"
+  title: A self-registering prototype registry across translation units
+  caption: >-
+    Each carrier policy's translation unit registers its own prototype at static
+    initialization, so a caller resolves a key through the registry and gets back a
+    fresh clone with no central file naming any concrete type.
+
 - name: 24-resource-pools
   section: "Ch. 24"
   title: A bounded resource pool and its RAII lease
@@ -208,6 +278,14 @@
     A caller acquires a resource from a bounded pool through an RAII lease that
     returns it on destruction, the shape that also underlies a connection pool, a
     thread pool, a monitor object, and an active object.
+
+- name: 24-threadpool-vs-active-object
+  section: "Ch. 24"
+  title: Thread pool versus active object, at runtime
+  caption: >-
+    A thread pool's shared queue serves several workers pulling concurrently, while
+    an active object's private queue serves one dedicated worker in submission
+    order and the caller never blocks.
 
 - name: 25-dispatch-tables
   section: "Ch. 25"
@@ -241,6 +319,14 @@
     that both a production implementation and a test double satisfy, so the once
     hard-wired dependency becomes substitutable under test.
 
+- name: 28-instance-delegator
+  section: "Ch. 28"
+  title: Introduce Instance Delegator over a static API
+  caption: >-
+    A port and a delegator put a seam in front of an untouched static lookup so a
+    new caller can inject a test double, while the legacy call site keeps calling
+    the static method directly.
+
 - name: 29-fowler-and-feathers
   section: "Ch. 29"
   title: The combined workflow, Feathers then Fowler
@@ -265,6 +351,14 @@
     Observer, with the events and calls flowing between them: a state transition
     fires observer notifications, a command invokes the factory-built strategy, and
     an undo restores the prior snapshot.
+
+- name: 31-final-project-sequence
+  section: "Ch. 31"
+  title: The final project's runtime sequence
+  caption: >-
+    One shipment's run in order across the five composed patterns, with the same
+    RateStrategy instance quoting the opening rate and the corrected rate after a
+    weight change.
 
 - name: 32-ai-and-llm-tools
   section: "Ch. 32"

@@ -115,6 +115,8 @@ After this runs, exactly one `DockBayLease` object believes it owns `bay_id_`, a
 
 This chapter's test suite proves the "no double release" claim with a number, not just a boolean. `DockBayRegistry::release_count()` advances only on a leased-to-free transition, so a test that moves a `DockBayLease` and then lets both the moved and the moved-from objects destruct can assert `release_count() == 1`. Two destructors ran on the same `bay_id_`. Exactly one of them did real work. That is the quantitative version of the same guarantee `std::unique_ptr` gives a raw pointer: a move transfers responsibility for calling `delete` exactly once, never zero times and never twice, no matter how many `unique_ptr` objects the pointer passed through on its way to wherever it ends up.
 
+{% include excalidraw.html name="05-move-ownership-transfer" caption="Figure 5.2: a move constructor hands ownership from one dock bay lease to another, and the registry's release count still advances by exactly one." %}
+
 ## A general-purpose scope guard
 
 `DockBayLease` is a resource guard custom-built for one specific resource. Most of the cleanup a function needs during its lifetime does not get a dedicated type: resetting a counter, undoing a partial update to a data structure, logging that an operation did not finish. `ScopeGuard` generalizes the same RAII shape, "run something when this scope ends," to any callable at all:

@@ -144,6 +144,8 @@ Nothing about this Facade adds a new capability `RateSource`, `LabelRenderer`, a
 
 A shipment triggers notifications, and two things about a notification vary independently of each other. The kind of event varies: a shipment was created, or a delivery is delayed, each needing its own message text. The delivery channel also varies: email, SMS, or whatever a future integration adds, each needing its own way of actually sending something. `NotificationTransport` is the implementation side of the Bridge, the delivery mechanism.
 
+{% include excalidraw.html name="15-bridge-matrix" caption="Figure 15.2: Two notification kinds crossed with two transports give four live combinations from N + M classes, not the N x M classes a class-per-combination design would need." %}
+
 ```cpp
 class NotificationTransport {
 public:
