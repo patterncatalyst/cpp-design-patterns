@@ -25,7 +25,7 @@ layout: default
                 </ol>
             </nav>
             <div class="tutorial__title">
-                <span class="tutorial__num">{{ page.order | prepend: '0' | slice: -2, 2 }}</span>
+                <span class="tutorial__num">{% if page.appendix %}{{ page.appendix }}{% else %}{{ page.order | prepend: '0' | slice: -2, 2 }}{% endif %}</span>
                 <h1>{{ page.title }}</h1>
             </div>
             {%- if page.description -%}
@@ -33,7 +33,7 @@ layout: default
             {%- endif -%}
             <p class="tutorial__meta">
                 {%- if page.duration -%}<span class="tutorial__pill">⏱ {{ page.duration }}</span>{%- endif -%}
-                <span class="tutorial__pill">Chapter {{ page.order }}</span>
+                <span class="tutorial__pill">{% if page.appendix %}Appendix {{ page.appendix }}{% else %}Chapter {{ page.order }}{% endif %}</span>
             </p>
         </header>
 
