@@ -63,7 +63,7 @@ codetabs — use them only where a genuine C++20/23 difference appears.
 | 2 | ch25 + examples/25-dispatch-tables + diagram (exec, standalone-verify both presets) | exec | TODO |
 | 3 | ch26 + examples/26-anti-patterns + diagram (exec, standalone-verify both presets) | exec | TODO |
 | 4 | Register 3 diagrams in `_data/diagrams.yml` + write 3 `_examples/NN-*.md` cards | main | TODO |
-| 5 | Integration `bundle exec jekyll build` (catches Liquid `{{` collisions) | main | TODO |
+| 5 | Integration `bundle exec jekyll build` (catches Liquid double-brace collisions) | main | TODO |
 | 6 | Opus validation: superbuild both presets + voice + idiom gates | validate | TODO |
 | 7 | Fix findings, re-verify | main | TODO |
 | 8 | PR, squash-merge, tag r09.x, notes-only release | main | TODO |
@@ -81,7 +81,8 @@ codetabs — use them only where a genuine C++20/23 difference appears.
 5. Each chapter ships a paired `diagrams/*.svg` + `.excalidraw` (light-fill
    emphasis boxes) registered in `_data/diagrams.yml`; a gallery card in
    `_examples/`.
-6. Jekyll build exits 0; adjacent `{{` in fenced code wrapped in `{% raw %}`.
+6. Jekyll build exits 0; adjacent opening braces in fenced code are wrapped in a
+   Liquid raw block.
 7. ch24 cross-links the concurrency book rather than duplicating threading
    mechanics.
 8. **Low chapter-number cross-referencing.** Reference patterns/idioms BY NAME,

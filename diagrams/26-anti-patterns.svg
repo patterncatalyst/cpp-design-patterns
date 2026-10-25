@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="30" width="400" height="380" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="50" font-size="12" font-weight="700" fill="#888">Over-patterned (BEFORE)</text>
+<rect x="480" y="30" width="400" height="380" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="492" y="50" font-size="12" font-weight="700" fill="#888">Simplified (AFTER)</text>
+<rect x="40" y="60" width="360" height="52" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="220.0" y="84.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">ShipmentOperationsManager</text>
+<text x="220.0" y="101.0" font-size="11.5" fill="#555555" text-anchor="middle">pricing + validation + logging + formatting</text>
+<rect x="40" y="132" width="360" height="52" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="220.0" y="156.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">RateCalculatorFactoryProvider</text>
+<text x="220.0" y="173.0" font-size="11.5" fill="#555555" text-anchor="middle">singleton holding the one factory</text>
+<rect x="40" y="204" width="360" height="52" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="220.0" y="228.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">RateCalculatorFactory</text>
+<text x="220.0" y="245.0" font-size="11.5" fill="#555555" text-anchor="middle">one implementation: StandardRateCalculatorFactory</text>
+<rect x="40" y="276" width="360" height="52" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="220.0" y="300.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">RateCalculator</text>
+<text x="220.0" y="317.0" font-size="11.5" fill="#555555" text-anchor="middle">one implementation: StandardRateCalculator</text>
+<rect x="40" y="348" width="360" height="52" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="220.0" y="372.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">ShippingRateRegistry</text>
+<text x="220.0" y="389.0" font-size="11.5" fill="#555555" text-anchor="middle">singleton: global mutable surcharge</text>
+<rect x="500" y="60" width="360" height="52" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="680.0" y="84.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Caller</text>
+<text x="680.0" y="101.0" font-size="11.5" fill="#555555" text-anchor="middle">production code, or a test</text>
+<rect x="500" y="132" width="360" height="52" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="680.0" y="156.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">RateSettings</text>
+<text x="680.0" y="173.0" font-size="11.5" fill="#555555" text-anchor="middle">plain value: surcharge_multiplier, handling_fee</text>
+<rect x="500" y="204" width="360" height="52" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="680.0" y="228.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">ShipmentPricingService</text>
+<text x="680.0" y="245.0" font-size="11.5" fill="#555555" text-anchor="middle">constructor takes one RateSettings value</text>
+<rect x="500" y="276" width="360" height="52" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="680.0" y="300.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">PricingResult</text>
+<text x="680.0" y="317.0" font-size="11.5" fill="#555555" text-anchor="middle">total_cost and surcharge_applied, one value</text>
+<path d="M220,112 L220,132" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="226.0" y="116.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">resolves via</text>
+<text x="226.0" y="116.0" font-size="11" fill="#555" text-anchor="middle">resolves via</text>
+<path d="M220,184 L220,204" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="226.0" y="188.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">hands out</text>
+<text x="226.0" y="188.0" font-size="11" fill="#555" text-anchor="middle">hands out</text>
+<path d="M220,256 L220,276" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="226.0" y="260.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">creates</text>
+<text x="226.0" y="260.0" font-size="11" fill="#555" text-anchor="middle">creates</text>
+<path d="M220,328 L220,348" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<text x="226.0" y="332.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">reads (global, anywhere)</text>
+<text x="226.0" y="332.0" font-size="11" fill="#b8650a" text-anchor="middle">reads (global, anywhere)</text>
+<path d="M680,112 L680,132" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="686.0" y="116.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">builds</text>
+<text x="686.0" y="116.0" font-size="11" fill="#555" text-anchor="middle">builds</text>
+<path d="M680,184 L680,204" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="686.0" y="188.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">injected via constructor</text>
+<text x="686.0" y="188.0" font-size="11" fill="#555" text-anchor="middle">injected via constructor</text>
+<path d="M680,256 L680,276" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="686.0" y="260.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">returns</text>
+<text x="686.0" y="260.0" font-size="11" fill="#555" text-anchor="middle">returns</text>
+<text x="450" y="18" font-size="11" fill="#888" text-anchor="middle" font-weight="700">Same shipment-pricing math, two designs</text>
+<text x="680" y="352" font-size="12" fill="#64748b" text-anchor="middle">(nothing else needed)</text>
+<text x="220" y="430" font-size="11" fill="#888" text-anchor="middle">4 types + 2 singletons to multiply one number</text>
+<text x="680" y="430" font-size="11" fill="#888" text-anchor="middle">1 type + 1 value; two configurations coexist</text>
+</svg>

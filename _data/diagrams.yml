@@ -200,3 +200,27 @@
     An expression template defers a weighted sum into a tree of scaled and sum
     nodes that evaluates once into a single result, against the eager version
     that builds a new object at every operator.
+
+- name: 24-resource-pools
+  section: "Ch. 24"
+  title: A bounded resource pool and its RAII lease
+  caption: >-
+    A caller acquires a resource from a bounded pool through an RAII lease that
+    returns it on destruction, the shape that also underlies a connection pool, a
+    thread pool, a monitor object, and an active object.
+
+- name: 25-dispatch-tables
+  section: "Ch. 25"
+  title: Three dispatch shortcuts for one message type
+  caption: >-
+    A shipment message type selects its handler three ways, an enum-indexed
+    function-pointer table, an open unordered_map, and a compile-time constexpr
+    array, each a lighter stand-in for a Strategy, State, or Command hierarchy.
+
+- name: 26-anti-patterns
+  section: "Ch. 26"
+  title: Over-patterned design versus the simplified rewrite
+  caption: >-
+    A singleton registry, a factory-of-factories, and a god object on one side,
+    collapsed on the other into one service that takes a settings value by
+    injection, which is what makes the rewrite testable in isolation.
