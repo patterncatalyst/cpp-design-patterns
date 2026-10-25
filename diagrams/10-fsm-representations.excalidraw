@@ -1052,13 +1052,13 @@
    "updated": 1,
    "link": null,
    "locked": false,
-   "text": "Figure 10.2: one rule set, four structurally different representations.",
+   "text": "One rule set, four representations",
    "fontSize": 13,
    "fontFamily": 1,
    "textAlign": "left",
    "verticalAlign": "top",
    "containerId": null,
-   "originalText": "Figure 10.2: one rule set, four structurally different representations.",
+   "originalText": "One rule set, four representations",
    "lineHeight": 1.25,
    "baseline": 13
   }

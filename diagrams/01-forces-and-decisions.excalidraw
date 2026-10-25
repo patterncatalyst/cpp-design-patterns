@@ -1003,13 +1003,13 @@
    "updated": 1,
    "link": null,
    "locked": false,
-   "text": "a pattern earns its place only if it resolves a real force",
+   "text": "a pattern belongs only where a real force calls for it",
    "fontSize": 14,
    "fontFamily": 1,
    "textAlign": "left",
    "verticalAlign": "top",
    "containerId": null,
-   "originalText": "a pattern earns its place only if it resolves a real force",
+   "originalText": "a pattern belongs only where a real force calls for it",
    "lineHeight": 1.25,
    "baseline": 14
   }

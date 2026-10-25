@@ -1743,13 +1743,13 @@
    "updated": 1,
    "link": null,
    "locked": false,
-   "text": "Figure 27.1: the same inherited dependency, three ways to make it substitutable",
+   "text": "One dependency, three substitutable seams",
    "fontSize": 13,
    "fontFamily": 1,
    "textAlign": "left",
    "verticalAlign": "top",
    "containerId": null,
-   "originalText": "Figure 27.1: the same inherited dependency, three ways to make it substitutable",
+   "originalText": "One dependency, three substitutable seams",
    "lineHeight": 1.25,
    "baseline": 13
   }

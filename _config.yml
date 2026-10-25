@@ -92,6 +92,7 @@ exclude:
     - LICENSE
     - CLAUDE.md
     - build/
+    - presentation/
     - scripts/
     - CMakeLists.txt
     - CMakePresets.json
