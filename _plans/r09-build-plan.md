@@ -84,3 +84,10 @@ codetabs — use them only where a genuine C++20/23 difference appears.
 6. Jekyll build exits 0; adjacent `{{` in fenced code wrapped in `{% raw %}`.
 7. ch24 cross-links the concurrency book rather than duplicating threading
    mechanics.
+8. **Low chapter-number cross-referencing.** Reference patterns/idioms BY NAME,
+   not "as we saw in chapter 8" / "we cover this in chapter 11". Intra-book
+   "see chapter N" plumbing reads poorly and breaks standalone reading; the
+   voice reference books (Kubernetes Patterns, Geewax) do not use it. Genuine
+   external pointers stay in "For deeper coverage". The validate/repair pass
+   greps the three new chapters for chapter-number cross-refs and softens them.
+   (Backlog beyond r09: sweep ch0-23 for the same.)
