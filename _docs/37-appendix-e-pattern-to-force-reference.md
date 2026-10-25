@@ -1,10 +1,10 @@
 ---
 title: "Pattern-to-force quick reference"
-order: 34
+order: 37
 layout: tutorial
 sectionid: docs
 part: appendices
-appendix: "B"
+appendix: "E"
 description: "A completeness ledger for the whole book: every GoF pattern, SOLID principle, and C++ idiom mapped to the force that justifies reaching for it, each linked to the chapter that builds it. Scan it to find the tool for a force in front of you, or to confirm the catalogue is complete."
 ---
 
