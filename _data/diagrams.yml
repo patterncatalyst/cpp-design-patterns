@@ -224,3 +224,35 @@
     A singleton registry, a factory-of-factories, and a god object on one side,
     collapsed on the other into one service that takes a settings value by
     injection, which is what makes the rewrite testable in isolation.
+
+- name: 27-seams
+  section: "Ch. 27"
+  title: Seams make a hard dependency substitutable
+  caption: >-
+    The same code shown three ways: hard-wired to the wall clock with no seam, an
+    object seam that injects a Clock so a test can substitute it, and a link seam
+    that swaps a grace-period policy at link time with no object to inject into.
+
+- name: 28-dependency-breaking
+  section: "Ch. 28"
+  title: Breaking a hard-wired dependency behind an interface
+  caption: >-
+    A direct call to a concrete collaborator, replaced by an extracted interface
+    that both a production implementation and a test double satisfy, so the once
+    hard-wired dependency becomes substitutable under test.
+
+- name: 29-fowler-and-feathers
+  section: "Ch. 29"
+  title: The combined workflow, Feathers then Fowler
+  caption: >-
+    A two-stage pipeline: Feathers first to characterize and break dependencies
+    into a safety net, then Fowler's named refactorings applied on the now-tested
+    code, with the handoff being the point a safety net exists.
+
+- name: 30-refactor-or-rewrite
+  section: "Ch. 30"
+  title: A strangler fig router behind a stable interface
+  caption: >-
+    Callers reach a stable pricing interface; a router sends traffic to the legacy
+    implementation, the new one, or both in compare mode, shifting customer by
+    customer until the new implementation passes the same characterization suite.
