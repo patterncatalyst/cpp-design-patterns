@@ -16,8 +16,8 @@ The verify-AI-output discipline, made runnable on a usage-tier billing domain:
   `<=` where the spec wants `<` at the Starter/Growth boundary.
 - **One behavior table** run against both. It passes on the correct
   implementation and catches the plausible-wrong one at the boundary value, using
-  GoogleTest's `EXPECT_NONFATAL_FAILURE` so the wrong implementation is genuinely
-  exercised and genuinely caught while the suite stays green.
+  GoogleTest's `EXPECT_NONFATAL_FAILURE` so the wrong implementation is exercised
+  and caught while the suite stays green.
 
 The chapter covers prompting with the forces vocabulary, the failure modes of an
 unchecked LLM, and the test-and-idiom gate that decides whether a draft ships.
