@@ -410,16 +410,16 @@ minus the final `std::expected` block, which only compiles under the
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, *Design
-  Patterns: Elements of Reusable Object-Oriented Software*
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design
+  Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480)
   (Addison-Wesley): Bridge's decoupling of an abstraction from its
   implementation is the structural ancestor PImpl specializes for a single
   concrete class, which is why Chapter 15's own Bridge section and this
   chapter's PImpl section build on the same entry. Type erasure is not a
   GoF-catalogued pattern; it is a C++ idiom drawn from how the standard
   library implements `std::function` and `std::any` themselves.
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official
-  GoogleTest documentation: the testing idiom behind
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official
+  [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind
   `examples/22-type-erasure-pimpl`'s suite, which asserts that
   `AnyRateQuoter` dispatches correctly to several distinct concrete types
   and that a copy's mutable state stays independent, and that

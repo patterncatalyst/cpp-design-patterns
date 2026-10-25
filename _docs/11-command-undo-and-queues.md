@@ -254,6 +254,6 @@ Running `examples/11-command/demo.sh cpp20` prints the same output; the `std::fu
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, *Design Patterns: Elements of Reusable Object-Oriented Software* (Addison-Wesley): the original Command entry, including the undo-support discussion this chapter's `CommandHistory` directly implements.
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official GoogleTest documentation: the testing idiom behind `examples/11-command`'s suite, which asserts that execute changes state, undo restores it, redo reapplies it, and a FIFO batch lands on the same final state regardless of how many commands ran before it.
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the original Command entry, including the undo-support discussion this chapter's `CommandHistory` directly implements.
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/11-command`'s suite, which asserts that execute changes state, undo restores it, redo reapplies it, and a FIFO batch lands on the same final state regardless of how many commands ran before it.
 - The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.

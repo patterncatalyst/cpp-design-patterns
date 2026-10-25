@@ -212,6 +212,6 @@ Running `examples/04-solid-dependency-inversion/demo.sh cpp20` prints the same o
 
 ## For deeper coverage
 
-- Robert C. Martin, *Agile Software Development: Principles, Patterns, and Practices* (Prentice Hall): the original statement of the Dependency Inversion Principle and the Interface Segregation Principle this chapter builds on, alongside the SRP/OCP/LSP trio Chapter 3 covers.
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, *Design Patterns: Elements of Reusable Object-Oriented Software* (Addison-Wesley): the book's foundational advice to "program to an interface, not an implementation," which DIP and ISP both sharpen into concrete, testable rules.
+- Robert C. Martin, [*Agile Software Development: Principles, Patterns, and Practices*](https://www.pearson.com/store/p/agile-software-development-principles-patterns-and-practices/P200000003363/9780135974445) (Prentice Hall): the original statement of the Dependency Inversion Principle and the Interface Segregation Principle this chapter builds on, alongside the SRP/OCP/LSP trio Chapter 3 covers.
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the book's foundational advice to "program to an interface, not an implementation," which DIP and ISP both sharpen into concrete, testable rules.
 - The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.

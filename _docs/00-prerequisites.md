@@ -161,5 +161,5 @@ Every pattern chapter also ships a runnable example under `examples/NN-pattern-n
 
 ## For deeper coverage
 
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official GoogleTest documentation: the testing idiom every example's GoogleTest suite in this book follows, starting with the first hands-on chapter.
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom every example's GoogleTest suite in this book follows, starting with the first hands-on chapter.
 - The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.

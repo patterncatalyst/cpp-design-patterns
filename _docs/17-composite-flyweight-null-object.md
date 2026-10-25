@@ -466,16 +466,16 @@ minus the final `std::expected` block, which only compiles under the
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, *Design
-  Patterns: Elements of Reusable Object-Oriented Software* (Addison-Wesley):
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design
+  Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley):
   the original Composite and Flyweight entries, including the
   intrinsic-versus-extrinsic state distinction this chapter's `SkuDescriptor`
   and `Item` build on. Null Object is not one of the original 23 patterns;
   it was named and popularized afterward as a direct answer to the same
   null-check-at-every-call-site problem this chapter's
   `ShipmentExceptionHandler` solves.
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official
-  GoogleTest documentation: the testing idiom behind
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official
+  [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind
   `examples/17-composite-flyweight`'s suite, which asserts pointer identity
   for the flyweight pool and a recorded event list for the Null Object
   rather than only checking that the binaries exit zero.

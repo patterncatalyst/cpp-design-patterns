@@ -490,7 +490,7 @@ identical output; nothing in this example's demo path is standard-specific.
 
 ## For deeper coverage
 
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official
   [GoogleTest documentation](https://google.github.io/googletest/): the
   testing idiom behind every example in this book, including the fixture,
   parameterized, typed, mock, and death-test styles this chapter trains,
