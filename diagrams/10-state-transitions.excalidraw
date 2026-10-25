@@ -1562,13 +1562,13 @@
    "updated": 1,
    "link": null,
    "locked": false,
-   "text": "Figure 10.1: A shipment's legal states and transitions, plus a weighted-probability outlet for the stochastic state machine.",
+   "text": "A shipment's legal states and transitions",
    "fontSize": 13,
    "fontFamily": 1,
    "textAlign": "left",
    "verticalAlign": "top",
    "containerId": null,
-   "originalText": "Figure 10.1: A shipment's legal states and transitions, plus a weighted-probability outlet for the stochastic state machine.",
+   "originalText": "A shipment's legal states and transitions",
    "lineHeight": 1.25,
    "baseline": 13
   }

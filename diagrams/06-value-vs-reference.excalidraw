@@ -1308,13 +1308,13 @@
    "updated": 1,
    "link": null,
    "locked": false,
-   "text": "Figure 6.2: the same mutation, independent under value semantics, shared under reference semantics.",
+   "text": "Value versus reference semantics",
    "fontSize": 12,
    "fontFamily": 1,
    "textAlign": "left",
    "verticalAlign": "top",
    "containerId": null,
-   "originalText": "Figure 6.2: the same mutation, independent under value semantics, shared under reference semantics.",
+   "originalText": "Value versus reference semantics",
    "lineHeight": 1.25,
    "baseline": 12
   }

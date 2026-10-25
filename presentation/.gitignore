@@ -1,0 +1,5 @@
+# deck build tooling / scratch — not committed
+node_modules/
+package-lock.json
+qa/
+*.pdf
