@@ -59,8 +59,7 @@ Setting an `EXPECT_CALL` is still setup, not verify, even though it reads like a
 assertion: it declares what the mock should do when called, before the call
 happens. The fixture member declarations above `TEST_F` are setup too, run fresh for
 every test case because GoogleTest default-constructs a new fixture instance per
-test. See the full test suite in the GoogleTest and GoogleMock chapter at
-{% raw %}{{ '/docs/07-testing-with-googletest/' | relative_url }}{% endraw %}.
+test. See the full test suite in the [GoogleTest and GoogleMock chapter]({{ '/docs/07-testing-with-googletest/' | relative_url }}).
 
 ## The test-double taxonomy
 
@@ -105,7 +104,7 @@ public:
 ```
 
 The test exercises the dispatcher, then asserts against `requests_seen` directly,
-no `EXPECT_CALL` involved. A spy earns its place over a mock when the assertion is
+no `EXPECT_CALL` involved. A spy fits better than a mock when the assertion is
 easier to express as "look at what accumulated" than as "declare the expectation up
 front."
 
@@ -117,11 +116,10 @@ verifying a dispatcher never retries a carrier call after a non-retryable reject
 EXPECT_CALL(carrier_gateway_, submit_label_request(_)).Times(1);
 ```
 
-**Fake.** An `InMemoryTrackingStore` is a real, working implementation: it records
+**Fake.** An `InMemoryTrackingStore` is a working implementation: it records
 events, returns them back, and enforces the same ordering contract the production
 store does, but keeps everything in a `std::unordered_map` instead of opening a
-connection. The connection-pool chapter at
-{% raw %}{{ '/docs/24-resource-pools/' | relative_url }}{% endraw %} shows the real
+connection. The [connection-pool chapter]({{ '/docs/24-resource-pools/' | relative_url }}) shows the real
 `TrackingStoreConnection` this fake stands in for; a fake is worth writing exactly
 when a stub's "return one canned value" is too thin to exercise the logic under
 test, for example a tracking query that depends on events recorded earlier in the
@@ -146,7 +144,7 @@ loaded once from a fixed table.
 
 **Transient vs. persistent fixture.** A transient fixture starts empty and is
 discarded after the test, the default for `InMemoryTrackingStore` constructed fresh
-per test. A persistent fixture is deliberately carried across tests or across runs,
+per test. A persistent fixture is carried across tests or across runs by design,
 for example a `TrackingStore` backed by a file the test suite seeds once and later
 tests query against. A persistent fixture needs an explicit reset step, the same
 discipline `SequentialQuoteIdGenerator::reset_sequence_for_test` applies in
@@ -212,9 +210,9 @@ suite built on this stack, each with the fix this book's examples already apply.
 | **Obscure test** | A reader cannot tell what behavior a failure indicates | One behavior per `TEST_F`, named for that behavior (`RejectsAnInvalidShipmentWithoutTouchingTheLedger`, not `Test3`) |
 | **Test code duplication** | The same ledger-and-generator wiring is retyped in every test | Fixture member declarations plus a custom assertion helper, as shown above, instead of repeating construction and field checks inline |
 | **Conditional test logic** | A test body branches on `if`/`else` or loops over cases | `TEST_P` with `INSTANTIATE_TEST_SUITE_P` for a table of shipment requests, instead of a loop inside one test that can silently skip a case |
-| **Slow test** | A suite that should run in milliseconds takes seconds because it touches a real store or a real carrier endpoint | A `Fake` in-memory tracking store or carrier gateway in place of the real connection; reserve the real `TrackingStoreConnection` pool from {% raw %}{{ '/docs/24-resource-pools/' | relative_url }}{% endraw %} for integration tests that intentionally exercise it |
+| **Slow test** | A suite that should run in milliseconds takes seconds because it touches a real store or a real carrier endpoint | A `Fake` in-memory tracking store or carrier gateway in place of the real connection; reserve the real `TrackingStoreConnection` pool (see the [connection-pool chapter]({{ '/docs/24-resource-pools/' | relative_url }})) for integration tests that exercise it directly |
 
-The object seam chapter at {% raw %}{{ '/docs/27-seams/' | relative_url }}{% endraw %}
+The [object seam chapter]({{ '/docs/27-seams/' | relative_url }})
 is where the erratic-test fix for a hidden clock call gets built end to end: a
 `ShipmentSlaChecker` that used to call the system clock directly becomes
 constructible with any `Clock`, which is what makes its deadline boundary testable

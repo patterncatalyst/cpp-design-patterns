@@ -140,7 +140,7 @@ GoogleTest constructs a fresh `ShipmentTrackerTest` instance for every
 `TEST_F` that uses it, runs `SetUp()`, runs the test body, runs `TearDown()`,
 and destroys the instance, so member variables declared directly on the
 fixture never leak state between tests on their own. `SetUp()`/`TearDown()`
-earn their keep over a constructor and destructor for two things a
+are preferable to a constructor and destructor for two things a
 constructor cannot do: resetting state that is not local to this fixture
 instance, such as a shared static counter or an on-disk file, and running
 cleanup that still executes when a fatal `ASSERT_*` cut the test body short.
@@ -277,10 +277,10 @@ ctest --preset cpp23 --output-on-failure
 
 The build and preset mechanics behind that command, the toolchain, Conan,
 and the two presets, are covered in the
-{% raw %}[build and toolchain reference]({{ '/docs/33-appendix-a-build-and-toolchain/' | relative_url }}){% endraw %}.
+[build and toolchain reference]({{ '/docs/33-appendix-a-build-and-toolchain/' | relative_url }}).
 GoogleMock's interaction-based mocks, `MOCK_METHOD` and `EXPECT_CALL`, are
 covered in the
-{% raw %}[mocking with gMock appendix]({{ '/docs/35-appendix-c-mocking-with-gmock/' | relative_url }}){% endraw %},
+[mocking with gMock appendix]({{ '/docs/35-appendix-c-mocking-with-gmock/' | relative_url }}),
 not here.
 
 ## For deeper coverage

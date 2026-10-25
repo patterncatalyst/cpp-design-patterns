@@ -25,7 +25,7 @@ and the [seams chapter]({{ '/docs/27-seams/' | relative_url }}) both build and u
 as part of a larger argument about design; this appendix is the reference you
 return to once that design is in place and you need the exact syntax.
 
-## When a mock earns its place
+## When a mock is the right double
 
 A mock verifies an interaction: that a collaborator was called, how many
 times, with which arguments, and in what order relative to other calls. A
@@ -108,10 +108,11 @@ the argument list ends and the specifier list begins, since a bare
 comma-separated argument list and a bare comma-separated specifier list look
 identical to the preprocessor.
 
-A mock class only needs `MOCK_METHOD` for the methods a test actually drives.
-An interface with ten methods where a given test suite only ever calls three
-of them only mocks those three; the rest can stay pure virtual and simply go
-uncalled, which fails to link only if something still tries to invoke them.
+A mock must override every pure virtual method its interface declares. A mock
+that leaves a pure virtual un-mocked is still an abstract class, so a test cannot
+construct it at all, whether or not anything calls that method. Non-pure virtual
+methods are different: leave them unmocked and the mock inherits the base class's
+implementation for those.
 
 ## Setting expectations
 
@@ -329,8 +330,8 @@ EXPECT_CALL(tracking_store, record_event("SHM-4471", _)).Times(1);
 
 ## Mock vs fake: when to hand-write a fake
 
-A mock earns its place when the test's assertion is about the call itself.
-A fake earns its place when the test's assertion is about the resulting
+A mock is the right double when the test's assertion is about the call itself.
+A fake is the right double when the test's assertion is about the resulting
 state, and the collaborator's own logic, not just its call count, needs to
 behave consistently across several calls in the same test.
 
