@@ -19,7 +19,7 @@ A freight-pricing engine migrated without a big-bang rewrite:
   preserved, judged against the identical test table.
 - **Strangler fig router.** Routes each quote to the legacy engine, the new one,
   or both in compare mode, shifting customer by customer. A comparison test
-  catches a deliberately wrong stand-in engine's disagreement while still
+  catches a stand-in engine built to disagree while still
   returning the safe legacy answer, before any real cutover.
 
 ## Build, run, observe

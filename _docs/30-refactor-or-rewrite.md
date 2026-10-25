@@ -301,7 +301,7 @@ case Mode::Compare: {
 ```
 
 `tests/strangler_pricing_router_test.cpp` proves this mode does its job
-with a deliberately buggy stand-in for the modern engine: the router
+with a stand-in for the modern engine built to disagree: the router
 detects the disagreement and still hands the customer the legacy answer,
 proving a defect introduced during the rewrite cannot reach a customer
 during the verification window, which is the entire reason to run a

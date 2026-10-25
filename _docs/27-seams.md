@@ -251,5 +251,5 @@ A seam is also the wrong tool when the "hard dependency" is not actually hard: a
 ## For deeper coverage
 
 - Michael Feathers, [*Working Effectively with Legacy Code*](https://www.oreilly.com/library/view/working-effectively-with/0131177052/) (Prentice Hall): the original definition of a seam, the full catalogue of dependency-breaking techniques this chapter draws its object, link, and preprocessor seams from, and the fuller discussion of characterization tests as a discipline distinct from specification testing.
-- Hyuk Myeong, *GoogleTest in Practice*: the GoogleMock idioms this chapter's `MockClock` and `EXPECT_CALL` usage follow, read alongside the official [GoogleTest documentation](https://google.github.io/googletest/).
+- Hyuk Myeong, *GoogleTest in Practice* (self-published): the GoogleMock idioms this chapter's `MockClock` and `EXPECT_CALL` usage follow, read alongside the official [GoogleTest documentation](https://google.github.io/googletest/).
 - The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.
