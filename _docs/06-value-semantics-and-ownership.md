@@ -445,16 +445,16 @@ default.
 
 ## For deeper coverage
 
-- Bjarne Stroustrup, *The C++ Programming Language*, 4th Edition
+- Bjarne Stroustrup, [*The C++ Programming Language*](https://www.informit.com/store/c-plus-plus-programming-language-9780321563842), 4th Edition
   (Addison-Wesley): the resource management chapter this book's Rule of
   Zero and Rule of Five both draw from, including the vocabulary of value
   versus reference semantics this chapter contrasts directly.
-- Scott Meyers, *Effective Modern C++* (O'Reilly): Items 18-21 cover
+- Scott Meyers, [*Effective Modern C++*](https://www.oreilly.com/library/view/effective-modern-c/9781491908419/) (O'Reilly): Items 18-21 cover
   `unique_ptr`, `shared_ptr`, and `weak_ptr` in the depth this chapter
   assumes, including the reference-cycle failure mode `ManifestNode`
   exists to avoid.
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official
-  GoogleTest documentation: the testing idiom behind
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official
+  [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind
   `examples/06-value-semantics-ownership`'s suite, which asserts observable
   ownership behavior (an emptied source after a move, an expired
   `weak_ptr`, a renegotiated rate seen by every sharing route) rather than

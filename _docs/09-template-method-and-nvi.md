@@ -260,6 +260,6 @@ Notice the trailer on every format agrees on the same unit count, four, and the 
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, *Design Patterns: Elements of Reusable Object-Oriented Software* (Addison-Wesley): the original Template Method entry, including the "hook" and "fixed sequence" framing this chapter's `OrderExportPipeline` builds on.
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official GoogleTest documentation: the testing idiom behind `examples/09-template-method`'s suite, which asserts a fixed hook-call order directly through a recording subclass rather than only checking a finished document.
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the original Template Method entry, including the "hook" and "fixed sequence" framing this chapter's `OrderExportPipeline` builds on.
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/09-template-method`'s suite, which asserts a fixed hook-call order directly through a recording subclass rather than only checking a finished document.
 - The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.

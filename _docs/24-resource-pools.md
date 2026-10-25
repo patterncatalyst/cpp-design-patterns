@@ -63,7 +63,7 @@ connection pool and an active object look nothing alike on the page.
 What this chapter does not do is re-teach `std::mutex`,
 `std::condition_variable`, `std::jthread`, or the C++ memory model from
 first principles. The sibling book in this series,
-*cpp-concurrency-and-parallelism*, covers that ground in the depth it
+[*C++ Concurrency and Parallelism*](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/), covers that ground in the depth it
 deserves: lock-free structures, memory ordering, false sharing, and the
 reasoning behind every synchronization primitive used below. This chapter
 assumes that mechanical knowledge and spends its words on the *shape* each
@@ -127,7 +127,7 @@ has not yet built as many resources as its capacity allows, or the
 timeout elapses. The predicate form of `condition_variable::wait_for`
 does the waiting; this chapter leans on that primitive without re-deriving
 why it is immune to the lost-wakeup and spurious-wakeup problems a
-hand-rolled flag-and-sleep loop is not, because *cpp-concurrency-and-parallelism*
+hand-rolled flag-and-sleep loop is not, because *C++ Concurrency and Parallelism*
 already covers that proof in full.
 
 `Lease` is the other half of the idiom, and the reason this pattern is
@@ -296,7 +296,7 @@ void LabelRenderThreadPool::worker_loop(std::stop_token stop_token) {
 destructor's implicit `request_stop()` fires, so no code here calls
 `notify_all()` by hand. Precisely how that callback wiring works, and what
 guarantees it makes about memory visibility, is again
-*cpp-concurrency-and-parallelism*'s territory; this chapter only needs
+*C++ Concurrency and Parallelism*'s territory; this chapter only needs
 that the mechanism exists and that reaching for it beats a polling loop
 with a sleep.
 
@@ -510,18 +510,17 @@ concurrent-access bug decide between them.
 ## For deeper coverage
 
 - Douglas C. Schmidt, Michael Stal, Hans Rohnert, and Frank Buschmann,
-  *Pattern-Oriented Software Architecture, Volume 2: Patterns for
-  Concurrent and Networked Objects* (Wiley, 2000): the original catalogue
+  [*Pattern-Oriented Software Architecture, Volume 2: Patterns for Concurrent and Networked Objects*](https://www.wiley.com/en-us/Pattern-Oriented+Software+Architecture,+Volume+2,+Patterns+for+Concurrent+and+Networked+Objects-p-9781118725177) (Wiley, 2000): the original catalogue
   entries for Monitor Object and Active Object this chapter teaches as
   idioms, plus the half-sync/half-async reasoning behind a thread pool's
   queue.
-- Anthony Williams, *C++ Concurrency in Action*, Second Edition (Manning,
+- Anthony Williams, [*C++ Concurrency in Action*](https://www.manning.com/books/c-plus-plus-concurrency-in-action-second-edition), Second Edition (Manning,
   2019): the deep mechanics behind every primitive this chapter uses
   without re-deriving, `std::mutex`, `std::condition_variable`,
   `std::jthread`, and the memory model underneath them. This book's
-  sibling, *cpp-concurrency-and-parallelism*, builds on the same ground.
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official
-  GoogleTest documentation: the testing idiom behind
+  sibling site, [*C++ Concurrency and Parallelism*](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/), builds on the same ground.
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official
+  [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind
   `examples/24-resource-pools`'s suite, which asserts concurrent behavior
   under bounded waits rather than sleeping and hoping.
 - The full reading list behind this book's opinions lives on the

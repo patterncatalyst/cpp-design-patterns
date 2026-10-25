@@ -211,6 +211,6 @@ Running `examples/14-singleton-and-di/demo.sh cpp20` prints the same output minu
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, *Design Patterns: Elements of Reusable Object-Oriented Software* (Addison-Wesley): the original Singleton entry, including the intent statement this chapter's Meyers implementation satisfies and the costs this chapter makes concrete.
-- Robert C. Martin, *Agile Software Development: Principles, Patterns, and Practices* (Prentice Hall): the Dependency Inversion Principle this chapter's `AuditSink` alternative applies, covered in full in Chapter 4.
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the original Singleton entry, including the intent statement this chapter's Meyers implementation satisfies and the costs this chapter makes concrete.
+- Robert C. Martin, [*Agile Software Development: Principles, Patterns, and Practices*](https://www.pearson.com/store/p/agile-software-development-principles-patterns-and-practices/P200000003363/9780135974445) (Prentice Hall): the Dependency Inversion Principle this chapter's `AuditSink` alternative applies, covered in full in Chapter 4.
 - The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.

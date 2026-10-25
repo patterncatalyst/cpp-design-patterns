@@ -502,15 +502,15 @@ preset.
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, *Design
-  Patterns: Elements of Reusable Object-Oriented Software* (Addison-Wesley):
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design
+  Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley):
   the original Chain of Responsibility and Iterator entries, including the
   "avoid coupling the sender of a request to its receiver" and "provide a
   way to access elements sequentially without exposing its underlying
   representation" intent statements this chapter's approval chain and
   package manifest each build on.
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official
-  GoogleTest documentation: the testing idiom behind
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official
+  [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind
   `examples/19-chain-iterator`'s suite, which asserts the full chain of
   handlers consulted for a request, not only the final decision, and
   compares a ranges pipeline's output against a plain loop over the same

@@ -521,13 +521,13 @@ under the `cpp23` preset.
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, *Design
-  Patterns: Elements of Reusable Object-Oriented Software* (Addison-Wesley):
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design
+  Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley):
   the original Observer and Mediator entries, including the "one-to-many
   dependency" and "encapsulate how a set of objects interact" intent
   statements this chapter's tracker and dispatch board each build on.
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official
-  GoogleTest documentation: the testing idiom behind
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official
+  [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind
   `examples/18-observer-mediator`'s suite, which asserts fan-out order,
   post-unsubscribe silence, and correct event routing rather than only
   checking that each class constructs without error.

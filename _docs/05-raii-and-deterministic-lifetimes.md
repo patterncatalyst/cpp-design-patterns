@@ -257,7 +257,7 @@ Running `examples/05-raii-lifetimes/demo.sh cpp20` prints the same output minus 
 
 ## For deeper coverage
 
-- Bjarne Stroustrup, *The C++ Programming Language*, 4th edition (Addison-Wesley): the resource-management chapters covering RAII, exception safety, and move semantics as a single, connected set of guarantees rather than three separate features.
-- Scott Meyers, *Effective Modern C++* (O'Reilly): Items on move semantics, `noexcept`, and resource-managing classes, including the deleted-copy-operations pattern this chapter's `DockBayLease` and `ScopeGuard` both follow.
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official GoogleTest documentation: the testing idiom behind `examples/05-raii-lifetimes`'s suite, which asserts observable integer state, a release counter and a rolled-back label count, rather than just checking that the binary exits zero.
+- Bjarne Stroustrup, [*The C++ Programming Language*](https://www.informit.com/store/c-plus-plus-programming-language-9780321563842), 4th edition (Addison-Wesley): the resource-management chapters covering RAII, exception safety, and move semantics as a single, connected set of guarantees rather than three separate features.
+- Scott Meyers, [*Effective Modern C++*](https://www.oreilly.com/library/view/effective-modern-c/9781491908419/) (O'Reilly): Items on move semantics, `noexcept`, and resource-managing classes, including the deleted-copy-operations pattern this chapter's `DockBayLease` and `ScopeGuard` both follow.
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/05-raii-lifetimes`'s suite, which asserts observable integer state, a release counter and a rolled-back label count, rather than just checking that the binary exits zero.
 - The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.

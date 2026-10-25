@@ -243,6 +243,6 @@ The self-registering registry and the templated serialization hook both earn the
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, *Design Patterns: Elements of Reusable Object-Oriented Software* (Addison-Wesley): Prototype's original entry, the pattern-level foundation this chapter's self-registering registry builds on as an idiom, and the shared intent Chapter 13 already covers in more depth.
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official GoogleTest documentation: the testing idiom behind `examples/23-expression-templates`'s suite, which asserts a construction count and a registry resolution across translation units rather than only checking that the binaries exit zero.
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): Prototype's original entry, the pattern-level foundation this chapter's self-registering registry builds on as an idiom, and the shared intent Chapter 13 already covers in more depth.
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/23-expression-templates`'s suite, which asserts a construction count and a registry resolution across translation units rather than only checking that the binaries exit zero.
 - The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.

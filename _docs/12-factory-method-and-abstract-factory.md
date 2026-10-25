@@ -442,13 +442,13 @@ preset.
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, *Design
-  Patterns: Elements of Reusable Object-Oriented Software* (Addison-Wesley):
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design
+  Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley):
   the original Factory Method and Abstract Factory entries, including the
   "family of related or dependent objects" framing this chapter's two
   carriers build on.
-- *GoogleTest in Practice* (Hyuk Myeong, Manning) and the official
-  GoogleTest documentation: the testing idiom behind
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official
+  [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind
   `examples/12-factories`'s suite, which asserts that each factory's
   family stays internally consistent rather than only checking that a
   product constructs without error.
