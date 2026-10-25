@@ -30,8 +30,10 @@ what the examples are verified against.
 
 ## The pinned toolchain
 
-`scripts/check-prereqs.sh` verifies the floor version of each tool and prints what
-it found. The floors, and the versions the examples are verified against:
+`scripts/check-prereqs.sh` checks the build tools it requires (Clang, CMake,
+Ninja, Conan) and prints what it found. GCC is a supported alternate rather than a
+required tool, so the script does not check it. The floors, and the versions the
+examples are verified against:
 
 | Tool | Floor | Verified against | Role |
 |------|-------|------------------|------|
