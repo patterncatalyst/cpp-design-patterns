@@ -64,7 +64,7 @@ common-knowledge industry concepts.
   and embedded with a `Figure` caption.
 - "For deeper coverage" links cited books to their PUBLISHER pages; those books
   also appear in `/bibliography/`.
-- `bundle exec jekyll build` exits 0 (watch the Liquid `{{ }}` adjacent-brace
+- `bundle exec jekyll build` exits 0 (watch the Liquid adjacent double-brace
   gotcha in any snippet with nested initializer braces).
 - `lgtm-professional-voice` scan: 0 ban-tier (no em-dash, no rule-of-three, no
   confessional register, no editorial padding).
