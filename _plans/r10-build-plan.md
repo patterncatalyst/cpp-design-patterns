@@ -96,3 +96,15 @@ and new implementations pass the same characterization suite).
    Reference patterns/idioms and the Feathers/Fowler techniques BY NAME, never
    "as we saw in chapter N" / "chapter N built". The validator greps all four
    chapters for chapter-number refs; executors are told the rule up front.
+8. **Publisher links in "For deeper coverage".** Each cited book links directly
+   to the PUBLISHER's page (Feathers -> O'Reilly, Fowler -> martinfowler.com),
+   never Amazon or Google. Books remain in `/bibliography/`. Orchestrator applies
+   the links in the wiring pass (executors write the sections; orchestrator owns
+   the exact URLs to avoid fabrication); validator confirms every book is linked
+   to a publisher, zero amazon.com/google links. *Googletest in Practice* is
+   self-published (no publisher page): cite it without a purchase link, keep the
+   official GoogleTest docs link, never attribute it to "Manning".
+9. **Sibling-book references link the Pages site, not the repo.** Any reference to
+   a series sibling uses the site name + Pages URL, e.g. "C++ Concurrency and
+   Parallelism" -> https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/ ,
+   never the repo slug or github.com URL. Orchestrator applies; validator checks.
