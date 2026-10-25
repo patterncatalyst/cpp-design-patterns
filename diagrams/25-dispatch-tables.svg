@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="20" width="860" height="90" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="40" font-size="12" font-weight="700" fill="#888">Carrier webhook feed</text>
+<rect x="20" y="130" width="860" height="260" rx="12" fill="#ffffff" stroke="#ddd"/>
+<text x="32" y="150" font-size="12" font-weight="700" fill="#888">Shipment-tracking ingestion service</text>
+<rect x="20" y="410" width="860" height="70" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="430" font-size="12" font-weight="700" fill="#888">Receiver</text>
+<rect x="50" y="55" width="230" height="45" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="165.0" y="75.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Carrier A webhook</text>
+<text x="165.0" y="92.5" font-size="11.5" fill="#555555" text-anchor="middle">CarrierMessage (enum type)</text>
+<rect x="330" y="55" width="230" height="45" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="445.0" y="75.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Carrier B webhook</text>
+<text x="445.0" y="92.5" font-size="11.5" fill="#555555" text-anchor="middle">CarrierWireMessage (string tag)</text>
+<rect x="610" y="55" width="240" height="45" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="730.0" y="75.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">New carrier, added later</text>
+<text x="730.0" y="92.5" font-size="11.5" fill="#555555" text-anchor="middle">unknown wire tag</text>
+<rect x="50" y="175" width="250" height="70" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="175.0" y="200.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Jump table</text>
+<text x="175.0" y="217.5" font-size="11.5" fill="#555555" text-anchor="middle">enum-indexed MessageHandler[]</text>
+<text x="175.0" y="232.5" font-size="11.5" fill="#555555" text-anchor="middle">fastest, closed set</text>
+<rect x="325" y="175" width="250" height="70" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="450.0" y="200.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Dispatch map</text>
+<text x="450.0" y="217.5" font-size="11.5" fill="#555555" text-anchor="middle">unordered_map&lt;string, Handler&gt;</text>
+<text x="450.0" y="232.5" font-size="11.5" fill="#555555" text-anchor="middle">open, registers at runtime</text>
+<rect x="600" y="175" width="250" height="70" rx="9" fill="#fff8ef" stroke="#e8870c" stroke-width="2"/>
+<text x="725.0" y="200.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">constexpr array table</text>
+<text x="725.0" y="217.5" font-size="11.5" fill="#555555" text-anchor="middle">std::array&lt;Handler, N&gt;</text>
+<text x="725.0" y="232.5" font-size="11.5" fill="#555555" text-anchor="middle">closed set, checked at compile time</text>
+<rect x="50" y="260" width="475" height="36" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="287.5" y="283.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">closed set, compile-time: enum must be known up front</text>
+<rect x="600" y="260" width="250" height="36" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="725.0" y="283.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">open set, runtime-extensible</text>
+<rect x="230" y="320" width="440" height="50" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="450.0" y="343.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Shared handler functions</text>
+<text x="450.0" y="360.0" font-size="11.5" fill="#555555" text-anchor="middle">handle_created / handle_picked_up / handle_delivered / ...</text>
+<rect x="330" y="425" width="240" height="40" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="450.0" y="443.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">TrackingLedger</text>
+<text x="450.0" y="460.0" font-size="11.5" fill="#555555" text-anchor="middle">records history per tracking id</text>
+<path d="M165,100 L175,175" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="176.0" y="131.5" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">closed type</text>
+<text x="176.0" y="131.5" font-size="11" fill="#555" text-anchor="middle">closed type</text>
+<path d="M445,100 L450,175" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="453.5" y="131.5" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">wire tag</text>
+<text x="453.5" y="131.5" font-size="11" fill="#555" text-anchor="middle">wire tag</text>
+<path d="M730,100 L725,175" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<text x="733.5" y="131.5" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">late register</text>
+<text x="733.5" y="131.5" font-size="11" fill="#b8650a" text-anchor="middle">late register</text>
+<path d="M175,245 L175,260" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M450,245 L290,260" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M725,245 L725,260" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M175,296 L400,320" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M450,296 L450,320" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M725,296 L550,320" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M450,370 L450,425" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="456.0" y="391.5" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">record()</text>
+<text x="456.0" y="391.5" font-size="11" fill="#555" text-anchor="middle">record()</text>
+<text x="450" y="45" font-size="14" fill="#888" text-anchor="middle" font-weight="700">Figure 25.1</text>
+</svg>
