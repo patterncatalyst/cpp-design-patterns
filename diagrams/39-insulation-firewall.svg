@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 360" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8650a"/></marker></defs>
+<rect x="20" y="30" width="480" height="300" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="50" font-size="12" font-weight="700" fill="#888">Stable across a release boundary: client never recompiles</text>
+<rect x="520" y="30" width="320" height="300" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="532" y="50" font-size="12" font-weight="700" fill="#888">Behind the firewall: free to change</text>
+<rect x="50" y="140" width="170" height="90" rx="9" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+<text x="135.0" y="183.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">Client</text>
+<text x="135.0" y="200.0" font-size="11.5" fill="#555555" text-anchor="middle">RateQuoteService caller</text>
+<rect x="270" y="110" width="200" height="150" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="370.0" y="175.5" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">CarrierGateway</text>
+<text x="370.0" y="192.5" font-size="11.5" fill="#555555" text-anchor="middle">protocol class / PImpl handle</text>
+<text x="370.0" y="207.5" font-size="11.5" fill="#555555" text-anchor="middle">(the firewall)</text>
+<rect x="560" y="140" width="240" height="90" rx="9" fill="#ffffff" stroke="#999999" stroke-width="1.5"/>
+<text x="680.0" y="183.0" font-size="13.5" font-weight="700" fill="#111111" text-anchor="middle">CarrierGatewayImpl</text>
+<text x="680.0" y="200.0" font-size="11.5" fill="#555555" text-anchor="middle">defined only in the .cpp</text>
+<path d="M220,185 L270,185" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="251.0" y="179.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">calls</text>
+<text x="251.0" y="179.0" font-size="11" fill="#555" text-anchor="middle">calls</text>
+<path d="M470,185 L560,185" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="521.0" y="179.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">forwards (pointer / vtable)</text>
+<text x="521.0" y="179.0" font-size="11" fill="#555" text-anchor="middle">forwards (pointer / vtable)</text>
+<text x="680" y="95" font-size="13" fill="#555555" text-anchor="middle">a change here never crosses the firewall</text>
+</svg>
