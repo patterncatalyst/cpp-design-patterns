@@ -378,3 +378,19 @@
     resilience, and a process family with no code shape at all, each a
     different angle on the same question of what force justifies a given
     design.
+
+- name: 39-levelization-before-after
+  section: "Appendix G"
+  title: Breaking a physical dependency cycle by levelizing
+  caption: >-
+    Shipment and Carrier as a cyclic include graph, redrawn as a levelized
+    directed acyclic graph where a higher-level coordinator depends down on
+    both peers so neither peer names the other.
+
+- name: 39-insulation-firewall
+  section: "Appendix G"
+  title: The compile-time firewall of insulation
+  caption: >-
+    A client depends only on a stable interface; the implementation hidden
+    behind the firewall can change without forcing a recompile on the client
+    side.
