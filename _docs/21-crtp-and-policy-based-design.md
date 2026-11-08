@@ -2,7 +2,7 @@
 title: "CRTP and policy-based design"
 order: 21
 part: "idiomatic-cpp-expressions"
-description: "Two idiomatic C++ expressions of static polymorphism, taught against the same shipping-rate domain Chapter 8 and Chapter 9 use: a CRTP base that resolves a derived type's method at compile time, a reusable CRTP mixin applied across unrelated types, and a policy-composed host class with zero runtime dispatch cost anywhere."
+description: "Two idiomatic C++ expressions of static polymorphism on the shipping-rate domain: a CRTP base that resolves a derived type's method at compile time, a reusable CRTP mixin across unrelated types, and a host class composed from compile-time policies with no runtime dispatch."
 duration: "30 min"
 ---
 
@@ -10,24 +10,19 @@ duration: "30 min"
 
 By the end of this chapter you can:
 
-- Build a CRTP base class template that resolves to a derived type's method through `static_cast`, with no virtual function and no vtable anywhere in the hierarchy.
-- Write a reusable CRTP mixin, not tied to any one class hierarchy, and explain why the self-type trick works across completely unrelated types.
-- Compose a host class from two or more independent, concept-constrained compile-time policies, and explain what changes when a caller swaps one policy versus swapping both.
-- State precisely when static polymorphism beats virtual dispatch, in terms this book has already built: Chapter 8's third Strategy expression and Chapter 9's CRTP-versus-deducing-this contrast, both named the tradeoff; this chapter builds the mechanism underneath it.
-- Rewrite a CRTP base with C++23's deducing `this`, and explain which costs that removes and which it does not.
-- Recognize when a CRTP hierarchy or a policy-templated class is solving a problem that a plain runtime interface already solves better, and say what to write instead.
+- Build a CRTP base class template that reaches a derived type's method through `static_cast`, with no virtual function and no vtable.
+- Write a CRTP mixin that adds operators to unrelated types.
+- Compose a host class from independent, concept-constrained compile-time policies.
+- Rewrite a CRTP base with C++23's deducing `this`, and say which costs that removes.
+- Tell when static polymorphism beats virtual dispatch, and when a runtime interface is the better answer.
 
 ## Why this matters
 
-Chapter 8 named a scenario it did not build: "a pricing engine that is compiled once per deployment region with that region's tariff policy baked in", a hot path where the strategy is already known before the program starts and every call-site indirection has a measurable cost. That scenario is this chapter's starting point, not a new one. A checkout library deployed as a shared object into a fleet of regional storefronts can be built once per region with that region's rounding rule and surcharge schedule fixed at compile time, because a region's tariff rarely changes and a quote on a checkout path is latency-sensitive enough that a virtual call or a type-erased `std::function` allocation is a cost worth avoiding. Chapter 8's third Strategy expression, a concept-constrained template parameter, already showed the entry point to this idea for a single varying algorithm. This chapter builds what sits underneath it: the CRTP idiom that makes a base class resolve to a derived type's method without a virtual function at all, and policy-based design, the technique for composing a class out of more than one independently swappable compile-time choice, not just one.
-
-Chapter 9 touched CRTP too, briefly, contrasting it with C++23's deducing `this` for a single hook with no precondition to protect. That contrast is correct as far as it goes, but it is narrow by design: one hook, one derived class, a comparison meant to be read in five minutes. Here, a CRTP base carries more than one concrete derived type, the ordinary shape a reader meets in real code; a CRTP mixin has no connection to any particular class hierarchy, proving the self-type trick is a general tool rather than a narrow one-hook illustration; and policy-based design sits on top of CRTP's foundation as a host class template parameterized by more than one independent policy, each swappable without touching the others.
+A checkout library deployed into a fleet of regional storefronts can be built once per region, with that region's rounding rule and surcharge schedule fixed at compile time. A region's tariff rarely changes, and a quote on the checkout path is hot enough that a virtual call or a `std::function` allocation is a cost worth avoiding. [Strategy]({{ '/docs/08-strategy/' | relative_url }}) already showed one varying algorithm as a concept-constrained template parameter. CRTP makes a base class reach a derived type's method without a virtual function, and policy-based design composes a class from more than one independent compile-time choice.
 
 {% include excalidraw.html name="21-crtp-policy" caption="Figure 21.1: CRTP resolves a derived type at compile time instead of through a vtable; a policy host is composed from interchangeable compile-time policies the same way." %}
 
-## The domain: a compile-time shipping quote
-
-The example behind this chapter lives in `examples/21-crtp-policy`, and it reuses the `Shipment` and `Cents` conventions Chapter 8 and Chapter 9 established: weight in kilograms, a declared value in integer cents, money that is always exact. Nothing about the domain itself is new here. What changes is the mechanism every quote runs through: every type in this chapter is a class template, a concept, or a `constexpr`-friendly ordinary class, resolved entirely during compilation, with no translation unit worth compiling into a separate library the way Chapter 8's shared `shipping_domain.cpp` was.
+The domain is the shipment from Chapter 8: weight in kilograms and a declared value in integer cents, so money stays exact. Every type here is a class template, a concept or a `constexpr` class, resolved during compilation.
 
 ```cpp
 using Cents = std::int64_t;
@@ -38,9 +33,19 @@ struct Shipment {
 };
 ```
 
-## CRTP: a base template that resolves itself at compile time
+## Pattern: CRTP
 
-The Curiously Recurring Template Pattern gets its name from the construction every concrete type using it has to write: a class inherits from a template instantiated with itself as the argument. `RateModel<Derived>` is the base; `FlatRateModel` and `WeightedRateModel` are two concrete rate models that each name themselves as `RateModel`'s template parameter.
+### The problem
+
+A family of rate models shares a public `quote()` and differs only in how each computes a rate. A virtual `compute()` would give every quote an indirect call through a vtable, and the region's build already knows which model it uses.
+
+### The solution
+
+The **Curiously Recurring Template Pattern** has a class inherit from a base template instantiated with that class itself, so the base can call the derived type's methods with no virtual dispatch.
+
+### How C++ models it
+
+`RateModel<Derived>` is the base; `FlatRateModel` and `WeightedRateModel` each name themselves as its template argument.
 
 ```cpp
 template <typename Derived>
@@ -60,9 +65,7 @@ private:
 };
 ```
 
-`quote()` is not virtual, and `RateModel<Derived>` declares no virtual function anywhere. The `static_cast<const Derived*>(this)` inside it is the entire mechanism: at the point `quote()` is instantiated for `RateModel<FlatRateModel>`, the compiler already knows `Derived` is `FlatRateModel`, so the cast is not a runtime check of any kind, just a reinterpretation the type system already guarantees is safe because `FlatRateModel` inherits from exactly that specialization of `RateModel`. The call to `compute()` that follows is an ordinary, fully resolved function call the compiler can inline straight through, the same way it would inline a call to any other non-virtual method.
-
-This is what "no vtable" means concretely, not just as a slogan. `RateModel<FlatRateModel>` and `RateModel<WeightedRateModel>` are two different, unrelated types as far as the compiler is concerned, each with its own fully specialized `quote()`. Nothing stores a pointer to a shared base at runtime and nothing looks one up through an indirect table; the example's test suite proves this by writing a function template that takes a `RateModel<Derived>` by reference and calls `quote()` through it:
+`quote()` isn't virtual, and the base declares no virtual function. When the compiler instantiates `quote()` for `RateModel<FlatRateModel>`, it already knows `Derived` is `FlatRateModel`, so the `static_cast` is no runtime check, and `compute()` is an ordinary call it can inline. `RateModel<FlatRateModel>` and `RateModel<WeightedRateModel>` are unrelated types, each with its own `quote()`. A function template taking the base by reference still reaches the right `compute()`:
 
 ```cpp
 template <typename Derived>
@@ -71,20 +74,18 @@ Cents quote_via_base(const RateModel<Derived>& model, const Shipment& shipment) 
 }
 ```
 
-`quote_via_base(flat_model, shipment)` and `quote_via_base(weighted_model, shipment)` dispatch correctly to `FlatRateModel::compute()` and `WeightedRateModel::compute()` respectively, even though both go through a reference to the same-looking base-class template. Compare this to Chapter 8's first Strategy expression, where `RateEstimator` holds a `std::unique_ptr<RateStrategy>` and `quote()` is resolved through a vtable lookup at the moment it is called, every single time. `RateModel<Derived>` never has that moment: the lookup already happened, once, when the compiler instantiated `quote()` for that particular `Derived`.
-
-The example's header carries a `static_assert` that proves this at compile time rather than only at test time:
+Chapter 8's first Strategy expression looks up `quote()` through a vtable on every call. `RateModel<Derived>` did that lookup once, at instantiation. A `static_assert` in the header evaluates the whole call during translation:
 
 ```cpp
 static_assert(FlatRateModel(500).quote(Shipment{9.0, 0}) == 500,
               "RateModel<FlatRateModel>::quote must resolve to FlatRateModel::compute at compile time");
 ```
 
-If a future edit to `RateModel` ever broke the dispatch, for instance by accidentally calling a method on `this` instead of the cast `Derived*`, this line would stop compiling. A gtest case can only tell you a binary that already built is behaving correctly; a `static_assert` tells you the behavior holds before the binary exists at all.
+A test checks a binary that already built; a `static_assert` fails the build itself.
 
-## A reusable CRTP mixin, not tied to one hierarchy
+### A mixin across unrelated types
 
-`RateModel<Derived>` is useful, but it is still a base class for one family of related types, rate models. CRTP's self-type trick is not limited to that shape. `Comparable<Derived>` in `src/comparable_mixin.hpp` is a mixin with no relationship to rate models whatsoever: any `Derived` that exposes a `sort_key()` method can inherit it and gain `operator<`, `operator==`, and `operator>` with no code of its own to write for any of them.
+The self-type trick isn't tied to one hierarchy. `Comparable<Derived>` gives any type with a `sort_key()` method `operator<`, `operator==` and `operator>`:
 
 ```cpp
 template <typename Derived>
@@ -100,62 +101,13 @@ public:
 };
 ```
 
-`ShipmentQuote` orders by an integer `Cents` key; `CarrierRating` orders by a floating-point score. Neither inherits from the other and neither is aware the other exists; both inherit `Comparable<Derived>` independently, each getting its own fully resolved `operator<` generated at the point it is instantiated for that `Derived`. `Comparable<Derived>` adds no data member of its own, so `sizeof(ShipmentQuote)` is exactly the size of its one `Cents` field; the empty base contributes nothing to the object's layout. This is the same construction the standard library itself uses in `std::enable_shared_from_this<Derived>`, which every C++ programmer who has written a class needing `shared_from_this()` has already inherited from without necessarily calling the technique by name. A reviewer who has learned to recognize `Base<Derived>` in one place recognizes it everywhere it appears afterward, including in library code they did not write.
+`ShipmentQuote` orders by an integer `Cents` key and `CarrierRating` by a floating-point score. Neither knows the other exists; each inherits `Comparable` and gets its own operators. The standard library uses the same construction in `std::enable_shared_from_this<Derived>`.
 
-`Derived` in a CRTP base can itself be constrained by a C++20 concept, the same tool Chapter 8 used to constrain a policy parameter. `Comparable` above does not bother, because a missing `sort_key()` produces a reasonably clear error at the point `operator<` tries to call it, but a CRTP base whose generated code is deeper or whose error would otherwise surface three template instantiations away benefits from the same `requires` clause Chapter 8's `RatePolicy` used, naming exactly what `Derived` is missing instead of leaving a reader to decode a page of compiler output.
+`Comparable` leaves `Derived` unconstrained, because a missing `sort_key()` fails at the call inside `operator<` with a readable error. When the generated code sits several instantiations deep, a `requires` clause on `Derived`, like Chapter 8's `RatePolicy`, names what is missing.
 
-## Policy-based design: composing more than one axis at compile time
+### Deducing `this`
 
-Chapter 8's third Strategy expression constrained a single template parameter, `Policy`, to a type with a `quote()` method, and that was the whole story: one axis varies, one template parameter carries it. Policy-based design is what happens when more than one independent decision needs to vary, and each decision gets its own template parameter rather than being folded into a single monolithic policy type that would otherwise have to cover every combination by hand.
-
-`ShippingCalculator<Rounding, Surcharge>` in `src/shipping_calculator.hpp` has two independent policy slots, each constrained by its own concept:
-
-```cpp
-template <typename Policy>
-concept RoundsCents = requires(const Policy& policy, Cents cents) {
-    { policy.round(cents) } -> std::convertible_to<Cents>;
-};
-
-template <typename Policy>
-concept SurchargesShipment = requires(const Policy& policy, const Shipment& shipment) {
-    { policy.surcharge(shipment) } -> std::convertible_to<Cents>;
-};
-
-template <RoundsCents Rounding, SurchargesShipment Surcharge>
-class ShippingCalculator {
-public:
-    constexpr explicit ShippingCalculator(Cents base_cents, Rounding rounding_policy = Rounding{},
-                                           Surcharge surcharge_policy = Surcharge{})
-        : base_cents_(base_cents),
-          rounding_policy_(std::move(rounding_policy)),
-          surcharge_policy_(std::move(surcharge_policy)) {}
-
-    constexpr Cents quote(const Shipment& shipment) const {
-        const Cents raw_cents = base_cents_ + surcharge_policy_.surcharge(shipment);
-        return rounding_policy_.round(raw_cents);
-    }
-private:
-    Cents base_cents_;
-    Rounding rounding_policy_;
-    Surcharge surcharge_policy_;
-};
-```
-
-`NoRoundingPolicy` and `RoundUpToNickelPolicy` satisfy `RoundsCents`; `NoSurchargePolicy`, `FlatSurchargePolicy`, and `DeclaredValueSurchargePolicy` satisfy `SurchargesShipment`. Swapping `Rounding` from `NoRoundingPolicy` to `RoundUpToNickelPolicy` changes `quote()`'s behavior without touching `Surcharge` at all, and the reverse holds too: the two axes are independent, not two names for the same underlying choice. `ShippingCalculator<RoundUpToNickelPolicy, FlatSurchargePolicy>` and `ShippingCalculator<RoundUpToNickelPolicy, DeclaredValueSurchargePolicy>` are two different, fully resolved types, each with its own `quote()` the compiler can see straight through to both policies' bodies.
-
-Policy-based design differs from Chapter 8's single-policy expression three in exactly this way: the host class does not grow a branch, a flag, or a second constructor to support a second varying decision. It grows a second template parameter, constrained by its own concept, and the two compose by simple template instantiation rather than by any logic `ShippingCalculator` itself has to write or test. A quote that needs a third independent axis, a currency-conversion policy, say, would add a third template parameter the same way, not a new code path inside `quote()`.
-
-A `static_assert` again proves the simplest composition resolves entirely at compile time:
-
-```cpp
-static_assert(ShippingCalculator<NoRoundingPolicy, NoSurchargePolicy>(1000).quote(
-                  Shipment{2.0, 0}) == 1000,
-              "a no-rounding, no-surcharge ShippingCalculator must quote exactly the base rate");
-```
-
-## CRTP versus deducing `this`, applied to this chapter's own base
-
-Chapter 9 drew the CRTP-versus-deducing-`this` contrast for a single narrow hook, `summarize()`, built just to show the mechanics and set aside immediately afterward. This chapter draws the same contrast against `RateModel`, the base this chapter's CRTP section teaches, to show what the C++23 idiom changes and what it leaves untouched when applied to a base with real derived types already using it.
+C++23's explicit object parameter removes the template argument and the cast. Both versions compile to the same call, resolved at compile time, and quote the same shipment identically.
 
 {% include codetabs.html langs="C++20|C++23" %}
 
@@ -201,49 +153,113 @@ private:
 };
 ```
 
-`DeducedFlatRateModel` inherits from `DeducedRateModel` the way it would inherit from any ordinary base class, naming nothing about itself in the inheritance list, because `DeducedRateModel` is not a template at all. Both versions compile to the same zero-overhead call, resolved entirely at compile time with no vtable in either column; the example's test suite asserts the two agree on the same `Shipment`. What deducing `this` removes is exactly what Chapter 9 already named: the CRTP template argument and the explicit `static_cast`, both constructions a reader has to have explained to them once before they stop looking strange. What it does not remove is the thing this chapter has been building toward: neither version pays a virtual-call cost, and neither buys back the ability to swap `Derived` after the program is compiled. Deducing `this` is a syntactic refinement of CRTP's self-type trick, not a different answer to when static polymorphism is the right tool. Chapter 9's policy pattern for applying it still holds here: reach for it on a single hook with a real, measured reason to avoid both the vtable and the CRTP boilerplate; a reviewer unfamiliar with either idiom reads a plain virtual method fastest of all three.
+| | CRTP | Deducing `this` |
+| --- | --- | --- |
+| Base is a template | Yes | No |
+| Derived names itself in the base list | Yes | No |
+| `static_cast` in the base | Yes | No |
+| Virtual call | None | None |
+| Swap the derived type after compiling | No | No |
 
-## When static polymorphism beats virtual dispatch
+Deducing `this` is a syntactic refinement of CRTP, not a different answer to when static polymorphism fits. A reviewer who knows neither idiom still reads a plain virtual method fastest.
 
-The forces are the same ones Chapter 8 trained for its three Strategy expressions, pushed one notch further: static polymorphism wins when the choice is fixed before the program runs and the call site is hot enough that an indirect call or a heap-allocated type-erased callable is a cost worth avoiding. A region-specific shipping calculator compiled once per deployment, a tight inner loop in a pricing engine invoked per line item on an order with thousands of lines, a hardware abstraction layer selected at build time because the target device never changes after the firmware image is flashed: each of these fixes its "which implementation" question once, at build time, and then calls the chosen implementation millions of times without ever needing to ask the question again. CRTP and policy-based design both answer exactly that question with zero runtime cost: no vtable lookup, no `std::function`'s type-erased allocation and indirect call, nothing standing between the call site and the concrete code that will run.
+## Pattern: Policy-based design
 
-Virtual dispatch wins back the moment the choice has to be made after the program starts: a carrier selected from a configuration file read at startup, a plugin loaded from a shared library the core binary was never compiled against, a strategy a user picks from a menu while the program is already running. Chapter 8's first two Strategy expressions exist for exactly that case, and nothing in this chapter changes that answer. A `RateModel<Derived>` cannot become a different `RateModel<OtherDerived>` after it is constructed, the same way Chapter 8 noted a `StaticRateCalculator<WeightBasedPolicy>` cannot become a `StaticRateCalculator<TieredZonePolicy>` without recompiling; the type itself is the decision, fixed the moment the compiler finishes.
+### The problem
 
-> **AI sidebar.** Ask an LLM pairing partner for "compile-time polymorphism" or "zero-overhead pluggable behavior" and a frequent result reaches for `std::variant<PolicyA, PolicyB>` plus `std::visit`, because that shape also avoids an abstract base class and reads as modern C++. Check what it resolved: `std::visit` dispatches on a runtime tag stored inside the `variant`, a jump table rather than a vtable, but still a runtime branch evaluated on every call, not a decision the compiler made once during instantiation. That is a legitimate answer to "the strategy varies, but I want to avoid an abstract base class," the same force Chapter 8's second expression already names, just expressed through a sum type instead of a `std::function`. It is not an answer to "the strategy is fixed before the program runs and I need zero indirection," the force this chapter's CRTP and policy-based design answer. The question worth asking before accepting either generated shape is the same one Chapter 1 trained: is the choice made once, at compile time, by whoever builds this binary, or can it still change while the program is running? A `variant`-and-`visit` answer to the first question has solved a problem the code does not have.
+A quote varies on two independent axes: how cents are rounded and what surcharge applies. One monolithic policy type would have to cover every combination by hand, and a flag inside the calculator would add a runtime branch.
 
-## When not to use CRTP or policy-based design
+### The solution
 
-CRTP and policy-based design earn their complexity when the choice is fixed before compilation and a measured cost at the call site justifies paying for a template-heavy design. Outside that case, they stop paying for themselves quickly, in three specific ways.
+**Policy-based design** builds a host class template from several independent policy parameters, each constrained by its own concept and swappable without touching the others.
 
-Code bloat is the first and most literal cost. Every distinct `Derived` instantiates its own copy of `RateModel<Derived>::quote()`, and every distinct `<Rounding, Surcharge>` combination instantiates its own copy of `ShippingCalculator`. Three rate models and two rounding policies crossed with three surcharge policies is already eight separate class instantiations, each with its own compiled code, even though the logic they share is identical apart from the policy calls. A single runtime `RateStrategy` interface or a single `ShippingCalculator` taking runtime policy objects through an abstract base pays for one compiled implementation and dispatches through it; the compile-time version pays in binary size for every combination a build uses. For a handful of combinations this is a rounding error in a modern binary's size; for a combinatorial policy space with a dozen axes, it is a build-time and binary-size cost a team should measure before committing to the design, not assume away.
+### How C++ models it
 
-Compile time is the second cost, and it compounds with the first. Header-only template code, which both CRTP and policy-based design are in this chapter's example, gets recompiled in every translation unit that includes it, and a heavily templated header with several instantiations in play can measurably slow a team's build the moment it is included from more than a handful of `.cpp` files. A single fixed algorithm with no second implementation in hand or coming does not need a template parameter at all; Chapter 8 already named the plainer alternative, a function, for exactly that shape, and the same answer holds here: write `RateModel` as an ordinary class with one `compute()` body until a second implementation is needed, not in anticipation of one.
+`ShippingCalculator<Rounding, Surcharge>` has two policy slots:
 
-The third case is the one this chapter has repeated throughout: when the choice has to be made after the program starts, from a configuration file, a user selection, or a plugin loaded at runtime, static polymorphism cannot answer the question at all, no matter how it is written. A `RateModel<Derived>` cannot be reassigned to a different `Derived` once constructed, and a `std::vector` cannot hold a mix of concrete `RateModel<FlatRateModel>` and `RateModel<WeightedRateModel>` objects the way Chapter 8's `std::vector<std::unique_ptr<RateStrategy>>` could, because the two specializations are unrelated types with no common runtime base to store them behind. Needing a heterogeneous collection chosen at runtime is the clearest signal that Chapter 8's first or second Strategy expression is the right chapter to reach for, not this one.
+```cpp
+template <typename Policy>
+concept RoundsCents = requires(const Policy& policy, Cents cents) {
+    { policy.round(cents) } -> std::convertible_to<Cents>;
+};
+
+template <typename Policy>
+concept SurchargesShipment = requires(const Policy& policy, const Shipment& shipment) {
+    { policy.surcharge(shipment) } -> std::convertible_to<Cents>;
+};
+
+template <RoundsCents Rounding, SurchargesShipment Surcharge>
+class ShippingCalculator {
+public:
+    constexpr explicit ShippingCalculator(Cents base_cents, Rounding rounding_policy = Rounding{},
+                                           Surcharge surcharge_policy = Surcharge{})
+        : base_cents_(base_cents),
+          rounding_policy_(std::move(rounding_policy)),
+          surcharge_policy_(std::move(surcharge_policy)) {}
+
+    constexpr Cents quote(const Shipment& shipment) const {
+        const Cents raw_cents = base_cents_ + surcharge_policy_.surcharge(shipment);
+        return rounding_policy_.round(raw_cents);
+    }
+private:
+    Cents base_cents_;
+    Rounding rounding_policy_;
+    Surcharge surcharge_policy_;
+};
+```
+
+| Concept | Policies |
+| --- | --- |
+| `RoundsCents` | `NoRoundingPolicy`, `RoundUpToNickelPolicy` |
+| `SurchargesShipment` | `NoSurchargePolicy`, `FlatSurchargePolicy`, `DeclaredValueSurchargePolicy` |
+
+Swapping `Rounding` changes the quote without touching `Surcharge`, and the reverse holds. Each combination is its own type, and the compiler sees through `quote()` into both policy bodies. A second varying decision adds a template parameter, not a branch or a second constructor; a currency-conversion policy would be a third parameter. A `static_assert` checks the simplest composition at compile time:
+
+```cpp
+static_assert(ShippingCalculator<NoRoundingPolicy, NoSurchargePolicy>(1000).quote(
+                  Shipment{2.0, 0}) == 1000,
+              "a no-rounding, no-surcharge ShippingCalculator must quote exactly the base rate");
+```
+
+### Static or virtual dispatch
+
+Static polymorphism wins when the choice is fixed before the program runs and the call site is hot. Virtual dispatch wins once the choice is made after startup.
+
+| The choice is made | Use |
+| --- | --- |
+| At build time: a region's tariff, a per-line-item pricing loop, a hardware layer fixed when firmware is flashed | CRTP or policy-based design |
+| At startup or later: a carrier from a config file, a plugin from a shared library, a user's menu pick | A virtual interface or `std::function`, as in Chapter 8 |
+
+A `RateModel<Derived>` can't become a `RateModel<OtherDerived>` after construction. The type is the decision.
+
+<blockquote class="ai-sidebar" markdown="1">
+**Specifying compile-time polymorphism.** "Make the rate models pluggable with zero overhead" doesn't say whether the choice is fixed at build time or made at run time, and `std::variant` plus `std::visit` answers the second with a runtime tag on every call.
+
+> In `examples/21-crtp-policy/src/shipping_calculator.hpp`, write `ShippingCalculator<Rounding, Surcharge>` as a class template with two policy parameters constrained by the concepts `RoundsCents` and `SurchargesShipment`, and policies `NoRoundingPolicy`, `RoundUpToNickelPolicy`, `NoSurchargePolicy`, `FlatSurchargePolicy` and `DeclaredValueSurchargePolicy`. Use no `std::variant`, `std::function` or virtual function. Keep `RateModel<Derived>` in `rate_model.hpp` as a CRTP base whose `quote()` calls `Derived::compute()` through `static_cast`, and add a `static_assert` that evaluates one quote of each at compile time.
+
+Check: `ctest --preset cpp23 -R 'RateModelTest|ShippingCalculatorTest'` passes, and the reply contains no `std::visit`.
+</blockquote>
+
+## When not to use it
+
+- **Code bloat.** Every distinct `Derived` instantiates its own `quote()`, and every `<Rounding, Surcharge>` pair its own `ShippingCalculator`. A runtime interface compiles one implementation. For a few combinations the size is negligible; for a dozen policy axes, measure binary size before committing.
+- **Compile time.** Header-only templates recompile in every translation unit that includes them. A single fixed algorithm with no second implementation needs no template parameter: write an ordinary class until a second implementation arrives.
+- **Runtime choice.** When a config file, a user or a plugin picks the implementation, static polymorphism can't answer. A `std::vector` can't hold `RateModel<FlatRateModel>` and `RateModel<WeightedRateModel>` together, because they share no runtime base. Use Chapter 8's `std::vector<std::unique_ptr<RateStrategy>>`.
 
 ## Build, run, observe
 
-Every command below runs with the local clang, CMake, Ninja, and Conan toolchain Chapter 0 installs; there is no container anywhere in this loop. From the repository root, the root superbuild picks up `examples/21-crtp-policy` automatically:
+From the repository root, the superbuild picks up `examples/21-crtp-policy`:
 
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23
 scripts/build.sh cpp20 && scripts/verify.sh cpp20
 ```
 
-`scripts/verify.sh` runs CTest, which discovers this example's GoogleTest cases through `gtest_discover_tests`: 13 cases under the `cpp23` preset, 11 under `cpp20`, the difference being the two deducing-`this` cases that only compile under C++23. Observed locally on Fedora 44 / clang 22.1.8:
-
-```
-100% tests passed, 0 tests failed out of 13   # cpp23
-100% tests passed, 0 tests failed out of 11   # cpp20
-```
-
-To see the CRTP and policy-based quotes side by side rather than just reading an assertion that says each one is correct, run the example's own demo script:
+All 13 cases pass under `cpp23` and 11 under `cpp20`; the two deducing-`this` cases compile only under C++23. The demo quotes a 3.5 kg shipment with a declared value of $123.45:
 
 ```sh
 examples/21-crtp-policy/demo.sh cpp23
 ```
-
-It quotes a 3.5 kg shipment with a declared value of $123.45 through both the CRTP rate models and three policy combinations, then through the deducing-`this` rewrite:
 
 ```
 == CRTP: RateModel<Derived> (static polymorphism) ==
@@ -263,10 +279,14 @@ Base rate + 1% declared-value surcharge, rounded to the nickel: $11.25
 Deduced flat rate model (no template argument on the base): $9.99
 ```
 
-Notice the flat rate model and the deduced flat rate model both quote $9.99 for the same flat-rate construction, the CRTP and deducing-`this` versions of the identical idea producing identical output from two different C++ standards. Running `examples/21-crtp-policy/demo.sh cpp20` prints the same output minus the final deducing-`this` block, which only compiles under the `cpp23` preset.
+The CRTP and deducing-`this` flat models both quote $9.99. Under `cpp20` the last block is absent.
+
+One experiment shows the compile-time check at work:
+
+- **Change a rate.** In a scratch copy, make `FlatRateModel::compute()` return `flat_cents_ + 1`. The build stops at the `static_assert` in `rate_model.hpp`, before any test runs.
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the Strategy and Template Method entries this chapter's compile-time idioms refine into zero-overhead C++, the same lineage Chapter 8 and Chapter 9 trace from the Gang of Four's runtime-oriented originals.
-- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/21-crtp-policy`'s suite, which asserts CRTP dispatch through a base-class reference and cross-checks the CRTP and deducing-`this` versions against each other, not just against a finished number.
-- The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the Strategy and Template Method entries that CRTP and policy-based design refine into zero-overhead C++.
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/21-crtp-policy`.
+- The full reading list lives on the [bibliography page]({{ '/bibliography/' | relative_url }}).

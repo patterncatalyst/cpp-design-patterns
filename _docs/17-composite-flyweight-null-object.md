@@ -2,7 +2,7 @@
 title: "Composite, Flyweight, and Null Object"
 order: 17
 part: "composing-adapting-structure"
-description: "Three idiomatic ways to keep a recursive structure simple, taught against a palletizing domain: a Composite interface that treats one item and an entire pallet identically, a Flyweight pool that shares a handful of SKU descriptors across thousands of line items, and a Null Object that lets a weight-limit check skip every null branch."
+description: "Composite treats one item and a whole pallet the same, Flyweight shares a few SKU descriptors across many line items, and Null Object removes the null checks from a weight-limit walk."
 duration: "30 min"
 ---
 

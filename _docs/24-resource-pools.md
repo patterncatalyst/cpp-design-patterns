@@ -2,7 +2,7 @@
 title: "Resource pools"
 order: 24
 part: "patterns-in-the-wild"
-description: "A generic, bounded resource pool with an RAII lease handle, taught against a shipment-tracking connection pool, plus four sibling concurrency shapes from the same domain: a thread pool rendering shipping labels, a monitor object, and an active object."
+description: "A generic, bounded resource pool with an RAII lease handle, taught against a shipment-tracking connection pool, plus three sibling concurrency shapes from the same domain: a thread pool rendering shipping labels, a monitor object, and an active object."
 duration: "35 min"
 ---
 
@@ -10,96 +10,43 @@ duration: "35 min"
 
 By the end of this chapter you can:
 
-- Build a generic `ResourcePool<Resource>` that bounds how many expensive
-  resources exist at once, and a `PoolLease<Resource>` RAII handle that
-  returns its resource to the pool automatically, on every exit path.
-- Build a connection pool, the canonical instance of that generic pool,
-  with a blocking `acquire()` that honors a timeout and a thread-safe
-  implementation built on a mutex and a condition variable.
-- Build a thread pool whose workers drain a shared task queue, and explain
-  why a C++23 `std::move_only_function` removes an allocation a C++20
-  `std::function` queue cannot avoid.
-- Build a monitor object, where an object owns its own mutex and every
-  public method is serialized, and tell it apart from a plain class with a
-  mutex member that callers forget to lock consistently.
-- Build an active object, where invoking a method only enqueues a request
-  and returns a `std::future`, decoupling the call from whatever thread
-  eventually executes it.
-- Say which of these five shapes to reach for given a concrete scenario,
-  and where the deep threading mechanics behind all of them live when this
-  chapter's pattern-shape view is not enough.
-
-{% include excalidraw.html name="24-resource-pools" caption="Figure 24.1: the generic ResourcePool and PoolLease, the TrackingStoreConnectionPool built on them, and three related concurrency shapes, a thread pool, a monitor object, and an active object, that share the same bounded-resource and serialized-access concerns." %}
+- Build a generic `ResourcePool<Resource>` that bounds how many expensive resources exist, with a nested `Lease` RAII handle that returns its resource on every exit path.
+- Build a connection pool on that mechanism, with a blocking `acquire()` that honors a timeout.
+- Build a thread pool whose workers drain a shared queue, and explain the allocation `std::move_only_function` removes.
+- Build a monitor object that serializes every public method on its own mutex.
+- Build an active object whose methods enqueue a request and return a `std::future`.
+- Pick among these shapes for a concrete scenario.
 
 ## Why this matters
 
-A shipment-tracking service does not open a fresh connection to its
-tracking store for every incoming scan event. Opening that connection
-costs a DNS lookup, a TCP handshake, and often a TLS negotiation and an
-authentication round trip, work measured in milliseconds against a query
-that itself takes microseconds once the connection exists. Doing that
-setup on every request would mean the connection costs more than the work
-it enables, every single time. The fix practitioners reach for is older
-than this book's other chapters: build a bounded set of connections once,
-hand them out to whoever needs one, and take them back when the caller is
-done. That is a resource pool, and despite being one of the most-used
-patterns in production C++, it never made Gamma, Helm, Johnson, and
-Vlissides' original 1994 catalogue; it was formalized later, most notably
-in Schmidt, Stal, Rohnert, and Buschmann's *Pattern-Oriented Software
-Architecture, Volume 2*, the same volume that catalogues two of this
-chapter's other patterns, Monitor Object and Active Object.
+A shipment-tracking service doesn't open a fresh connection to its tracking store for every scan event. Opening one costs a DNS lookup, a TCP handshake, often TLS and an authentication round trip: milliseconds, against a query that takes microseconds once connected. A pool builds a bounded set of connections once, hands them out and takes them back. The pattern isn't in the 1994 Gang of Four catalogue; Schmidt, Stal, Rohnert and Buschmann's *Pattern-Oriented Software Architecture, Volume 2* formalized it alongside Monitor Object and Active Object.
 
-This chapter treats the resource pool as a generic mechanism first, then
-builds a connection pool as the mechanism's canonical instance, and then
-walks through three sibling shapes practitioners reach for under the same
-production pressure: a thread pool for CPU-bound work with a natural
-queue, a monitor object for state several threads touch directly, and an
-active object for one narrow request type that needs its own serialized
-timeline. All five patterns share a concern, bounding or
-serializing access to something that is expensive or unsafe to share
-carelessly, which is why they belong in one chapter even though a
-connection pool and an active object look nothing alike on the page.
+All four shapes bound or serialize access to something expensive or unsafe to share. They don't re-teach `std::mutex`, `std::condition_variable`, `std::jthread` or the memory model; the sibling book [*C++ Concurrency and Parallelism*](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/) covers those, including lock-free structures, memory ordering and false sharing. Here the subject is the shape each pattern gives a caller.
 
-What this chapter does not do is re-teach `std::mutex`,
-`std::condition_variable`, `std::jthread`, or the C++ memory model from
-first principles. The sibling book in this series,
-[*C++ Concurrency and Parallelism*](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/), covers that ground in the depth it
-deserves: lock-free structures, memory ordering, false sharing, and the
-reasoning behind every synchronization primitive used below. This chapter
-assumes that mechanical knowledge and spends its words on the *shape* each
-pattern gives that mechanism: what a pool, a monitor, and an active object
-look like as types a caller depends on, and when each shape is the right
-answer.
+{% include excalidraw.html name="24-resource-pools" caption="Figure 24.1: the generic ResourcePool and PoolLease, the TrackingStoreConnectionPool built on them, and three related concurrency shapes, a thread pool, a monitor object, and an active object, that share the same bounded-resource and serialized-access concerns." %}
 
-## The domain: a shipment-tracking service under load
+The tracking service has four kinds of work:
 
-Every example in this chapter lives in `examples/24-resource-pools` and
-shares one domain: a service that tracks shipments as they move through a
-carrier network. Three kinds of expensive-or-shared work recur across that
-service, and each gets its own pattern:
+| Work | Pressure | Pattern |
+| --- | --- | --- |
+| Recording a tracking event in the store | The connection is expensive to open, cheap to reuse | Connection pool |
+| Rendering a shipping label | CPU-bound; many requests at once | Thread pool |
+| Updating a package manifest during intake | Several scan threads touch the same state | Monitor object |
+| Printing a label on a physical printer | One at a time, on its own timeline; callers shouldn't wait | Active object |
 
-- Recording a tracking event (a shipment left a facility, arrived at a
-  hub, was delivered) means talking to a tracking store over a connection
-  that is expensive to open and cheap to reuse. That is the connection
-  pool's job.
-- Rendering a shipping label is CPU-bound work, formatting text and
-  computing a barcode payload, that several requests want done
-  concurrently without one request waiting behind another on a single
-  thread. That is the thread pool's job.
-- A shipment's manifest, the list of line items inside one package, gets
-  touched by several warehouse-scan threads as items are added or removed
-  during intake. That shared, mutable state is the monitor object's job.
-- Printing a label on a physical printer is inherently one-at-a-time work
-  with its own timeline; callers want to fire off a print request and keep
-  going, not block until the printer finishes. That is the active
-  object's job.
+## Pattern: Resource pool
 
-## The generic resource pool and its RAII lease
+### The problem
 
-The centerpiece is `ResourcePool<Resource>` in
-`src/resource_pool.hpp`. It holds a bounded free list of
-`std::unique_ptr<Resource>`, builds new resources lazily up to a capacity,
-and hands them out through a nested `Lease` type:
+Every request needs a tracking-store connection for microseconds, and building one takes milliseconds. Building one per request spends more on setup than on work, and an unbounded number of connections exceeds what the store accepts.
+
+### The solution
+
+A **resource pool** builds a bounded number of expensive resources, lends each to one caller at a time, and takes it back for reuse when the caller is done.
+
+### How C++ models it
+
+`ResourcePool<Resource>` in `src/resource_pool.hpp` holds a bounded free list of `std::unique_ptr<Resource>`, builds resources lazily up to its capacity and hands them out through a nested `Lease`:
 
 ```cpp
 template <typename Resource>
@@ -121,25 +68,11 @@ public:
 };
 ```
 
-`acquire()` blocks under a `std::unique_lock` and a `std::condition_variable`
-until one of three things is true: a resource is already free, the pool
-has not yet built as many resources as its capacity allows, or the
-timeout elapses. The predicate form of `condition_variable::wait_for`
-does the waiting; this chapter leans on that primitive without re-deriving
-why it is immune to the lost-wakeup and spurious-wakeup problems a
-hand-rolled flag-and-sleep loop is not, because *C++ Concurrency and Parallelism*
-already covers that proof in full.
+`acquire()` waits under a `std::unique_lock` with the predicate form of `condition_variable::wait_for` until a resource is free, the pool can build another under its capacity, or the timeout elapses. It throws `std::runtime_error` on timeout or after `shutdown()`.
 
-`Lease` is the other half of the idiom, and the reason this pattern is
-safe to use at all under exceptions. A `Lease` is move-only: copying a
-handle to a pooled resource would let two callers believe they each
-exclusively own the same connection, so the copy constructor and copy
-assignment are deleted. Its destructor calls back into the pool and pushes
-the resource onto the free list, whether the scope that held the `Lease`
-exited normally, early via a `return`, or by exception unwinding past it.
-A caller never writes `pool.release(connection)`; forgetting to call a
-release method is a whole category of bug this design makes impossible to
-write; there is no release method to forget.
+### The lease is the only way back
+
+`Lease` is move-only: a copy would let two callers each believe they own the same connection. Its destructor pushes the resource back onto the free list whether the scope ends normally, through an early `return` or by exception. There's no `release()` method to forget.
 
 ```cpp
 {
@@ -148,21 +81,11 @@ write; there is no release method to forget.
 }  // lease destructor runs here: the connection returns to the pool
 ```
 
-This is the same RAII discipline that governs memory and file
-handles, applied to something with a bound on how many can exist at once.
-The bound is what makes a pool more than a cache: a cache grows to fit
-demand, while a pool's whole purpose is to cap demand at a number the
-backing resource (a connection limit, a thread count, a licensed
-hardware seat) can actually sustain.
+The bound is what separates a pool from a cache. A cache grows to fit demand; a pool caps it at what the backing resource sustains: a connection limit, a thread count, a licensed hardware seat.
 
-## The connection pool: the canonical instance
+### The connection pool
 
-`TrackingStoreConnectionPool` in
-`src/tracking_store_connection_pool.hpp` wraps
-`ResourcePool<TrackingStoreConnection>` and nothing else. It exists so
-call sites depend on a named, domain-shaped type, "a pool of tracking-store
-connections," instead of a bare template instantiation, and so the seam
-for testing has one obvious home:
+`TrackingStoreConnectionPool` wraps `ResourcePool<TrackingStoreConnection>` so call sites depend on a named domain type, and forwards `acquire()`, `try_acquire()` and `shutdown()` unchanged. Its constructor takes a `std::shared_ptr<ConnectionFactory>`, the seam a GoogleMock factory replaces:
 
 ```cpp
 class ConnectionFactory {
@@ -172,23 +95,11 @@ public:
 };
 ```
 
-`TrackingStoreConnectionPool`'s constructor takes a
-`std::shared_ptr<ConnectionFactory>` rather than building connections
-itself. That seam is what makes the pool's central claim testable: a test
-substitutes a `MockConnectionFactory` and asserts, via GoogleMock's
-`EXPECT_CALL(*factory, create()).Times(2)`, that ten acquire-and-release
-cycles against a capacity-2 pool call `create()` exactly twice, never once
-per acquire. Without that mock, a test could only observe that the demo
-runs and prints plausible numbers; with it, the test fails loudly the
-moment a change accidentally makes the pool build a fresh connection on
-every request, which is exactly the regression a connection pool exists
-to prevent.
+With a mock factory expecting `create()` `.Times(2)`, ten acquire-and-release cycles on a capacity-2 pool build exactly two connections. A change that builds a connection per request fails that expectation.
 
-`TrackingStoreConnectionPool` forwards `acquire()`, `try_acquire()`, and
-`shutdown()` straight through to the `ResourcePool` underneath it. That
-thin forwarding is deliberate: the pattern's value is entirely in the
-generic mechanism, and a canonical instance should not re-implement
-anything the mechanism already got right.
+### Why `try_acquire()` failed
+
+`try_acquire()` never waits. Under C++20 an empty `std::optional` can't say whether every connection is leased or the pool was shut down. `std::expected`, new in C++23, carries a `PoolAcquireError` of `Exhausted` or `Closed`; the code sits behind `#if __cplusplus >= 202302L`, so the C++20 build never needs `<expected>`.
 
 {% include codetabs.html langs="C++20|C++23" %}
 ```cpp
@@ -209,36 +120,25 @@ if (!lease.has_value()) {
 }
 ```
 
-`try_acquire()` is the non-blocking sibling of `acquire()`: it never
-waits, it either hands back a `Lease` immediately or reports failure.
-Under C++20 that failure collapses "every connection is leased" and "the
-pool was shut down" into the same empty `std::optional`, mirroring the
-exact narrowing a bare `std::optional` forces on any failed lookup. Under
-C++23, `PoolAcquireError` distinguishes `Exhausted` from `Closed`, and
-`tests/resource_pool_test.cpp`'s `TryAcquireReportsWhyItFailedUnderCpp23`
-case proves both values are reachable and distinct, guarded behind
-`#if __cplusplus >= 202302L` so the mandatory C++20 build path never needs
-`<expected>`.
+## Pattern: Thread pool
 
-## The thread pool: workers draining a shared queue
+### The problem
 
-`LabelRenderThreadPool` in `src/label_render_thread_pool.hpp` is the shape
-most engineers picture first when someone says "thread pool": a fixed set
-of worker threads, started once, pulling callables off a shared queue
-until told to stop. `submit()` wraps the caller's work in a
-`std::packaged_task`, pushes it onto the queue, and returns the matching
-`std::future` immediately, before any worker has necessarily picked the
-task up:
+Several requests want labels rendered at once. A thread per request costs a thread start each time and oversubscribes the cores; one thread makes every request wait behind the others.
+
+### The solution
+
+A **thread pool** starts a fixed set of worker threads once and has them pull tasks from a shared queue until told to stop.
+
+### How C++ models it
+
+`LabelRenderThreadPool::submit()` wraps the work in a `std::packaged_task`, queues it and returns the `std::future` at once:
 
 ```cpp
 std::future<RenderedLabel> submit(ShippingLabelRequest request);
 ```
 
-The queue itself needs a type-erased callable, because a thread pool's
-whole point is accepting arbitrary, unrelated work, not one fixed
-function signature. That type erasure is exactly where C++20 and C++23
-diverge in a way worth stopping on, because `std::packaged_task` is
-move-only and the type the queue stores has to account for that.
+The queue accepts unrelated work, so it stores a type-erased callable. `std::packaged_task` is move-only, and that's where the standards differ:
 
 {% include codetabs.html langs="C++20|C++23" %}
 ```cpp
@@ -261,18 +161,11 @@ using Task = std::move_only_function<void()>;
 Task task(std::move(packaged));
 ```
 
-This is not a cosmetic difference. Every production thread pool written
-against C++20 or earlier either pays that `shared_ptr` tax on every
-submitted task or hand-rolls its own move-only type eraser, which is more
-code solving a problem the standard library solved in C++23. `std::move_only_function`
-exists specifically to remove this workaround, and
-`examples/24-resource-pools` is built once under each standard precisely
-so a reader can see both versions compile and both pass the identical
-`AllSubmittedTasksRunExactlyOnce` test, proving the two implementations
-are behaviorally equivalent and differ only in that one allocation.
+A C++20 pool either pays the `shared_ptr` allocation per task or hand-rolls a move-only eraser. `std::move_only_function`, new in C++23, removes both. The two builds behave the same: every submitted task runs exactly once.
 
-`worker_loop()` is where `std::jthread` and `std::stop_token` do their
-job without any hand-kept "please stop" flag:
+### Stopping without a flag
+
+`std::jthread` and `std::stop_token` replace a hand-kept "please stop" flag:
 
 ```cpp
 void LabelRenderThreadPool::worker_loop(std::stop_token stop_token) {
@@ -291,24 +184,21 @@ void LabelRenderThreadPool::worker_loop(std::stop_token stop_token) {
 }
 ```
 
-`condition_variable_any::wait()`'s stop-token overload registers a
-`std::stop_callback` that wakes every waiting worker the instant the pool
-destructor's implicit `request_stop()` fires, so no code here calls
-`notify_all()` by hand. Precisely how that callback wiring works, and what
-guarantees it makes about memory visibility, is again
-*C++ Concurrency and Parallelism*'s territory; this chapter only needs
-that the mechanism exists and that reaching for it beats a polling loop
-with a sleep.
+`cv_` is a `std::condition_variable_any`, whose stop-token overload of `wait()` wakes every waiting worker when the destructor's implicit `request_stop()` fires. No code calls `notify_all()` for shutdown.
 
-## The monitor object: an object that serializes itself
+## Pattern: Monitor object
 
-`ShipmentManifestMonitor` in `src/shipment_manifest_monitor.hpp` answers a
-different question than the pool and the thread pool: not "how many of
-these may exist," but "how do several threads touch the same mutable
-state safely." A monitor object's defining trait is that it owns its own
-mutex and takes it at the top of every public method, so a caller never
-sees the mutex, never names it, and cannot forget to lock it before
-touching the object's state:
+### The problem
+
+During intake, several scan threads add items to and remove items from the same package manifest. A class with a public mutex, or none, leaves locking to every call site, and one missed `lock_guard` corrupts the state under load.
+
+### The solution
+
+A **monitor object** owns its mutex and takes it at the top of every public method, so callers never see or name the lock.
+
+### How C++ models it
+
+`ShipmentManifestMonitor` locks in each method body:
 
 ```cpp
 void add_item(std::string sku, double weight_kg) {
@@ -322,32 +212,23 @@ bool remove_item(const std::string& sku) {
 }
 ```
 
-Contrast this with a plain class that exposes its mutex, or exposes
-nothing but trusts every caller to wrap every call site in a lock. Both of
-those designs push the locking discipline out to every call site, where
-one missed `lock_guard` corrupts shared state in a way that only shows up
-under load, days after the code that introduced the bug shipped. The
-monitor object collapses that discipline into one place: the method body.
-`tests/shipment_manifest_monitor_test.cpp`'s
-`ConcurrentAddItemCallsAreAllSerializedWithoutLoss` test spins up eight
-threads each adding two hundred items to the same manifest and asserts the
-final count is exactly sixteen hundred, every run; without the lock inside
-`add_item()`, that count would be unpredictable and usually short, a
-classic torn-write race on `std::vector::emplace_back`.
+Eight threads adding 200 items each leave exactly 1,600 items, every run. Without the lock, concurrent `emplace_back` calls on the same `std::vector` race and corrupt the heap.
 
-A monitor object still runs every call on the *caller's* thread, one
-caller at a time. That is the crucial distinction from the pattern below:
-a monitor object serializes access, it does not move the work anywhere.
+A monitor object still runs each call on the caller's thread, one caller at a time. It serializes access; it doesn't move work anywhere.
 
-## The active object: decoupling invocation from execution
+## Pattern: Active object
 
-`LabelPrinterActiveObject` in `src/label_printer_active_object.hpp`
-answers a third question: what happens when a caller wants to say "print
-this" and move on immediately, while the actual printing happens on its
-own timeline, one request after another, on a thread the caller never
-touches. `print_label()` builds a `std::packaged_task<PrintResult()>`,
-pushes it onto a private request queue, and returns the matching
-`std::future` without running anything:
+### The problem
+
+A label printer prints one job at a time. Callers want to say "print this" and keep going, not block until the printer finishes, and the printer must never receive two jobs at once.
+
+### The solution
+
+An **active object** turns each method call into a request on a private queue, served in order by its own thread, and returns a future for the result.
+
+### How C++ models it
+
+`LabelPrinterActiveObject::print_label()` builds a `std::packaged_task`, queues it and returns its future without running anything:
 
 ```cpp
 std::future<PrintResult> print_label(ShippingLabelRequest request) {
@@ -365,74 +246,50 @@ std::future<PrintResult> print_label(ShippingLabelRequest request) {
 }
 ```
 
-A single dedicated `std::jthread`, started once in the constructor, pulls
-requests off that queue in submission order and runs them one at a time.
-`tests/label_printer_active_object_test.cpp`'s
-`SubmittingDoesNotBlockTheCallingThread` test asserts `print_label()`
-itself returns in under fifty milliseconds regardless of how long the
-eventual render takes, and `PrintLabelRunsOnADifferentThreadThanTheCaller`
-compares `PrintResult::executed_on` against the calling thread's id to
-prove the work really did move, not merely that the API looks
-asynchronous.
+One `std::jthread`, started in the constructor, runs the requests in submission order. `print_label()` returns in under 50 ms however long the render takes, and `PrintResult::executed_on` differs from the caller's thread id.
 
-The active object's queue skips something the thread pool's queue cannot:
-type erasure. Every request an active object accepts has the exact same
-signature, `print_label(ShippingLabelRequest) -> std::future<PrintResult>`,
-so `requests_` is a plain `std::deque<std::packaged_task<PrintResult()>>`,
-no `Task` wrapper, no `std::move_only_function`, no C++20/23 fork at all.
-That contrast is the clearest way to tell the two patterns apart on sight:
-reach for a thread pool when many different, unrelated jobs need to share
-a pool of workers, and reach for an active object when one narrow request
-type needs its own private, serialized timeline and a caller who never
-blocks on submission.
+### Thread pool or active object
+
+Every request has the same signature, so `requests_` is a plain `std::deque<std::packaged_task<PrintResult()>>`: no type erasure and no C++20/C++23 split.
+
+| | Thread pool | Active object |
+| --- | --- | --- |
+| Work accepted | Many unrelated jobs | One narrow request type |
+| Workers | Several, sharing one queue | One dedicated thread |
+| Order | Any | Submission order |
+| Queue element | Type-erased `Task` | `std::packaged_task<PrintResult()>` |
 
 {% include excalidraw.html name="24-threadpool-vs-active-object" caption="Figure 24.2: the thread pool's shared queue serving concurrent workers against the active object's private queue serving one dedicated worker in order." %}
 
-> **AI sidebar.** Ask an LLM pairing partner for a "thread-safe connection
-> pool" and a frequent result returns a raw pointer or reference from
-> `acquire()` with a separate `release(connection)` method the caller must
-> remember to call on every exit path, including exception paths the
-> generated code rarely considers. That shape reintroduces exactly the bug
-> class RAII exists to close: one forgotten `release()` in an error branch
-> leaks a connection out of the pool forever, and the pool silently shrinks
-> at runtime until no connection is left to acquire. Read that result
-> against this chapter's `Lease`: a pooled resource's handle must be a
-> move-only RAII type whose destructor is the only path back into the free
-> list, with no parallel "give it back" method for a caller to forget. The
-> same generated code often gets the thread pool wrong in a related way,
-> storing tasks in a `std::vector` and locking around a manual index
-> instead of a queue plus a condition variable, which works under a quick
-> manual test and then busy-spins or misses wakeups the moment two workers
-> contend for the same slot. Check whether a generated pool's acquire path
-> returns an RAII handle and whether its worker loop blocks on a condition
-> variable instead of polling; if either answer is no, the shape is wrong
-> even when the code compiles and runs once.
+<blockquote class="ai-sidebar" markdown="1">
+**Specifying a connection pool.** "Write a thread-safe connection pool" doesn't say how a connection comes back, and an `acquire()` that returns a raw pointer plus a `release(connection)` method leaks a connection on every error path that skips the call.
+
+> In `examples/24-resource-pools/src/resource_pool.hpp`, make `ResourcePool<Resource>::acquire(std::chrono::milliseconds)` return a move-only `Lease` whose destructor is the only path back to the free list, with no public release method. Wait with a `std::condition_variable` predicate under `std::unique_lock`, never a sleep loop, and throw `std::runtime_error` on timeout or after `shutdown()`. Build connections only through the `ConnectionFactory` passed to `TrackingStoreConnectionPool`, and never more than the capacity.
+
+Check: `ctest --preset cpp23 -R 'ResourcePoolTest|TrackingStoreConnectionPoolTest'` passes, and the reply has no `release(` method callers can reach.
+</blockquote>
+
+## When not to use it
+
+| Pattern | Skip it when | Instead |
+| --- | --- | --- |
+| Resource pool | The resource is cheap to build, and construction never shows in a profile | Construct directly |
+| Thread pool | The work is I/O-bound and mostly waits | Coroutines or async I/O; blocked threads are an expensive way to wait |
+| Thread pool sized past the core count | The work is CPU-bound | Size to the cores; extra threads add only context switches |
+| Monitor object | One thread ever touches the object | A plain class; every lock is waste |
+| Monitor object | The need is an ordered queue of operations, not shared fields | An active object |
+| Active object | Tasks have no ordering requirement, or the caller can block | A thread pool, or a direct synchronous call |
 
 ## Build, run, observe
 
-Every command below runs with the local clang, CMake, Ninja, and Conan
-toolchain from the prerequisites; there is no container anywhere in this loop.
-From the repository root, the root superbuild picks up
-`examples/24-resource-pools` automatically:
+From the repository root, the superbuild picks up `examples/24-resource-pools`:
 
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23
 scripts/build.sh cpp20 && scripts/verify.sh cpp20
 ```
 
-`scripts/verify.sh` runs CTest, which discovers this example's GoogleTest
-cases through `gtest_discover_tests`: 19 cases under the `cpp23` preset, 18
-under `cpp20`, the difference being the one `std::expected`-specific case
-that only compiles under C++23. Observed locally on Fedora 44 / clang
-22.1.8:
-
-```
-100% tests passed, 0 tests failed out of 19   # cpp23
-100% tests passed, 0 tests failed out of 18   # cpp20
-```
-
-To see all five patterns run end to end against real output rather than
-an assertion that says they work, run the example's own demo script:
+All 19 cases pass under `cpp23` and 18 under `cpp20`; the `std::expected` case compiles only under C++23. The demo runs all four shapes:
 
 ```sh
 examples/24-resource-pools/demo.sh cpp23
@@ -461,71 +318,16 @@ Printed SHM-4002 on a different thread
 Printed SHM-4003 on a different thread
 ```
 
-Running `examples/24-resource-pools/demo.sh cpp20` prints the same output
-except the `try_acquire` line, which reads "failed (no reason available)"
-instead of naming the exhaustion reason, since `PoolAcquireError` and
-`describe()` only compile under the `cpp23` preset. Every other line is
-identical, because the generic pool, the thread pool's task-execution
-guarantees, the monitor object, and the active object all behave
-identically under both standards; only the one lookup's failure reporting
-and the task queue's internal storage moved forward.
+Under `cpp20` the `try_acquire` line reads "failed (no reason available)"; every other line is identical.
 
-## When not to use it
+Two experiments show what each guard buys:
 
-A resource pool pays for its added complexity when building the resource
-is expensive relative to using it, and when demand is bursty enough that
-reuse saves work a cache of size one could not. A `TrackingStoreConnection`
-clears that bar easily; a cheap-to-construct value type never should be
-pooled, because the pool's bookkeeping, the mutex, the condition variable,
-the free list, costs more than just building a fresh instance every time.
-If nothing about constructing the resource shows up in a profile, skip the
-pool and construct directly.
-
-A thread pool is worth building when the work is CPU-bound and plentiful
-enough that several pieces of it need to run concurrently; for
-I/O-bound work that spends most of its time waiting on a network call, an
-async/await or coroutine-based design usually beats a thread pool outright,
-because threads sitting blocked on I/O are a more expensive way to wait
-than a suspended coroutine. A pool sized larger than the machine's core
-count for CPU-bound work buys nothing but context-switch overhead.
-
-A monitor object is the right choice when several threads need to call the
-*same* object's methods directly and concurrently. It is the wrong choice
-when only one thread ever touches the object, the lock-guard overhead on
-every call is pure waste there, and it is also the wrong choice when the
-real need is a serialized queue of distinct operations rather than
-protected access to shared fields, which is what an active object is for.
-
-An active object is the right choice when a caller must never block on
-submission and when the receiving side needs one serialized timeline, a
-printer, a single outbound connection, a hardware device that cannot
-accept concurrent commands. It is overkill for work that could just run
-on a thread pool with no ordering requirement between tasks, and it adds
-a queue, a future, and a dedicated thread's lifetime to manage for what a
-synchronous call would have done in one line if blocking the caller were
-acceptable. Across all five shapes, the test that justifies the pattern is
-the same one the forces framing teaches: name the plain alternative, a direct
-constructor call, a single worker thread, an ordinary method call, next to
-the pattern, and let a real bound, a real measured cost, or a real
-concurrent-access bug decide between them.
+- **Empty the lease destructor.** In a scratch copy, make `~Lease()` an empty body. Three cases fail: leases no longer return their resource, and the pool calls `create()` more than twice.
+- **Drop the monitor's lock.** In a scratch copy, delete the `std::lock_guard` in `ShipmentManifestMonitor::add_item()`. The eight-thread intake case aborts or segfaults on every run as the `std::vector` is corrupted.
 
 ## For deeper coverage
 
-- Douglas C. Schmidt, Michael Stal, Hans Rohnert, and Frank Buschmann,
-  [*Pattern-Oriented Software Architecture, Volume 2: Patterns for Concurrent and Networked Objects*](https://www.wiley.com/en-us/Pattern-Oriented+Software+Architecture,+Volume+2,+Patterns+for+Concurrent+and+Networked+Objects-p-9781118725177) (Wiley, 2000): the original catalogue
-  entries for Monitor Object and Active Object this chapter teaches as
-  idioms, plus the half-sync/half-async reasoning behind a thread pool's
-  queue.
-- Anthony Williams, [*C++ Concurrency in Action*](https://www.manning.com/books/c-plus-plus-concurrency-in-action-second-edition), Second Edition (Manning,
-  2019): the deep mechanics behind every primitive this chapter uses
-  without re-deriving, `std::mutex`, `std::condition_variable`,
-  `std::jthread`, and the memory model underneath them. This book's
-  sibling site, [*C++ Concurrency and Parallelism*](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/), builds on the same ground.
-- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official
-  [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind
-  `examples/24-resource-pools`'s suite, which asserts concurrent behavior
-  under bounded waits rather than sleeping and hoping.
-- The full reading list behind this book's opinions lives on the
-  [bibliography page]({{ '/bibliography/' | relative_url }}); each
-  citation there is a pointer to the full book, not a substitute for
-  reading it.
+- Douglas C. Schmidt, Michael Stal, Hans Rohnert, and Frank Buschmann, [*Pattern-Oriented Software Architecture, Volume 2: Patterns for Concurrent and Networked Objects*](https://www.wiley.com/en-us/Pattern-Oriented+Software+Architecture,+Volume+2,+Patterns+for+Concurrent+and+Networked+Objects-p-9781118725177) (Wiley, 2000): the original entries for Monitor Object and Active Object, plus the half-sync/half-async reasoning behind a thread pool's queue.
+- Anthony Williams, [*C++ Concurrency in Action*](https://www.manning.com/books/c-plus-plus-concurrency-in-action-second-edition), Second Edition (Manning, 2019): the mechanics behind `std::mutex`, `std::condition_variable`, `std::jthread` and the memory model. The sibling site [*C++ Concurrency and Parallelism*](https://patterncatalyst.github.io/cpp-concurrency-and-parallelism/) builds on the same ground.
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/24-resource-pools`, which checks concurrent behavior under bounded waits rather than sleeps.
+- The full reading list lives on the [bibliography page]({{ '/bibliography/' | relative_url }}).
