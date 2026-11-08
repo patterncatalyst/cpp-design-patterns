@@ -354,13 +354,11 @@ Each technique needs a named friction. Without one, it adds a layer with nothing
 - **Bridge.** Use it for two axes that vary in practice. One notification kind over one transport is one class. Split when a second kind or transport is in hand or clearly coming.
 - **PImpl.** It costs a hand-written destructor, copy constructor and copy assignment, plus a heap allocation and an indirection per object. It pays when the implementation is large, changes often, or pulls in a third-party header the rest of the code shouldn't include. A small, stable class gains nothing.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying an adapter and a facade.** "Wrap this third-party rate API" leaves inheritance versus composition open, and "add a shipping facade" leaves open whether callers can still reach the subsystems. State both:
-
-> Write `LegacyFreightRateAdapter` implementing `RateSource`, holding `LegacyGlobalFreightRateApi` as a private data member rather than inheriting from it, converting kilograms to grams and `DestinationZone` to the legacy zone code. Write `ShippingFacade` with one public `quote_and_label()` that quotes, issues the tracking number, then renders the label, and no accessors for its subsystems.
-
-Run `ctest --preset cpp23 -R 'LegacyFreightRateAdapter|ShippingFacade'`, and check that the adapter's base list names only `RateSource` and that `ShippingFacade` has no subsystem getter.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "Write `LegacyFreightRateAdapter` implementing `RateSource`, holding `LegacyGlobalFreightRateApi` as a private data member rather than inheriting from it, converting kilograms to grams and `DestinationZone` to the legacy zone code. Write `ShippingFacade` with one public `quote_and_label()` that quotes, issues the tracking number, then renders the label, and no accessors for its subsystems."
+>
+> Run `ctest --preset cpp23 -R 'LegacyFreightRateAdapter|ShippingFacade'`, and check that the adapter's base list names only `RateSource` and that `ShippingFacade` has no subsystem getter.
 
 ## Build, run, observe
 

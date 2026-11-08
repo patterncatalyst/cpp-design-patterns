@@ -251,13 +251,11 @@ void dispatch_via_constexpr_table(const CarrierMessage& message, TrackingSink& s
 
 The bounds check stays: the `static_assert` covers every declared enumerator, not a garbled integer from outside the enum's range.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a dispatch table.** "Add a dispatch table for shipment events" doesn't say whether the key set is closed or open, and a `std::map<CarrierMessageType, std::function<...>>` filled by one `insert()` per enumerator pays type erasure for a closed set and notices nothing when a row is missing.
-
-> In `examples/25-dispatch-tables/src/carrier_message.hpp`, add a `ReturnedToSender` enumerator at the end of `CarrierMessageType` and raise `kCarrierMessageTypeCount` to 7. Declare and define `handle_returned_to_sender` in `message_handlers.hpp` and `.cpp`. In `dispatch_table_constexpr.hpp`, add its row to `make_dispatch_table()` as `table[message_type_index(CarrierMessageType::ReturnedToSender)] = ...`, keep the `std::ranges::none_of` `static_assert`, and use no `std::map` or `std::function` for the closed set. Give `MessageDispatchMap` a `"RETURNED_TO_SENDER"` row, and append the handler as the last row of `g_jump_table` so its rows stay in enum declaration order.
-
-Check: the build succeeds, `ctest --preset cpp23 -R 'JumpTableTest|ConstexprDispatchTableTest|DispatchMapTest'` passes, and deleting the new `make_dispatch_table()` row fails the build at the `static_assert`.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/25-dispatch-tables/src/carrier_message.hpp`, add a `ReturnedToSender` enumerator at the end of `CarrierMessageType` and raise `kCarrierMessageTypeCount` to 7. Declare and define `handle_returned_to_sender` in `message_handlers.hpp` and `.cpp`. In `dispatch_table_constexpr.hpp`, add its row to `make_dispatch_table()` as `table[message_type_index(CarrierMessageType::ReturnedToSender)] = ...`, keep the `std::ranges::none_of` `static_assert`, and use no `std::map` or `std::function` for the closed set. Give `MessageDispatchMap` a `"RETURNED_TO_SENDER"` row, and append the handler as the last row of `g_jump_table` so its rows stay in enum declaration order."
+>
+> Check: the build succeeds, `ctest --preset cpp23 -R 'JumpTableTest|ConstexprDispatchTableTest|DispatchMapTest'` passes, and deleting the new `make_dispatch_table()` row fails the build at the `static_assert`.
 
 ## When not to use it
 

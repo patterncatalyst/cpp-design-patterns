@@ -51,13 +51,11 @@ Feathers runs first because it produces what Fowler's catalogue assumes. Fowler 
 
 The order can't run backward because a refactoring is only as safe as the tests that verify it, and tests can't verify what they can't observe. Replace Conditional with Polymorphism on a dispatch chain that reads a live clock means each run may land on a different side of a seasonal boundary, so a failure after the refactoring looks the same as a failure caused by the calendar.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a cleanup.** "Clean up this legacy class" doesn't say whether behavior is pinned first, and a reply can go straight to refactorings with nothing to show they preserved behavior. State the order:
-
-> In `examples/29-refactoring-workflow`, leave `LegacyEtaEstimator` unchanged. First pin `base_transit_days()` and `base_surcharge()` with characterization tests. Then add a `Clock` interface with `today()`, a `SystemClock` and a `FixedClock`, and a `SeamedEtaEstimator` whose no-argument constructor builds a `SystemClock` and whose `explicit` overload takes `const Clock&`; change only the clock read. Rerun the characterization values against it with a non-holiday `FixedClock`. Only then write `ModernEtaEstimator`: Extract Function for the holiday and surcharge rules, a `CarrierProfile` hierarchy chosen by `carrier_profile_for()` in place of the `if`/`else` chain, and a `ShipmentProfile` parameter object. Check that it matches `SeamedEtaEstimator` on every carrier, a July date and a December date.
-
-Check with `ctest --preset cpp23 -R 'DependencyBreak|ModernRefactor'`, and confirm a December `FixedClock` gives 4 transit days and an $8.00 surcharge for a ground same-zone shipment.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/29-refactoring-workflow`, leave `LegacyEtaEstimator` unchanged. First pin `base_transit_days()` and `base_surcharge()` with characterization tests. Then add a `Clock` interface with `today()`, a `SystemClock` and a `FixedClock`, and a `SeamedEtaEstimator` whose no-argument constructor builds a `SystemClock` and whose `explicit` overload takes `const Clock&`; change only the clock read. Rerun the characterization values against it with a non-holiday `FixedClock`. Only then write `ModernEtaEstimator`: Extract Function for the holiday and surcharge rules, a `CarrierProfile` hierarchy chosen by `carrier_profile_for()` in place of the `if`/`else` chain, and a `ShipmentProfile` parameter object. Check that it matches `SeamedEtaEstimator` on every carrier, a July date and a December date."
+>
+> Check with `ctest --preset cpp23 -R 'DependencyBreak|ModernRefactor'`, and confirm a December `FixedClock` gives 4 transit days and an $8.00 surcharge for a ground same-zone shipment.
 
 ## Running one component through the full sequence
 

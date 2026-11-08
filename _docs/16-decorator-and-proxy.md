@@ -189,13 +189,11 @@ Both enforce the same clearance rule. Only how a caller learns about a denial ch
 - **Proxy.** An object that is cheap to construct and open to every caller needs no surrogate. Add a lazy proxy after measuring that construction matters, and an access proxy when a second caller with lesser clearance exists.
 - **A cache.** Decide which force is in play before choosing the shape. A cache that composes with other concerns belongs in a decorator stack; a cache that only gates one expensive call is a proxy.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a cache.** "Add caching to the rate source" leaves open whether the cache is a new layer or a `cache_` field and an `if (cached) return cached;` branch inside `TariffTableRateSource::quote()`, and where the layer sits relative to the surcharge. State both:
-
-> Add `CachingRateSource` as a decorator implementing `RateSource` that owns its inner source by `std::unique_ptr`, keyed on weight, zone and declared value. Leave `TariffTableRateSource` unchanged. Place the cache inside `SurchargeRateSource`, so a surcharge rate change applies to the next quote.
-
-Run `ctest --preset cpp23 -R 'CachingRateSource|DecoratorStack'`, and check that `TariffTableRateSource` gained no `cache_` member.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "Add `CachingRateSource` as a decorator implementing `RateSource` that owns its inner source by `std::unique_ptr`, keyed on weight, zone and declared value. Leave `TariffTableRateSource` unchanged. Place the cache inside `SurchargeRateSource`, so a surcharge rate change applies to the next quote."
+>
+> Run `ctest --preset cpp23 -R 'CachingRateSource|DecoratorStack'`, and check that `TariffTableRateSource` gained no `cache_` member.
 
 ## Build, run, observe
 

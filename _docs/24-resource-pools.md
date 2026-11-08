@@ -261,13 +261,11 @@ Every request has the same signature, so `requests_` is a plain `std::deque<std:
 
 {% include excalidraw.html name="24-threadpool-vs-active-object" caption="Figure 24.2: the thread pool's shared queue serving concurrent workers against the active object's private queue serving one dedicated worker in order." %}
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a connection pool.** "Write a thread-safe connection pool" doesn't say how a connection comes back, and an `acquire()` that returns a raw pointer plus a `release(connection)` method leaks a connection on every error path that skips the call.
-
-> In `examples/24-resource-pools/src/resource_pool.hpp`, make `ResourcePool<Resource>::acquire(std::chrono::milliseconds)` return a move-only `Lease` whose destructor is the only path back to the free list, with no public release method. Wait with a `std::condition_variable` predicate under `std::unique_lock`, never a sleep loop, and throw `std::runtime_error` on timeout or after `shutdown()`. Build connections only through the `ConnectionFactory` passed to `TrackingStoreConnectionPool`, and never more than the capacity.
-
-Check: `ctest --preset cpp23 -R 'ResourcePoolTest|TrackingStoreConnectionPoolTest'` passes, and the reply has no `release(` method callers can reach.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/24-resource-pools/src/resource_pool.hpp`, make `ResourcePool<Resource>::acquire(std::chrono::milliseconds)` return a move-only `Lease` whose destructor is the only path back to the free list, with no public release method. Wait with a `std::condition_variable` predicate under `std::unique_lock`, never a sleep loop, and throw `std::runtime_error` on timeout or after `shutdown()`. Build connections only through the `ConnectionFactory` passed to `TrackingStoreConnectionPool`, and never more than the capacity."
+>
+> Check: `ctest --preset cpp23 -R 'ResourcePoolTest|TrackingStoreConnectionPoolTest'` passes, and the reply has no `release(` method callers can reach.
 
 ## When not to use it
 

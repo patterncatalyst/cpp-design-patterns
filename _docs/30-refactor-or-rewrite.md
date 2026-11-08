@@ -166,13 +166,11 @@ std::expected<Quote, PricingError> try_quote(const ShipmentRequest& request) con
 
 Neither engine knows `std::expected` exists. `try_quote()` is written once in `PricingEngine` using the non-virtual interface idiom and calls the `quote()` override every engine already has. The caller-facing contract gained a typed failure path, and neither the legacy engine nor its replacement changed.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a rewrite.** "Modernize this legacy pricing engine" doesn't say which behavior must survive, and a reply built from inferred pricing rules can drop a negotiated discount or a rounding rule in a branch it deletes. Name the rules and the bar:
-
-> In `examples/30-refactor-or-rewrite`, write `ModernPricingEngine` implementing `PricingEngine::quote()`. Keep every rule `LegacyPricingEngine` encodes: the 15-lane zone matrix as a named `zone_rate_card()`, ACME-2019's $5.00 off subtotals above $20.00, GLOBEX's 10% off, and rounding every total up to the nearest quarter dollar. Replace the customer `if`/`else` chain with a `CustomerAdjustment` lookup table. Don't change `LegacyPricingEngine` or the expected totals in `tests/pricing_characterization_cases.hpp`; the new engine must match all seven cases. Then put both behind `StranglerPricingRouter` and confirm `Mode::Compare` records zero disagreements.
-
-Check with `ctest --preset cpp23 -R 'ModernPricingEngine|Agreement|Strangler'`, and reject a reply that edits an expected total to make a case pass.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/30-refactor-or-rewrite`, write `ModernPricingEngine` implementing `PricingEngine::quote()`. Keep every rule `LegacyPricingEngine` encodes: the 15-lane zone matrix as a named `zone_rate_card()`, ACME-2019's $5.00 off subtotals above $20.00, GLOBEX's 10% off, and rounding every total up to the nearest quarter dollar. Replace the customer `if`/`else` chain with a `CustomerAdjustment` lookup table. Don't change `LegacyPricingEngine` or the expected totals in `tests/pricing_characterization_cases.hpp`; the new engine must match all seven cases. Then put both behind `StranglerPricingRouter` and confirm `Mode::Compare` records zero disagreements."
+>
+> Check with `ctest --preset cpp23 -R 'ModernPricingEngine|Agreement|Strangler'`, and reject a reply that edits an expected total to make a case pass.
 
 ## Build, run, observe
 

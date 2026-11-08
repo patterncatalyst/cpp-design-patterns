@@ -123,13 +123,11 @@ void ExpectSpecCompliantClassification(const UsageTierStrategy& strategy) {
 
 The bug has a price. At exactly 10,000 requests, Growth bills a flat $99.00; the wrong classification keeps the customer on Starter's $0.02 per request, a $200.00 bill and a $101.00 overcharge from one comparison operator. Nothing about a three-branch Strategy looks risky enough to skip testing. The risk was never the pattern's complexity; it was the boundary.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a Strategy.** "Write a tier classifier" doesn't say which way each boundary falls, and a reply can choose `<=` where the spec means `<`. State the boundaries and the gate:
-
-> In `examples/32-ai-and-llm-tools`, implement `CorrectUsageTierStrategy::Classify(long monthly_requests)` against the `UsageTierStrategy` interface. Return `UsageTier::Starter` below 10,000, `UsageTier::Growth` from 10,000 through 99,999, and `UsageTier::Scale` from 100,000; both lower bounds are inclusive. Use early returns with `<` comparisons only. Don't change `ExpectSpecCompliantClassification` or `MonthlyBillUsd`. At exactly 10,000 requests the bill must be $99.00.
-
-Check with `ctest --preset cpp23 -R 'UsageTierClassification|MonthlyBillUsd'`; all six pass only if both boundaries are inclusive.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/32-ai-and-llm-tools`, implement `CorrectUsageTierStrategy::Classify(long monthly_requests)` against the `UsageTierStrategy` interface. Return `UsageTier::Starter` below 10,000, `UsageTier::Growth` from 10,000 through 99,999, and `UsageTier::Scale` from 100,000; both lower bounds are inclusive. Use early returns with `<` comparisons only. Don't change `ExpectSpecCompliantClassification` or `MonthlyBillUsd`. At exactly 10,000 requests the bill must be $99.00."
+>
+> Check with `ctest --preset cpp23 -R 'UsageTierClassification|MonthlyBillUsd'`; all six pass only if both boundaries are inclusive.
 
 ## Build, run, observe
 

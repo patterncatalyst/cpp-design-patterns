@@ -153,13 +153,11 @@ The order is fixed:
 
 In order, the three steps turn "I'm fairly sure this still works" into "every test that passed before still passes, plus one new test for what I meant to change."
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a seam.** "Make this testable" doesn't say which seam, whether production code may change shape, or what must stay the same. A reply can intercept `system_clock::now()` inside `seam27_tests` and leave the hidden dependency in place. State the decisions:
-
-> In `examples/27-seams`, keep `LegacyShipmentSlaChecker` unchanged as the characterized reference. Add a `Clock` interface with a pure virtual `now()` and a `SystemClock` that forwards to `std::chrono::system_clock::now()`. Give `ShipmentSlaChecker` an `explicit` constructor taking `const Clock&`, stored as `std::reference_wrapper<const Clock>`. Don't intercept `now()` with macros or link tricks. Write a GoogleMock `MockClock` and pin `is_breached()` exactly at the deadline and one nanosecond either side, with the deadline counted as breached (`>=`). Leave `late_fee_cents()`'s signature alone and break its `grace_period()` dependency with a link seam: one declaration in `grace_policy.hpp`, a production definition for `seam27_demo` and a 0-minute test double for `seam27_tests`.
-
-Check the reply with `ctest --preset cpp23 -R 'ShipmentSlaChecker|LateFeeSchedule'`, and confirm `grace_policy_production.cpp` isn't in the `seam27_tests` sources.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/27-seams`, keep `LegacyShipmentSlaChecker` unchanged as the characterized reference. Add a `Clock` interface with a pure virtual `now()` and a `SystemClock` that forwards to `std::chrono::system_clock::now()`. Give `ShipmentSlaChecker` an `explicit` constructor taking `const Clock&`, stored as `std::reference_wrapper<const Clock>`. Don't intercept `now()` with macros or link tricks. Write a GoogleMock `MockClock` and pin `is_breached()` exactly at the deadline and one nanosecond either side, with the deadline counted as breached (`>=`). Leave `late_fee_cents()`'s signature alone and break its `grace_period()` dependency with a link seam: one declaration in `grace_policy.hpp`, a production definition for `seam27_demo` and a 0-minute test double for `seam27_tests`."
+>
+> Check the reply with `ctest --preset cpp23 -R 'ShipmentSlaChecker|LateFeeSchedule'`, and confirm `grace_policy_production.cpp` isn't in the `seam27_tests` sources.
 
 ## Build, run, observe
 

@@ -227,13 +227,11 @@ The check isn't `assert()`. Both presets set `CMAKE_BUILD_TYPE` to `Release`, CM
 
 Use a death test when a violation is meant to be fatal. A check that `quote_cost()` threw or returned a sentinel would test a gentler contract than the one it promises. Death tests fork, so they're slower and less parallel-friendly; keep them for the few invariants that should end the program, not for input validation with a normal return-value contract.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying tests.** "Write tests for `QuoteIntake`" doesn't say which collaborators to mock, which interactions matter, or which checks must stop the test. State those:
-
-> In `examples/07-testing-with-gtest`, add cases for `QuoteIntake::submit()` to `tests/quote_intake_test.cpp` using the existing `QuoteIntakeTest` fixture and `MockQuoteLedger` from `tests/mock_quote_ledger.hpp`. For an invalid request, expect `record(_)` with `Times(0)`. For a valid one, match the argument with `Field(&Quote::amount_cents, Eq(...))` using the price `quote_cost()` gives. Use `ASSERT_TRUE` on `has_value()` before dereferencing the result. Don't mock anything in the `validate_shipment()` or `quote_cost()` cases; call them directly.
-
-Check with `ctest --preset cpp23 -R QuoteIntake`, and reject any case whose only assertion restates what the mock was told to return.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/07-testing-with-gtest`, add cases for `QuoteIntake::submit()` to `tests/quote_intake_test.cpp` using the existing `QuoteIntakeTest` fixture and `MockQuoteLedger` from `tests/mock_quote_ledger.hpp`. For an invalid request, expect `record(_)` with `Times(0)`. For a valid one, match the argument with `Field(&Quote::amount_cents, Eq(...))` using the price `quote_cost()` gives. Use `ASSERT_TRUE` on `has_value()` before dereferencing the result. Don't mock anything in the `validate_shipment()` or `quote_cost()` cases; call them directly."
+>
+> Check with `ctest --preset cpp23 -R QuoteIntake`, and reject any case whose only assertion restates what the mock was told to return.
 
 ## When not to use these styles
 

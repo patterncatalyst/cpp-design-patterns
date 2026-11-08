@@ -225,13 +225,11 @@ std::expected<Totals, std::string> try_totals_for(const Invoice& invoice) const 
 
 Both reject the same condition; only the shape of the rejection changes. The standard changes how a failure is reported, not how the responsibilities split, where the extension point is, or whether a subtype keeps its parent's promise.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a SOLID refactor.** "Apply SOLID to `Invoice`" doesn't say which reasons to change justify a split, whether a second rule exists, or which invariant a subtype must keep. State those:
-
-> In `examples/03-solid-first-principles`, keep `InvoiceCalculator`, `InvoiceFormatter` and `InMemoryInvoiceRepository` as three concrete types with no `I`-prefixed interfaces. Add a new rule as a class deriving from `InvoiceRule` in `src/invoice_rules.hpp` without editing `InvoiceCalculator::totals_for()`. Any new discount subtype derives from `PercentageDiscountRule` and overrides only `discount_rate()`; `adjustment_for()` stays `final` and keeps the clamp to `[0, 1]`.
-
-Check the reply with `ctest --preset cpp23 -R 'InvoiceCalculator|LiskovSubstitution'`, and reject any diff that touches `totals_for()` or removes `final`.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/03-solid-first-principles`, keep `InvoiceCalculator`, `InvoiceFormatter` and `InMemoryInvoiceRepository` as three concrete types with no `I`-prefixed interfaces. Add a new rule as a class deriving from `InvoiceRule` in `src/invoice_rules.hpp` without editing `InvoiceCalculator::totals_for()`. Any new discount subtype derives from `PercentageDiscountRule` and overrides only `discount_rate()`; `adjustment_for()` stays `final` and keeps the clamp to `[0, 1]`."
+>
+> Check the reply with `ctest --preset cpp23 -R 'InvoiceCalculator|LiskovSubstitution'`, and reject any diff that touches `totals_for()` or removes `final`.
 
 ## When SOLID works against you
 

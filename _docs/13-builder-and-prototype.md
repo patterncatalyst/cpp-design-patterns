@@ -230,13 +230,11 @@ Neither pattern changes shape between the standards. The difference is one call 
 - **Builder with nothing to validate.** If callers set two or three fields and there's no cross-field invariant, a few factory functions that each return a complete object read better than a chain used two calls deep. Builder's value is concentrated in `build()`.
 - **Prototype for one kind.** With one package kind, or packages that differ on every order, there's nothing to clone. A plain `Package` struct filled in at the call site beats a `PackageTemplate` hierarchy with one subclass.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a builder and a prototype.** "Add hazardous-materials packages" leaves open where the new fields are validated and whether the registry clones or shares. State it:
-
-> In `examples/13-builder-prototype`, add `HazardousMaterialsPackage` deriving from `PackageTemplate`, with its own `kind()` of `"hazardous-materials"`, a `clone()` that returns `std::make_unique<HazardousMaterialsPackage>(*this)`, and a `make_package()` branch so it survives `serialize_manifest()` and `deserialize_manifest()`. Register it in `PackageTemplateRegistry`. Add `ManifestBuilder::hazmat_contact(std::string)` and check in `validation_error()`, not in any setter, that a manifest with a hazardous package has a contact. Add tests that two clones are independent after one is changed, that `build()` throws `std::invalid_argument` without the contact, and that a round trip gives `manifests_equal()`.
-
-Run `ctest --preset cpp23` and check that no setter in `ManifestBuilder` throws.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/13-builder-prototype`, add `HazardousMaterialsPackage` deriving from `PackageTemplate`, with its own `kind()` of `"hazardous-materials"`, a `clone()` that returns `std::make_unique<HazardousMaterialsPackage>(*this)`, and a `make_package()` branch so it survives `serialize_manifest()` and `deserialize_manifest()`. Register it in `PackageTemplateRegistry`. Add `ManifestBuilder::hazmat_contact(std::string)` and check in `validation_error()`, not in any setter, that a manifest with a hazardous package has a contact. Add tests that two clones are independent after one is changed, that `build()` throws `std::invalid_argument` without the contact, and that a round trip gives `manifests_equal()`."
+>
+> Run `ctest --preset cpp23` and check that no setter in `ManifestBuilder` throws.
 
 ## Build, run, observe
 

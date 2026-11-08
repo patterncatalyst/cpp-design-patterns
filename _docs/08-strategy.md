@@ -193,13 +193,11 @@ The Strategy is the same in both columns. Only the way `RateEstimator` reports a
 - **A short branch one team owns.** Three carriers in a four-line `if`/`else if` inside one function are visible at a glance and easy to review. Move to a Strategy when the carrier list grows past a handful, when different teams own different carriers' pricing, or when the choice must come from configuration at runtime.
 - **A compile-time policy where the choice is a runtime input.** If the carrier is read from a request, a template parameter can't hold it; use the `std::function` or the interface.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a strategy.** "Make the shipping rate pluggable" leaves open which of the three expressions to use, where the rate math lives and how a bad shipment is reported. State them:
-
-> In `examples/08-strategy`, add a dimensional-weight carrier. Put the rate math in one free function in `shipping_domain.cpp`, then expose it three ways that all call that function: a `RateStrategy` subclass for `RateEstimator`, a `RateFn` factory for `QuoteBook`, and a policy type that satisfies the `RatePolicy` concept for `StaticRateCalculator`. Keep money in `Cents`, round fractional cents up, and add tests that quote the same `Shipment` through all three and expect the same `Cents`.
-
-Run `ctest --preset cpp23` and check that the reply added no second copy of the rate math.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/08-strategy`, add a dimensional-weight carrier. Put the rate math in one free function in `shipping_domain.cpp`, then expose it three ways that all call that function: a `RateStrategy` subclass for `RateEstimator`, a `RateFn` factory for `QuoteBook`, and a policy type that satisfies the `RatePolicy` concept for `StaticRateCalculator`. Keep money in `Cents`, round fractional cents up, and add tests that quote the same `Shipment` through all three and expect the same `Cents`."
+>
+> Run `ctest --preset cpp23` and check that the reply added no second copy of the rate math.
 
 ## Build, run, observe
 

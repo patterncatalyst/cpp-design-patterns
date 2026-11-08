@@ -188,13 +188,11 @@ DeliveryAuditor auditor(email_gateway);
 
 A container also costs a pinned and audited dependency, a binding DSL every new team member has to learn, and distance between "this type is constructed" and the line that constructs it. For a graph like this one, and for many production services, the manual composition root is the better call.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying dependency injection.** "Add DI to `OrderNotificationPolicy`" doesn't say how many interfaces, who owns each collaborator, or where wiring happens. State those:
-
-> In `examples/04-solid-dependency-inversion`, add a push-notification channel as `PushGateway` implementing only `MessageSender` from `src/gateway_interfaces.hpp`. Don't add an interface per class, a registration map or a container. Policies keep taking role interfaces by reference (`MessageSender&`, `TemplateRenderer&`, `DeliveryStatusProvider&`), not `std::shared_ptr`. Construct `PushGateway` once in `src/demo_main.cpp` next to `EmailGateway` and `SmsGateway`, and don't touch `OrderNotificationPolicy`.
-
-Check with `ctest --preset cpp23`, and reject a diff that edits `src/order_notification_policy.hpp` or makes `PushGateway` derive from `TemplateRenderer`.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/04-solid-dependency-inversion`, add a push-notification channel as `PushGateway` implementing only `MessageSender` from `src/gateway_interfaces.hpp`. Don't add an interface per class, a registration map or a container. Policies keep taking role interfaces by reference (`MessageSender&`, `TemplateRenderer&`, `DeliveryStatusProvider&`), not `std::shared_ptr`. Construct `PushGateway` once in `src/demo_main.cpp` next to `EmailGateway` and `SmsGateway`, and don't touch `OrderNotificationPolicy`."
+>
+> Check with `ctest --preset cpp23`, and reject a diff that edits `src/order_notification_policy.hpp` or makes `PushGateway` derive from `TemplateRenderer`.
 
 ## When not to invert
 

@@ -182,13 +182,11 @@ std::expected<void, std::string> RateQuoteLedger::try_record(std::string label, 
 
 Both call the same `Impl::record()`; only how the caller learns of the rejection changes.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying uniform handling.** "Make these quoters work the same way" doesn't say whether the quoter types may change, and the plain answer, an `IQuoter` base, edits types you may not own.
-
-> In `examples/22-type-erasure-pimpl/src/any_rate_quoter.hpp`, write `AnyRateQuoter` as a value type over any type satisfying the `Quotable` concept, with a private `Concept` and a `Model<Quoter>`, a copy constructor that deep-copies through `clone()`, and defaulted moves. Don't change `FlatRateQuoter`, `WeightBasedQuoter`, `SurgeQuoter` or `InsuredQuoter`. Keep `RateQuoteLedger` behind a `std::unique_ptr<Impl>`, with the destructor, copies and moves declared in `rate_quote_ledger.hpp` and defined in `rate_quote_ledger.cpp`.
-
-Check: `ctest --preset cpp23 -R 'AnyRateQuoterTest|RateQuoteLedgerTest'` passes, and `rate_quoters.hpp` is unchanged.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/22-type-erasure-pimpl/src/any_rate_quoter.hpp`, write `AnyRateQuoter` as a value type over any type satisfying the `Quotable` concept, with a private `Concept` and a `Model<Quoter>`, a copy constructor that deep-copies through `clone()`, and defaulted moves. Don't change `FlatRateQuoter`, `WeightBasedQuoter`, `SurgeQuoter` or `InsuredQuoter`. Keep `RateQuoteLedger` behind a `std::unique_ptr<Impl>`, with the destructor, copies and moves declared in `rate_quote_ledger.hpp` and defined in `rate_quote_ledger.cpp`."
+>
+> Check: `ctest --preset cpp23 -R 'AnyRateQuoterTest|RateQuoteLedgerTest'` passes, and `rate_quoters.hpp` is unchanged.
 
 ## When not to use it
 

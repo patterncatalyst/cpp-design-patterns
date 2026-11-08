@@ -242,13 +242,11 @@ explicit PackageGroup(std::string label,
 - **Flyweight.** Three SKUs referenced by a dozen line items save nothing worth the indirection; put the `SkuDescriptor` fields on `Item`. The pool pays once references per value climb into the hundreds or thousands and the copies show on a profiler.
 - **Null Object.** Use it when an absent collaborator is a normal state, as an unwired exception handler is. When the collaborator must exist, such as a database connection a service can't run without, a Null Object turns a loud early failure into a silent one; throw or return a typed error at construction instead.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a flyweight pool.** "Cache this lookup" leaves open who owns the cached value and whether callers get a shared instance or a copy. State both:
-
-> Write `SkuCatalog::get(std::string_view sku_code)` returning `std::shared_ptr<const SkuDescriptor>`. Materialize a descriptor from the master table on first request, store it in `flyweights_`, and return the same pointer on every later call. Throw `std::out_of_range` for an unregistered code. Never return a raw pointer, reference or iterator into either map, and don't materialize every registered SKU up front.
-
-Run `ctest --preset cpp23 -R SkuCatalog`, and check that two `get()` calls for one code return the same `.get()` address.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "Write `SkuCatalog::get(std::string_view sku_code)` returning `std::shared_ptr<const SkuDescriptor>`. Materialize a descriptor from the master table on first request, store it in `flyweights_`, and return the same pointer on every later call. Throw `std::out_of_range` for an unregistered code. Never return a raw pointer, reference or iterator into either map, and don't materialize every registered SKU up front."
+>
+> Run `ctest --preset cpp23 -R SkuCatalog`, and check that two `get()` calls for one code return the same `.get()` address.
 
 ## Build, run, observe
 

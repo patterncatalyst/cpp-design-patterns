@@ -192,13 +192,11 @@ if (!result.has_value()) {
 
 Both keep one lease per bay and release through the same destructor. Only the report changes: an exception the caller may catch, or a value the caller must check.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a resource guard.** "Write a wrapper class that manages a resource" doesn't say whether it can be copied, what a move leaves behind, or how acquisition fails. State those:
-
-> In `examples/05-raii-lifetimes`, add a `LabelPrinterLease` beside `DockBayLease` that acquires a printer from a registry in its constructor and releases it in its destructor. Delete the copy constructor and copy assignment explicitly. Write a `noexcept` move constructor that clears the source's ownership flag, and a move assignment that releases the target's printer before adopting the source's. Use `on_scope_exit` from `src/scope_guard.hpp` for any rollback, and add a `try_acquire` returning `std::expected` behind `#if __cplusplus >= 202302L`.
-
-Check that `= delete` appears on both copy operations, and that a move followed by two destructors advances the registry's release count by one.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/05-raii-lifetimes`, add a `LabelPrinterLease` beside `DockBayLease` that acquires a printer from a registry in its constructor and releases it in its destructor. Delete the copy constructor and copy assignment explicitly. Write a `noexcept` move constructor that clears the source's ownership flag, and a move assignment that releases the target's printer before adopting the source's. Use `on_scope_exit` from `src/scope_guard.hpp` for any rollback, and add a `try_acquire` returning `std::expected` behind `#if __cplusplus >= 202302L`."
+>
+> Check that `= delete` appears on both copy operations, and that a move followed by two destructors advances the registry's release count by one.
 
 ## When not to use a single-owner guard
 

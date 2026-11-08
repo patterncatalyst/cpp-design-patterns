@@ -468,36 +468,6 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
     color: var(--fg-muted);
 }
 
-/* AI sidebar: <blockquote class="ai-sidebar" markdown="1">. A header strip
-   carries the label, so the body doesn't repeat "AI sidebar." inline. */
-.tutorial__main blockquote.ai-sidebar {
-    position: relative;
-    margin: 1.9rem 0;
-    padding: 2.9rem 1.3rem 1.1rem;
-    background: var(--accent-soft);
-    border: 1px solid var(--accent);
-    border-radius: var(--radius);
-    color: var(--fg);
-}
-.tutorial__main blockquote.ai-sidebar::before {
-    content: "🤖 AI sidebar";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    padding: .45rem 1.3rem;
-    background: var(--accent);
-    color: var(--accent-fg);
-    font-family: var(--font-sans);
-    font-size: .72rem;
-    font-weight: 700;
-    letter-spacing: .09em;
-    text-transform: uppercase;
-    border-radius: var(--radius) var(--radius) 0 0;
-}
-.tutorial__main blockquote.ai-sidebar > :first-child { margin-top: 0; }
-.tutorial__main blockquote.ai-sidebar > :last-child { margin-bottom: 0; }
-
 .tutorial__main table {
     width: 100%; border-collapse: collapse; margin: 1.25rem 0;
     font-size: .95rem;

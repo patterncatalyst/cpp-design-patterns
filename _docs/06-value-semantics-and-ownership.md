@@ -198,13 +198,11 @@ RateTableHandle open_rate_table(const std::string& carrier_code) {
 
 `RateTableHandle` is a `std::unique_ptr<CRateTable, RateTableDeleter>` whose deleter calls `legacy_close_rate_table()`. The difference is how long an unmanaged `CRateTable*` exists. In C++20, `raw_table` lives from the call to the `return`, and a line added later in that gap could copy it, pass it on or throw, and the table leaks. `std::out_ptr`, new in C++23, writes the result into `handle` when the call returns, so the pointer is never outside a `unique_ptr`. Its companion `std::inout_ptr` is for a C API that also reads the current pointer before replacing it, such as a resize in place; this factory only allocates. `src/rate_table_adapter.cpp` guards the C++23 branch with `#if __cplusplus >= 202302L`.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying ownership.** "Add a smart pointer" doesn't say how many owners the object has or which edges in a graph must not own. State those:
-
-> In `examples/06-value-semantics-ownership`, add `ManifestNode::sibling_manifests()` returning the other children of this node's parent. Keep `parent_` a `std::weak_ptr<ManifestNode>` and `lock()` it inside the function; don't add any `std::shared_ptr` member that points from a child toward its parent. Return the siblings as `std::vector<std::shared_ptr<ManifestNode>>`. Leave `DockSlot` on `std::unique_ptr<Parcel>`; don't change it to `shared_ptr`.
-
-Check with `ctest --preset cpp23 -R ManifestTree`: the expiry cases must still pass after the root is reset.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/06-value-semantics-ownership`, add `ManifestNode::sibling_manifests()` returning the other children of this node's parent. Keep `parent_` a `std::weak_ptr<ManifestNode>` and `lock()` it inside the function; don't add any `std::shared_ptr` member that points from a child toward its parent. Return the siblings as `std::vector<std::shared_ptr<ManifestNode>>`. Leave `DockSlot` on `std::unique_ptr<Parcel>`; don't change it to `shared_ptr`."
+>
+> Check with `ctest --preset cpp23 -R ManifestTree`: the expiry cases must still pass after the root is reset.
 
 ## When not to reach for shared_ptr
 

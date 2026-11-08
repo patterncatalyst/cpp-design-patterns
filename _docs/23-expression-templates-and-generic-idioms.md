@@ -219,13 +219,11 @@ std::string serialize(const CarrierProfile& profile) {
 
 A fourth field is one more `field(...)` call; neither `serialize()` nor `deserialize()` changes, because neither knows how many fields exist. `CarrierProfile` is a plain copyable value, unlike Chapter 13's move-only `ShipmentManifest`, so a defaulted `operator==` checks a round trip.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying an expression template.** "Make the weighted route sum avoid temporaries" doesn't say where the nodes may live or where registration goes, and a helper that returns `auto` from a `RouteSum` compiles cleanly and dangles later.
-
-> In `examples/23-expression-templates/src/route_metrics.hpp`, add a `RouteDifference<Left, Right>` node derived from `RouteExpr`, holding `const` references like `RouteSum`, and an `operator-` over `RouteExpr<Left>` and `RouteExpr<Right>`. Evaluate only in `RouteMetrics`'s converting constructor. Don't add any function that returns a node type, and don't store a node in a named variable. Add a fourth carrier policy as a new `.cpp` file with its own `CarrierPolicyRegistrar` at namespace scope, and don't edit `carrier_policy.hpp`, `carrier_policy.cpp` or `demo_main.cpp`.
-
-Check: `ctest --preset cpp23 -R 'ExpressionTemplateTest|CarrierPolicyRegistryTest'` passes, and `grep -n 'auto' src/route_metrics.hpp` shows no function returning a node.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/23-expression-templates/src/route_metrics.hpp`, add a `RouteDifference<Left, Right>` node derived from `RouteExpr`, holding `const` references like `RouteSum`, and an `operator-` over `RouteExpr<Left>` and `RouteExpr<Right>`. Evaluate only in `RouteMetrics`'s converting constructor. Don't add any function that returns a node type, and don't store a node in a named variable. Add a fourth carrier policy as a new `.cpp` file with its own `CarrierPolicyRegistrar` at namespace scope, and don't edit `carrier_policy.hpp`, `carrier_policy.cpp` or `demo_main.cpp`."
+>
+> Check: `ctest --preset cpp23 -R 'ExpressionTemplateTest|CarrierPolicyRegistryTest'` passes, and `grep -n 'auto' src/route_metrics.hpp` shows no function returning a node.
 
 ## When not to use it
 

@@ -78,8 +78,12 @@ Every chapter (`_docs/NN-*.md`) follows the same shape:
    matching `examples/` demo.
 
 Every pattern chapter additionally ends with a **"when NOT to use it"**
-section and carries exactly one **AI sidebar** box — no more than one per
-chapter.
+section and carries exactly one AI callout: the minikube-on-fedora and openshift-local-on-fedora callout (owner decision 2026-11-08): a plain
+markdown blockquote, `> **🤖 Explore with your agent**`, a `>` line, the prompt as one quoted
+paragraph (`> "..."`) naming the example's own types and the chapter's decisions, then
+optionally `>` and one `Check:` line (the test command or what to look for). No HTML wrapper,
+no class, no nested quote, no "Specifying X" lead-in, never a claim about what assistants do.
+The check is `grep -c '> \*\*🤖 Explore with your agent'` == 1.
 
 - **Write like the EIP-Camel book** (`~/Dev/enterprise-integration-patterns-with-camel`), owner
   decision 2026-11-08: get to the point. About 2,000 words a chapter is the goal and 2,500 the

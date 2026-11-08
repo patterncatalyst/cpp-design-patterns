@@ -173,13 +173,11 @@ Both columns depend on `AuditSink&` through the same constructor and composition
 - **A singleton for mutable, shared state.** The audit log is changed by every call, read by audits and used by `OrderFulfillmentService`, warehouse modules and billing modules. That's the profile where a test needs a double and a reviewer needs the dependency in a signature, so inject it.
 - **Dependency injection for something with nothing to substitute.** A process-wide resource with no plausible second implementation and nothing a test would fake, such as an output handle to a fixed file descriptor or a read-only table of physical constants loaded once at startup, costs close to nothing as a singleton. If exactly one instance must exist, it's effectively immutable after construction and no caller will substitute another, the singleton's convenience is real.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a shared capability.** "Add a metrics registry the whole pipeline can use" leaves open whether it's a global accessor or an injected dependency, and how a test substitutes it. State it:
-
-> In `examples/14-singleton-and-di`, add a `MetricsSink` interface with one `increment(const std::string& counter)` method and an `InMemoryMetricsSink` implementation. Inject it into `OrderFulfillmentService` through the constructor as a reference, next to `AuditSink&`, and wire one instance in the composition root in `demo_main.cpp`. Don't add an `instance()` accessor, a function-local static or a `reset_for_testing()` method. Add tests that each build their own fake `MetricsSink` and check that `fulfill_order()` increments `"orders_fulfilled"` once per call.
-
-Run `ctest --preset cpp23 -R OrderFulfillment` and check that no new `static` appeared in `src/`.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/14-singleton-and-di`, add a `MetricsSink` interface with one `increment(const std::string& counter)` method and an `InMemoryMetricsSink` implementation. Inject it into `OrderFulfillmentService` through the constructor as a reference, next to `AuditSink&`, and wire one instance in the composition root in `demo_main.cpp`. Don't add an `instance()` accessor, a function-local static or a `reset_for_testing()` method. Add tests that each build their own fake `MetricsSink` and check that `fulfill_order()` increments `"orders_fulfilled"` once per call."
+>
+> Run `ctest --preset cpp23 -R OrderFulfillment` and check that no new `static` appeared in `src/`.
 
 ## Build, run, observe
 

@@ -271,13 +271,11 @@ Both reject the same `(status, event)` pairs. `apply()` keeps throwing under bot
 - **Events that can't arrive illegally.** If the only caller of `ship()` checked the payment a few lines earlier, a second guard in the machine buys nothing, and a reviewer will ask where illegal calls are expected from.
 - **Uncertainty that isn't real.** A carrier's delivery outcome or a sampled feature rollout is what a `std::discrete_distribution` over an injected engine is for. "Status updates sometimes arrive late from the carrier's API" is a data problem; modeling it as a probability hides a fixable integration bug behind a parameter that looks intentional. Use a retry, a timeout or a bug report instead.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a state machine.** "Add a customs hold to the shipment state machine" leaves open which of the representations change, whether they must still agree and how an illegal event is reported. State it:
-
-> In `examples/10-state-machines`, add a `HeldAtCustoms` status reachable from `InTransit` by a new `Hold` event and leaving by `Release` back to `InTransit`. Add it to all three deterministic machines: a new `ShipmentState` subclass for `GofStateMachine`, two rows in `shipment_transition_table()`, and a `HeldAtCustomsTag` with its own lambda in every `std::visit` over `ShipmentVariant`. Every other event from `HeldAtCustoms` throws `IllegalTransition`. Don't change `kInTransitWeights` or the `std::mt19937` constructor parameter on `StochasticShipmentMachine`. Add cross-check tests that drive `Pay`, `Ship`, `Hold`, `Release`, `Deliver` through all three machines and expect the same status after each event.
-
-Run `ctest --preset cpp23 -R CrossCheck` and check that the variant still has no default lambda.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/10-state-machines`, add a `HeldAtCustoms` status reachable from `InTransit` by a new `Hold` event and leaving by `Release` back to `InTransit`. Add it to all three deterministic machines: a new `ShipmentState` subclass for `GofStateMachine`, two rows in `shipment_transition_table()`, and a `HeldAtCustomsTag` with its own lambda in every `std::visit` over `ShipmentVariant`. Every other event from `HeldAtCustoms` throws `IllegalTransition`. Don't change `kInTransitWeights` or the `std::mt19937` constructor parameter on `StochasticShipmentMachine`. Add cross-check tests that drive `Pay`, `Ship`, `Hold`, `Release`, `Deliver` through all three machines and expect the same status after each event."
+>
+> Run `ctest --preset cpp23 -R CrossCheck` and check that the variant still has no default lambda.
 
 ## Build, run, observe
 

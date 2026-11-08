@@ -232,13 +232,11 @@ Static polymorphism wins when the choice is fixed before the program runs and th
 
 A `RateModel<Derived>` can't become a `RateModel<OtherDerived>` after construction. The type is the decision.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying compile-time polymorphism.** "Make the rate models pluggable with zero overhead" doesn't say whether the choice is fixed at build time or made at run time, and `std::variant` plus `std::visit` answers the second with a runtime tag on every call.
-
-> In `examples/21-crtp-policy/src/shipping_calculator.hpp`, write `ShippingCalculator<Rounding, Surcharge>` as a class template with two policy parameters constrained by the concepts `RoundsCents` and `SurchargesShipment`, and policies `NoRoundingPolicy`, `RoundUpToNickelPolicy`, `NoSurchargePolicy`, `FlatSurchargePolicy` and `DeclaredValueSurchargePolicy`. Use no `std::variant`, `std::function` or virtual function. Keep `RateModel<Derived>` in `rate_model.hpp` as a CRTP base whose `quote()` calls `Derived::compute()` through `static_cast`, and add a `static_assert` that evaluates one quote of each at compile time.
-
-Check: `ctest --preset cpp23 -R 'RateModelTest|ShippingCalculatorTest'` passes, and the reply contains no `std::visit`.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/21-crtp-policy/src/shipping_calculator.hpp`, write `ShippingCalculator<Rounding, Surcharge>` as a class template with two policy parameters constrained by the concepts `RoundsCents` and `SurchargesShipment`, and policies `NoRoundingPolicy`, `RoundUpToNickelPolicy`, `NoSurchargePolicy`, `FlatSurchargePolicy` and `DeclaredValueSurchargePolicy`. Use no `std::variant`, `std::function` or virtual function. Keep `RateModel<Derived>` in `rate_model.hpp` as a CRTP base whose `quote()` calls `Derived::compute()` through `static_cast`, and add a `static_assert` that evaluates one quote of each at compile time."
+>
+> Check: `ctest --preset cpp23 -R 'RateModelTest|ShippingCalculatorTest'` passes, and the reply contains no `std::visit`.
 
 ## When not to use it
 

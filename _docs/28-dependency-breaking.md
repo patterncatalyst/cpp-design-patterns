@@ -208,13 +208,11 @@ New code, `ShipmentRoutingAdvisor`, depends on `ZoneLookupPort` from the start, 
 
 {% include excalidraw.html name="28-instance-delegator" caption="Figure 28.2: ShipmentRoutingAdvisor depends on ZoneLookupPort, a seam a delegator forwards to the untouched static lookup, while ZoneSurchargeReport's existing call site keeps calling that static method directly." %}
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a dependency break.** "Make this legacy class testable" doesn't say how far the change may reach, and a reply that converts every static method and rewrites every caller bundles a high-risk rewrite with one new test. Name the technique and the callers that must not move:
-
-> In `examples/28-dependency-breaking`, apply Introduce Instance Delegator. Leave `LegacyCarrierZoneLookup` and `ZoneSurchargeReport` byte-for-byte unchanged. Add a `ZoneLookupPort` interface with `virtual int zone_for(const std::string& postal_code) const = 0`, and a `CarrierZoneLookupDelegator` that forwards to `LegacyCarrierZoneLookup::zone_for`. Make `ShipmentRoutingAdvisor` take a `const ZoneLookupPort&` and never name the static class. Add a GoogleMock `MockZoneLookupPort` and drive the advisor through it with no legacy table.
-
-Check with `ctest --preset cpp23 -R ShipmentRoutingAdvisor`, and confirm `git diff` shows no change to `LegacyCarrierZoneLookup` or `ZoneSurchargeReport`.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/28-dependency-breaking`, apply Introduce Instance Delegator. Leave `LegacyCarrierZoneLookup` and `ZoneSurchargeReport` byte-for-byte unchanged. Add a `ZoneLookupPort` interface with `virtual int zone_for(const std::string& postal_code) const = 0`, and a `CarrierZoneLookupDelegator` that forwards to `LegacyCarrierZoneLookup::zone_for`. Make `ShipmentRoutingAdvisor` take a `const ZoneLookupPort&` and never name the static class. Add a GoogleMock `MockZoneLookupPort` and drive the advisor through it with no legacy table."
+>
+> Check with `ctest --preset cpp23 -R ShipmentRoutingAdvisor`, and confirm `git diff` shows no change to `LegacyCarrierZoneLookup` or `ZoneSurchargeReport`.
 
 ## Adapt Parameter: shrinking a dependency to what it actually reads
 

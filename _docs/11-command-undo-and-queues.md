@@ -214,13 +214,11 @@ The trade-off is explicit: a `RestockLogFn` has no `undo()`, so it can't go on a
 - **A side effect with no reverse.** Logging, a notification or a webhook gets a callable, not an `InventoryCommand` subclass with an empty `undo()`.
 - **A `std::function<void()>` undo stack.** Closures work until different undo logic needs different state. Then each closure carries an ad hoc capture list, and nothing in the stack's type says what an entry can do. An `InventoryCommand` interface gives every undo a named slot to review.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a command.** "Make bin transfers undoable" leaves open whether the undo is an inverse or a snapshot, when the snapshot is taken and how the command reaches the history. State it:
-
-> In `examples/11-command`, add `WriteOffDamagedCommand` implementing `InventoryCommand`: it removes a damaged quantity from one `(bin, sku)` through `WarehouseEditor::adjust_stock()` with a negative delta, and `undo()` adds it back. Take no snapshot in the constructor; if the command reads editor state, read it in `execute()`. Don't use `std::function` for it, and don't add undo logic to `WarehouseEditor`. Add tests that run it through `CommandHistory` and through `CommandQueue::process_all()` with a history, then undo and redo it, and check the bin's quantity after each step.
-
-Run `ctest --preset cpp23 -R Command` and check that `CommandHistory` and `CommandQueue` are unchanged.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/11-command`, add `WriteOffDamagedCommand` implementing `InventoryCommand`: it removes a damaged quantity from one `(bin, sku)` through `WarehouseEditor::adjust_stock()` with a negative delta, and `undo()` adds it back. Take no snapshot in the constructor; if the command reads editor state, read it in `execute()`. Don't use `std::function` for it, and don't add undo logic to `WarehouseEditor`. Add tests that run it through `CommandHistory` and through `CommandQueue::process_all()` with a history, then undo and redo it, and check the bin's quantity after each step."
+>
+> Run `ctest --preset cpp23 -R Command` and check that `CommandHistory` and `CommandQueue` are unchanged.
 
 ## Build, run, observe
 

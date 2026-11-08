@@ -173,13 +173,11 @@ public:
 - **A sequence that changes per caller.** If a caller needs only the header and footer, or must interleave other work between steps, one `export_order()` fights the problem. Compose free functions, or one `std::function` per step, in the order each caller needs.
 - **Compile-time hooks without a measured reason.** CRTP and deducing this answer one hook, no precondition and a measured reason to avoid a vtable. Otherwise a plain virtual hook reads start to finish without learning either idiom.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a template method.** "Add an XML exporter" leaves open whether the new class may change the sequence, call the hooks itself or compute its own unit count. State it:
-
-> In `examples/09-template-method`, add `XmlManifestExporter` deriving from `OrderExportPipeline`. Override only `format_name()`, `render_header()`, `render_line()` and `render_footer()`, and keep all four `private`. Don't make `export_order()` virtual, don't touch `validate()` or `trailer_for()`, and don't sum quantities in the new class; the trailer's unit count comes from `total_quantity()`. Add tests that an empty order throws `std::invalid_argument` and that the document ends with the trailer.
-
-Run `ctest --preset cpp23` and check that no `virtual` or `protected` was added to `OrderExportPipeline`.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/09-template-method`, add `XmlManifestExporter` deriving from `OrderExportPipeline`. Override only `format_name()`, `render_header()`, `render_line()` and `render_footer()`, and keep all four `private`. Don't make `export_order()` virtual, don't touch `validate()` or `trailer_for()`, and don't sum quantities in the new class; the trailer's unit count comes from `total_quantity()`. Add tests that an empty order throws `std::invalid_argument` and that the document ends with the trailer."
+>
+> Run `ctest --preset cpp23` and check that no `virtual` or `protected` was added to `OrderExportPipeline`.
 
 ## Build, run, observe
 

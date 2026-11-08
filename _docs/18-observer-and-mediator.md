@@ -264,13 +264,11 @@ void DispatchCoordinator::notify(DispatchColleague& sender, DispatchEvent event,
 - **Observer.** A status change with one fixed reaction needs a direct call, not a subscription pipeline. Add the pipeline when a second listener is in hand or clearly coming; until then it costs a `std::function` allocation, a handle to manage and a detour for every reader.
 - **Mediator.** Three components with a stable set of calls read best as a visible sequence a reviewer follows top to bottom. Add a hub when collaborators multiply, different teams own them, or the routing rule changes independently of any one collaborator.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying event wiring.** "Wire these components to react to each other" leaves open whether components hold pointers to each other or talk through a hub, and who removes a subscription. State both:
-
-> Route every event between `WarehouseStation`, `CarrierStation` and `CustomerNotificationStation` through `DispatchCoordinator::notify()`; no station holds a pointer or reference to another. Colleagues call `raise()` from `DispatchColleague`, and only the coordinator calls `bind()`. For status changes, have `ShipmentTracker::subscribe()` return a `ScopedSubscription` whose destructor unsubscribes, and notify from a copy of `slots_`.
-
-Run `ctest --preset cpp23 -R 'DispatchCoordinator|ShipmentTracker'`, and check that no station class has a member pointing at another station.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "Route every event between `WarehouseStation`, `CarrierStation` and `CustomerNotificationStation` through `DispatchCoordinator::notify()`; no station holds a pointer or reference to another. Colleagues call `raise()` from `DispatchColleague`, and only the coordinator calls `bind()`. For status changes, have `ShipmentTracker::subscribe()` return a `ScopedSubscription` whose destructor unsubscribes, and notify from a copy of `slots_`."
+>
+> Run `ctest --preset cpp23 -R 'DispatchCoordinator|ShipmentTracker'`, and check that no station class has a member pointing at another station.
 
 ## Build, run, observe
 

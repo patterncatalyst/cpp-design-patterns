@@ -90,13 +90,11 @@ RateCalculatorFactory& RateCalculatorFactoryProvider::factory() {
 
 `RateCalculatorFactoryProvider::instance().factory().create_calculator()` goes four symbols and two singletons deep for the object `std::make_unique<StandardRateCalculator>()` returns in one line. That's a factory of factories: speculative generality compounded with Singleton's hidden dependency, each hiding the other well enough that a reviewer reading one class at a time can miss both.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a simplification.** "Clean up the pricing code" doesn't say which abstractions have a force behind them, so a reply can keep the factory "in case" or add another interface.
-
-> In `examples/26-anti-patterns`, price shipments through `ShipmentPricingService` constructed from a `RateSettings{surcharge_multiplier, handling_fee}` value, returning a `PricingResult` that carries `surcharge_applied`. Don't use `ShippingRateRegistry`, `RateCalculatorFactory` or `RateCalculatorFactoryProvider`, and add no interface, factory or singleton: there is one implementation and no second one planned. Two services with different `RateSettings` must coexist in one process, and `price()` must reject a non-positive base cost as the over-patterned design does.
-
-Check: `ctest --preset cpp23 -R 'AntiPatternEquivalenceTest|ShipmentPricingServiceTest'` passes, and the reply's `shipment_pricing_service.hpp` contains no `virtual` and no `instance()`.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/26-anti-patterns`, price shipments through `ShipmentPricingService` constructed from a `RateSettings{surcharge_multiplier, handling_fee}` value, returning a `PricingResult` that carries `surcharge_applied`. Don't use `ShippingRateRegistry`, `RateCalculatorFactory` or `RateCalculatorFactoryProvider`, and add no interface, factory or singleton: there is one implementation and no second one planned. Two services with different `RateSettings` must coexist in one process, and `price()` must reject a non-positive base cost as the over-patterned design does."
+>
+> Check: `ctest --preset cpp23 -R 'AntiPatternEquivalenceTest|ShipmentPricingServiceTest'` passes, and the reply's `shipment_pricing_service.hpp` contains no `virtual` and no `instance()`.
 
 ## The god object: a class that knows everything
 

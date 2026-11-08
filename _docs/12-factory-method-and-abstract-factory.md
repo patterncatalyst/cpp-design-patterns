@@ -219,13 +219,11 @@ Using Abstract Factory for one varying product leaves creation methods nobody ca
 - **One way to run the step.** A workflow with one test suite needs a function that runs it inline, not a base class, one subclass and one override. Introduce `create_test_suite()` when a second environment needs a different product at that point.
 - **The wrong one of the two.** A three-method factory interface where two methods have one caller and one implementation is Abstract Factory solving a Factory Method problem. Identify the force, one varying product in a fixed sequence, and use the narrower pattern.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a factory.** "Add a third carrier" leaves open whether the carrier gets its own factory or a branch in existing code, and whether `ShipmentProcessor` changes. State it:
-
-> In `examples/12-factories`, add a carrier called NorthwindPost. Write `NorthwindPostIntegrationFactory` implementing `CarrierIntegrationFactory`, with its own `LabelFormatter`, `RateQuoter` and `TrackingClient` classes that all use the account id passed to the factory's constructor. Add one `"northwindpost"` branch to `make_carrier_factory()` and the same branch to `try_make_carrier_factory()`, and change nothing else: no carrier name or concrete class may appear in `ShipmentProcessor`. Add a test that the label, quote and tracking URL from one `ShipmentProcessor` all belong to NorthwindPost.
-
-Run `ctest --preset cpp23` and check that `ShipmentProcessor`'s files are unchanged.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/12-factories`, add a carrier called NorthwindPost. Write `NorthwindPostIntegrationFactory` implementing `CarrierIntegrationFactory`, with its own `LabelFormatter`, `RateQuoter` and `TrackingClient` classes that all use the account id passed to the factory's constructor. Add one `"northwindpost"` branch to `make_carrier_factory()` and the same branch to `try_make_carrier_factory()`, and change nothing else: no carrier name or concrete class may appear in `ShipmentProcessor`. Add a test that the label, quote and tracking URL from one `ShipmentProcessor` all belong to NorthwindPost."
+>
+> Run `ctest --preset cpp23` and check that `ShipmentProcessor`'s files are unchanged.
 
 ## Build, run, observe
 

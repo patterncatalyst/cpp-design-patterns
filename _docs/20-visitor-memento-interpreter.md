@@ -300,13 +300,11 @@ Both look up the same rules. Only how a caller learns about a missing label chan
 - **Interpreter.** Build one when the grammar is open-ended, assembled from user input or configuration. A single hard-coded condition in checkout code is a boolean expression written where it's checked.
 - **Memento.** An object with no multi-step editing workflow and no "discard this batch" request needs no `Snapshot`. And when the request is to undo one keystroke at a time, cloning the whole object on every edit costs far more than one cheap inverse; use Command.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying rule-set undo.** "Let me undo editing this rule set" leaves open whether the undo reverses one operation or discards everything since a point, and whether saved state is readable from outside. State it:
-
-> Add whole-state undo to `RuleSetEditor` as a Memento. `save()` returns a nested `RuleSetEditor::Snapshot` with private members, a private constructor and `RuleSetEditor` as its only friend; it is move-only. `save()` deep-copies every rule with `clone(rule.expr)`, and `restore(Snapshot)` replaces `draft_name_`, `rules_` and `published_` in one call. Don't write per-operation inverses for `add_rule()`, `remove_rule()` or `set_published()`.
-
-Run `ctest --preset cpp23 -R RuleSetEditor`, and check that no public accessor on `Snapshot` exposes its fields.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "Add whole-state undo to `RuleSetEditor` as a Memento. `save()` returns a nested `RuleSetEditor::Snapshot` with private members, a private constructor and `RuleSetEditor` as its only friend; it is move-only. `save()` deep-copies every rule with `clone(rule.expr)`, and `restore(Snapshot)` replaces `draft_name_`, `rules_` and `published_` in one call. Don't write per-operation inverses for `add_rule()`, `remove_rule()` or `set_published()`."
+>
+> Run `ctest --preset cpp23 -R RuleSetEditor`, and check that no public accessor on `Snapshot` exposes its fields.
 
 ## Build, run, observe
 

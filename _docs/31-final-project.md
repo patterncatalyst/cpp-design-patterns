@@ -199,13 +199,11 @@ std::expected<CarrierProfile, CarrierFactoryError> CarrierFactory::try_create(co
 }
 ```
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a change to a composed system.** "Add a new carrier" doesn't say which seam the change may cross, and a patch can touch `ShipmentDispatcher`, `CarrierFactory` and `AdjustWeightCommand` together because they're nearby files. Confine it to one seam:
-
-> In `examples/31-final-project`, add a carrier code `"PARCELPOST"` to `CarrierFactory::create()` returning a `CarrierProfile` with `carrier_name` "Parcel Post", `sla_hours` 96 and a `FlatRateStrategy` of 650 cents. Don't edit `ShipmentDispatcher`, `AdjustWeightCommand`, `AdvanceLifecycleCommand` or any `LifecycleObserver`. Keep `CarrierProfile` returned by value with its `std::unique_ptr<RateStrategy>`, and keep `AdjustWeightCommand` holding a `const RateStrategy&`. Add a `CarrierFactoryTest` case for the new code, and keep `try_create()` reporting `CarrierFactoryError::UnknownCarrierCode` for unknown codes.
-
-Check with `ctest --preset cpp23 -R 'CarrierFactory|ShipmentDispatcherIntegration'`, and confirm the diff touches only `carrier_factory.cpp` and `tests/carrier_factory_test.cpp`.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "In `examples/31-final-project`, add a carrier code `"PARCELPOST"` to `CarrierFactory::create()` returning a `CarrierProfile` with `carrier_name` "Parcel Post", `sla_hours` 96 and a `FlatRateStrategy` of 650 cents. Don't edit `ShipmentDispatcher`, `AdjustWeightCommand`, `AdvanceLifecycleCommand` or any `LifecycleObserver`. Keep `CarrierProfile` returned by value with its `std::unique_ptr<RateStrategy>`, and keep `AdjustWeightCommand` holding a `const RateStrategy&`. Add a `CarrierFactoryTest` case for the new code, and keep `try_create()` reporting `CarrierFactoryError::UnknownCarrierCode` for unknown codes."
+>
+> Check with `ctest --preset cpp23 -R 'CarrierFactory|ShipmentDispatcherIntegration'`, and confirm the diff touches only `carrier_factory.cpp` and `tests/carrier_factory_test.cpp`.
 
 ## Build, run, observe
 

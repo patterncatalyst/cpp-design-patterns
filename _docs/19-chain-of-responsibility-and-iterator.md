@@ -250,13 +250,11 @@ Both produce the same `std::vector<std::string>`; only the last step changed.
 - **Iterator.** If `PackageManifest` were one flat `std::vector<Package>`, its `const_iterator` would already give sequential access, and a custom iterator would only forward `operator*()` and `operator++()`. Write one only when there's a real structure to hide.
 - **Ranges pipeline.** Compose `views::filter` and `views::transform` when a caller needs a subset-and-project view. A single pass that a plain `for` loop states clearly doesn't need one.
 
-<blockquote class="ai-sidebar" markdown="1">
-**Specifying a new approval check.** "Add a check to the approval chain" leaves open whether it becomes a new handler or another `if` inside `ApprovalHandler::handle()`, and where it runs. State both:
-
-> Add a `DeclaredValueHandler` deriving from `ApprovalHandler` that rejects a `ShipmentRequest` above a configured limit. Implement only `try_handle()`, returning `std::nullopt` on every path that should pass. Insert it in `build_default_chain()` between `HazmatHandler` and `EmbargoHandler`, and leave `ApprovalHandler::handle()` and `ManualApprovalHandler` unchanged.
-
-Run `ctest --preset cpp23 -R ApprovalChain`, and check that `ApprovalHandler::handle()` gained no new branch.
-</blockquote>
+> **🤖 Explore with your agent**
+>
+> "Add a `DeclaredValueHandler` deriving from `ApprovalHandler` that rejects a `ShipmentRequest` above a configured limit. Implement only `try_handle()`, returning `std::nullopt` on every path that should pass. Insert it in `build_default_chain()` between `HazmatHandler` and `EmbargoHandler`, and leave `ApprovalHandler::handle()` and `ManualApprovalHandler` unchanged."
+>
+> Run `ctest --preset cpp23 -R ApprovalChain`, and check that `ApprovalHandler::handle()` gained no new branch.
 
 ## Build, run, observe
 
