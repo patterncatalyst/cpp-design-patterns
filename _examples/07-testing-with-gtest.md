@@ -6,7 +6,7 @@ description: A freight quote-intake component exercised through all five GoogleT
 github_path: examples/07-testing-with-gtest
 card_eyebrow: "Chapter 7 · Testing"
 card_title: "Quote intake: GoogleTest styles"
-card_blurb: "Fixtures, parameterized tests, typed tests, GoogleMock interaction tests, and a death test, each used where it genuinely fits, all discovered and run through CTest."
+card_blurb: "Fixtures, parameterized tests, typed tests, GoogleMock interaction tests, and a death test, each used where it fits, all discovered and run through CTest."
 ---
 
 A freight carrier's quote-intake component used to showcase every GoogleTest

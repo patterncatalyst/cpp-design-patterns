@@ -1,4 +1,4 @@
-# Companion decks — build notes
+# Companion decks: build notes
 
 Three Red Hat-branded 16:9 decks, built with pptxgenjs (lgtm-presentation house style).
 

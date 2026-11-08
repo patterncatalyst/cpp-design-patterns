@@ -14,11 +14,11 @@ A shipment lifecycle (`Created → Paid → InTransit → Delivered`, with
 share only the status and event types, so cross-check tests prove they agree
 rather than assume it:
 
-- **GoF State pattern** — one type per status, default-reject base methods,
+- **GoF State pattern**: one type per status, default-reject base methods,
   `unique_ptr`-owned context.
-- **Table-driven FSM** — a `(status, event) → status` map.
-- **`std::variant` FSM** — tag types plus `std::visit` over an overload set.
-- **Probability-driven FSM** — deterministic events plus a probabilistic
+- **Table-driven FSM**: a `(status, event) → status` map.
+- **`std::variant` FSM**: tag types plus `std::visit` over an overload set.
+- **Probability-driven FSM**: deterministic events plus a probabilistic
   `advance()` using `std::discrete_distribution` over configured weights.
 
 The stochastic machine takes its `std::mt19937` by constructor injection, so

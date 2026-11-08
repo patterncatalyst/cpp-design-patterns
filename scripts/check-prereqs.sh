@@ -8,8 +8,8 @@
 # Pinned/floor versions, from the r01 build plan's verified toolchain table:
 #   clang   >= 21   (verified against 22.1.8)
 #   cmake   >= 3.28 (verified against 4.3.0)
-#   ninja   present (verified against 1.13.2)
-#   conan   2.x     (verified against 2.25.2)
+#   ninja   present (verified against 1.13.0)
+#   conan   2.x     (verified against 2.30.0)
 #   gtest   1.17.0, installed via Conan — not checked here, see conanfile.py
 
 set -eu

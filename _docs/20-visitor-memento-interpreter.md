@@ -10,64 +10,48 @@ duration: "30 min"
 
 By the end of this chapter you can:
 
-- Name the force Visitor answers: a fixed object structure that rarely gains a new node kind, paired with a growing set of operations that each need to touch every kind, without putting all of those operations inside the node classes themselves.
-- Build a classic Gang of Four Visitor, a `RuleVisitor` interface and a class hierarchy with `accept()`, and show that a second operation ships with no change to any node class.
-- Build the same structure and the same two operations with a `std::variant` of value types and `std::visit` over a lambda overload set, with no `RuleVisitor` interface and no `accept()` anywhere.
-- Build an Interpreter that walks that structure to evaluate a small filter grammar, and show that the nesting of its And/Or/Not nodes decides the answer, the same way operator precedence decides the value of a parsed expression.
-- Build a Memento that snapshots an object's entire state and restores it in one call, and say how that differs from Chapter 11's Command-based undo of one operation at a time.
-- Recognize when any of the three patterns is answering a force the surrounding code does not have, and say what to write instead.
+- Add operations over a fixed object structure without editing its node classes.
+- Build a classic Visitor, a `RuleVisitor` interface over a class hierarchy with `accept()`, and ship a second operation with no node class changed.
+- Build the same structure and operations as a `std::variant` of value types with `std::visit` over a lambda overload set.
+- Build an Interpreter that evaluates a small filter grammar, and show that the nesting of And/Or/Not decides the answer.
+- Snapshot an object's entire state and restore it in one call, and say how that differs from per-operation Command undo.
+- Recognize when the surrounding code doesn't have the force any of the three answers.
 
 ## Why this matters
 
-A checkout platform that lets merchants define their own shipping filters, "hold any package over 20 kilograms for manual review," "flag international shipments with a declared value above $500," runs into the same small, closed grammar over and over: a predicate about one shipment attribute, combined with `AND`, `OR`, and `NOT`. The grammar itself barely changes once it is defined. What changes constantly is what a team wants to *do* with a filter once it exists: evaluate it against an incoming shipment, render it as a readable string for an audit log, eventually sum a surcharge it implies. That is the exact shape Visitor exists to handle: a fixed structure, a growing set of operations over it, and a design that wants the operations added without reopening every node class each time one ships.
+Merchants define their own shipping filters: "hold any package over 20 kilograms for manual review", "flag international shipments declared above $500". Every filter is a predicate about one shipment attribute combined with `AND`, `OR` and `NOT`. That grammar barely changes. What changes is what a team does with a filter: evaluate it against a shipment, render it for an audit log, later sum a surcharge it implies.
 
-A merchant editing one of these rule sets in an admin screen has a second problem with a different shape. Drafting a filter usually takes several steps: name the draft, add a rule, add another, maybe remove one that turned out wrong, flip a `published` flag when it is ready. If step four turns out to be a mistake, "edit the current state until it looks right again" is slower and more error-prone than "throw away everything since step three and start that step over." That is a whole-state rollback, not a single reversed operation, and it is the force Memento exists to handle: capture everything an object is, including the internals nobody outside it should be able to see, and hand back an opaque token that can restore all of it in one call.
+Editing a rule set takes several steps: name the draft, add a rule, add another, remove one, flip `published`. When step four is a mistake, editing until the state looks right again is slower and riskier than discarding everything since step three.
 
-Visitor's two idiomatic expressions in modern C++, the classic Gang of Four double dispatch and a `std::variant` with `std::visit`, both operate on the exact same rule-node shape this chapter builds, and Interpreter walks that identical shape to answer a third question: not "what string describes this rule" or "does this one predicate match," but "what does this whole filter expression evaluate to, given how its pieces are nested." Pairing the three patterns in one chapter is not an arbitrary grouping. All three operate on the same small AST, and telling them apart by what each one is *for*, adding an operation, interpreting a grammar, or snapshotting a state, is the same discipline Chapter 16 used to separate Decorator from Proxy by intent rather than by shape.
+Visitor adds operations over the rule tree, Interpreter evaluates the grammar the tree represents, and Memento rolls the whole draft back.
 
 {% include excalidraw.html name="20-visitor-memento-interpreter" caption="Figure 20.1: A shared rule-node AST walked two ways, a classic double-dispatch Visitor and a std::variant plus std::visit Visitor producing the same result, with Interpreter walking the same AST to a grammar result; separately, a RuleSetEditor Originator whose Snapshot (Memento) captures and restores its whole state." %}
 
-## The domain: filtering shipments, snapshotting a draft rule set
+A rule tests a `Shipment` (`weight_kg`, a `DestinationZone`, `declared_value_cents`) with one of three predicates, `WeightAbove`, `ZoneIs` or `DeclaredValueAbove`, combined by `And`, `Or` and `Not`. Those six kinds are the fixed structure.
 
-The example behind this chapter lives in `examples/20-visitor-memento-interpreter`, and it reuses this book's familiar `Shipment` shape from Chapter 8: a `weight_kg`, a `DestinationZone`, and a `declared_value_cents`. A rule against that shipment is one of three predicates, `WeightAbove`, `ZoneIs`, or `DeclaredValueAbove`, combined with `And`, `Or`, and `Not` into a small tree. That six-kind shape is the fixed structure every pattern in this chapter shares, expressed two different ways:
+## Pattern: Visitor
+
+### The problem
+
+Evaluating, describing and pricing a rule each need a branch per node kind. Putting every operation inside the node classes means reopening all six classes each time an operation ships.
+
+### The solution
+
+**A Visitor represents an operation over the elements of an object structure as a separate object, so new operations are added without changing the element classes.**
+
+### How C++ models it: double dispatch
+
+In the classic form, every node derives from `RuleNode`:
 
 ```cpp
-// Classic form: a RuleNode class hierarchy (classic_visitor.hpp).
 class RuleNode {
 public:
     virtual ~RuleNode() = default;
     virtual void accept(RuleVisitor& visitor) const = 0;
 };
-
-class WeightAboveNode : public RuleNode { /* ... */ };
-class ZoneIsNode : public RuleNode { /* ... */ };
-class DeclaredValueAboveNode : public RuleNode { /* ... */ };
-class AndNode : public RuleNode { /* left_, right_ */ };
-class OrNode : public RuleNode { /* left_, right_ */ };
-class NotNode : public RuleNode { /* inner_ */ };
 ```
 
-```cpp
-// Variant form: the same six kinds as value types (rule_expr.hpp).
-struct WeightAbove { double threshold_kg; };
-struct ZoneIs { DestinationZone zone; };
-struct DeclaredValueAbove { Cents threshold_cents; };
-struct AndExpr { std::unique_ptr<RuleExpr> left, right; };
-struct OrExpr  { std::unique_ptr<RuleExpr> left, right; };
-struct NotExpr { std::unique_ptr<RuleExpr> inner; };
-
-struct RuleExpr {
-    std::variant<WeightAbove, ZoneIs, DeclaredValueAbove, AndExpr, OrExpr, NotExpr> node;
-};
-```
-
-Both shapes carry identical information: a leaf predicate checks one `Shipment` field against a threshold, and `And`/`Or`/`Not` combine other nodes. `And`/`Or`/`Not` own their children through `std::unique_ptr`, in both forms, the same RAII ownership Chapter 8's `RateEstimator` used for a single strategy; a `RuleExpr`'s `AndExpr` cannot outlive the tree it is part of, and nothing outside that tree can alias into the middle of it. The variant form needs `std::unique_ptr<RuleExpr>` for exactly one structural reason: `std::variant` cannot hold itself directly, so `AndExpr`, `OrExpr`, and `NotExpr` each hold their children behind a pointer, the smallest indirection a recursive variant can get away with.
-
-`RuleSetEditor`, this chapter's Memento example, is a separate concern built on top of the variant form: a merchant's named, in-progress collection of `RuleExpr` trees, with a draft name and a `published` flag alongside them.
-
-## Visitor, the classic shape: double dispatch over a fixed structure
-
-The Gang of Four's original Visitor pairs a `RuleVisitor` interface with the class hierarchy above. Each concrete node implements `accept()` by calling `visitor.visit(*this)`, which resolves to the overload matching that node's exact type:
+`WeightAboveNode`, `ZoneIsNode`, `DeclaredValueAboveNode`, `AndNode`, `OrNode` and `NotNode` each implement `accept()` as `visitor.visit(*this)`. The visitor interface has one overload per kind:
 
 ```cpp
 class RuleVisitor {
@@ -82,9 +66,9 @@ public:
 };
 ```
 
-`accept()` resolves the node's exact type through ordinary virtual dispatch; `visit()` is already overloaded on that exact type, so by the time a `RuleVisitor` implementation's `visit(const AndNode&)` runs, it already knows precisely which node kind it is looking at, no `dynamic_cast` or type tag anywhere. That is the "double" in double dispatch: one virtual call picks the node's type, a second, already-resolved overload picks the operation's behavior for that type.
+The virtual `accept()` picks the node's type, and the overload it calls picks the operation's behavior for that type, with no `dynamic_cast` or type tag. That's the double in double dispatch.
 
-`MatchEvaluator` is the first concrete `RuleVisitor`, answering "does this shipment match the rule." Its `visit()` methods have no return type to hand a result back up through, so a recursive case like `AndNode` builds a fresh `MatchEvaluator` per child and reads each one's `result()` back:
+`MatchEvaluator` answers "does this shipment match". `visit()` returns nothing, so a recursive case builds a fresh evaluator per child and reads its result:
 
 ```cpp
 void MatchEvaluator::visit(const AndNode& node) {
@@ -96,88 +80,173 @@ void MatchEvaluator::visit(const AndNode& node) {
 }
 ```
 
-`RuleDescriber` is the second `RuleVisitor`, rendering a rule as a readable string for an audit log, `(weight above 10.0kg AND zone is National)`. Adding it costs exactly one new class; `RuleNode` and all six of its subclasses are untouched. That is Visitor's whole argument in one sentence: a structure that rarely grows a new node kind can absorb an unbounded number of new operations, each one a new `RuleVisitor` implementation, without a single edit to the node classes an operation runs over.
+`RuleDescriber` renders a rule for the audit log, `(weight above 10.0kg AND zone is National)`. Adding it costs one class; `RuleNode` and its six subclasses are untouched.
 
-## Visitor, the modern shape: std::variant and std::visit
+### How C++ models it: `std::variant` and `std::visit`
 
-The variant form answers the identical force without a `RuleVisitor` interface or an `accept()` method anywhere. `std::visit` dispatches directly on `RuleExpr::node`'s active alternative, and a lambda-per-alternative overload set reads as one operation with one branch per node kind:
+The same six kinds as value types:
+
+```cpp
+struct WeightAbove {
+    double threshold_kg;
+};
+
+struct ZoneIs {
+    DestinationZone zone;
+};
+
+struct DeclaredValueAbove {
+    Cents threshold_cents;
+};
+
+struct RuleExpr;
+
+// And/Or/Not hold their children behind unique_ptr<RuleExpr> because a
+// std::variant cannot hold itself directly; the pointer is the only
+// indirection a recursive variant needs, and it still owns its children
+// outright, the same RAII ownership Chapter 8's RateEstimator used for a
+// single strategy.
+struct AndExpr {
+    std::unique_ptr<RuleExpr> left;
+    std::unique_ptr<RuleExpr> right;
+};
+
+struct OrExpr {
+    std::unique_ptr<RuleExpr> left;
+    std::unique_ptr<RuleExpr> right;
+};
+
+struct NotExpr {
+    std::unique_ptr<RuleExpr> inner;
+};
+
+struct RuleExpr {
+    std::variant<WeightAbove, ZoneIs, DeclaredValueAbove, AndExpr, OrExpr, NotExpr> node;
+};
+```
+
+There's no `RuleVisitor` and no `accept()`. A lambda-per-alternative overload set, deduced by class template argument deduction, makes a `std::visit` call read as one operation with one branch per kind:
 
 ```cpp
 template <typename... Alternatives>
 struct Overload : Alternatives... {
     using Alternatives::operator()...;
 };
+
 template <typename... Alternatives>
 Overload(Alternatives...) -> Overload<Alternatives...>;
+```
 
+```cpp
 bool evaluate(const RuleExpr& expr, const Shipment& shipment) {
     return std::visit(
         Overload{
-            [&](const WeightAbove& p) { return shipment.weight_kg > p.threshold_kg; },
-            [&](const ZoneIs& p) { return shipment.zone == p.zone; },
-            [&](const DeclaredValueAbove& p) { return shipment.declared_value_cents > p.threshold_cents; },
-            [&](const AndExpr& e) { return evaluate(*e.left, shipment) && evaluate(*e.right, shipment); },
-            [&](const OrExpr& e) { return evaluate(*e.left, shipment) || evaluate(*e.right, shipment); },
-            [&](const NotExpr& e) { return !evaluate(*e.inner, shipment); },
+            [&](const WeightAbove& predicate) { return shipment.weight_kg > predicate.threshold_kg; },
+            [&](const ZoneIs& predicate) { return shipment.zone == predicate.zone; },
+            [&](const DeclaredValueAbove& predicate) {
+                return shipment.declared_value_cents > predicate.threshold_cents;
+            },
+            [&](const AndExpr& expr_and) {
+                return evaluate(*expr_and.left, shipment) && evaluate(*expr_and.right, shipment);
+            },
+            [&](const OrExpr& expr_or) {
+                return evaluate(*expr_or.left, shipment) || evaluate(*expr_or.right, shipment);
+            },
+            [&](const NotExpr& expr_not) { return !evaluate(*expr_not.inner, shipment); },
         },
         expr.node);
 }
 ```
 
-`describe()` is the second operation, built the same way: one more `std::visit` call with six more lambdas, added with no change to `WeightAbove`, `ZoneIs`, `DeclaredValueAbove`, `AndExpr`, `OrExpr`, or `NotExpr`. `examples/20-visitor-memento-interpreter`'s test suite builds the identical logical tree both ways and asserts `evaluate_classic()` and `evaluate()` agree, and that `describe_classic()` and `describe()` produce the identical string, for the same shipment every time. Neither form is "more correct" Visitor; a `RuleVisitor` interface costs a vtable per node and buys an open set of node kinds a plugin could add later, while a `std::variant` costs nothing per call and buys exhaustiveness at compile time: a `std::visit` call must supply all six alternatives in its overload set to compile, the identical completeness guarantee a `RuleVisitor` subclass gets from `RuleVisitor` declaring every `visit()` overload pure virtual.
+`describe()` is one more `std::visit` with six more lambdas, and no value type changes. Built the same logical tree both ways, the classic and variant forms agree on every match and produce identical descriptions.
 
-## Interpreter: walking the same tree to evaluate a grammar
+### Interface or variant
 
-Interpreter is not a third way to write Visitor's operations. It names a different force: a small grammar, here three predicate kinds combined with `And`, `Or`, and `Not`, and a canonical way to evaluate an expression written in that grammar. `evaluate()` above already is that canonical evaluator; this chapter's Interpreter and its variant-form Visitor sit on literally the same function, which is the point worth sitting with rather than glossing over. Visitor's question is "what operations can I add over this fixed structure"; Interpreter's question is "given this structure already *is* a grammar, what does walking it compute." The same `std::visit` recursion answers both, because in modern C++ a tree-walking interpreter over an AST and a Visitor operation over that same AST are the identical mechanism aimed at two different design questions.
+| | `RuleVisitor` hierarchy | `std::variant` + `std::visit` |
+| --- | --- | --- |
+| Dispatch cost | Two virtual calls per node | A visit on the active alternative, no vtable |
+| Node kinds | Open: a plugin can add a subclass, and every visitor must learn it | Closed at compile time |
+| Missing case | Won't instantiate: every `visit()` is pure virtual | Won't compile: the overload set must cover all six |
+| Nodes | Heap objects behind pointers | Values, with pointers only for children |
 
-What makes Interpreter worth its own section rather than a footnote on Visitor is nesting. Building expressions through this chapter's `rule_and()`, `rule_or()`, and `rule_not()` helpers makes nesting an explicit, visible choice, the same three leaf predicates assembled in a different shape producing a different answer:
+## Pattern: Interpreter
+
+### The problem
+
+The filter language is a grammar: three predicates combined with `And`, `Or` and `Not`. A rule written in it needs one canonical meaning, and that meaning depends on how the pieces nest.
+
+### The solution
+
+**An Interpreter defines a representation for a grammar and evaluates sentences in it by walking that representation.**
+
+### How C++ models it
+
+`evaluate()` above is the interpreter. Visitor asks "what operations can I add over this structure"; Interpreter asks "this structure is a grammar, so what does walking it compute". In modern C++ the same `std::visit` recursion answers both.
+
+### Nesting is precedence
+
+The `rule_and()`, `rule_or()` and `rule_not()` helpers make nesting explicit. The same three predicates in two shapes:
 
 ```cpp
-RuleExpr outer_or = rule_or(
-    rule_and(weight_above(10.0), zone_is(DestinationZone::National)),
-    declared_value_above(50000));
-
-RuleExpr outer_and = rule_and(
-    weight_above(10.0),
-    rule_or(zone_is(DestinationZone::National), declared_value_above(50000)));
+    rules::RuleExpr outer_or =
+        rules::rule_or(rules::rule_and(rules::weight_above(10.0), rules::zone_is(DestinationZone::National)),
+                        rules::declared_value_above(50000));
+    rules::RuleExpr outer_and = rules::rule_and(
+        rules::weight_above(10.0),
+        rules::rule_or(rules::zone_is(DestinationZone::National), rules::declared_value_above(50000)));
 ```
 
-Evaluated against a 5.0 kilogram shipment headed to `National` with a declared value of $800, `outer_or` is `true`: the weight predicate fails, but `OR`-ing in `DeclaredValueAbove(50000)` still matches. `outer_and` is `false`: the same weight predicate failing now gates the entire `AND`, and the `OR` on its right side never gets a chance to rescue the result. Three identical leaf predicates, two different trees, two different answers for the identical shipment. That is precedence, expressed as tree shape instead of as operator-binding rules a parser would otherwise need to apply; building the tree directly, the way this chapter's helper functions do, sidesteps writing a parser at all while keeping the exact behavior a parsed grammar would have.
+For a 5.0 kg National shipment declared at $800:
 
-## Memento: snapshotting a whole draft, not one edit at a time
+| Tree | Result | Why |
+| --- | --- | --- |
+| `(weight > 10 AND National) OR value > $500` | `true` | The weight fails, but the `OR` matches on value |
+| `weight > 10 AND (National OR value > $500)` | `false` | The failing weight gates the whole `AND` |
 
-`RuleSetEditor` is this chapter's Originator: a merchant's in-progress rule set, a draft name, a `published` flag, and a list of named `RuleExpr` trees built up across several editing steps. Its `Snapshot` is the Memento, a nested class whose constructor and data members are private, with `RuleSetEditor` alone named as a friend:
+Precedence is expressed as tree shape instead of operator-binding rules. Building the tree directly skips writing a parser and keeps the behavior a parsed grammar would have.
+
+## Pattern: Memento
+
+### The problem
+
+A merchant wants to discard a batch of edits to a draft rule set, however many there were, and return to a known state. The draft's internals shouldn't be visible to the code that holds the saved state.
+
+### The solution
+
+**A Memento captures an object's internal state in an opaque token that a caretaker can store and hand back, without exposing that state to the caretaker.**
+
+### How C++ models it
+
+`RuleSetEditor` is the originator: a draft name, a `published` flag and a list of named `RuleExpr` trees. Its nested `Snapshot` is the memento, with private data and a private constructor, and only `RuleSetEditor` as a friend:
 
 ```cpp
-class RuleSetEditor {
-public:
     class Snapshot {
     public:
         Snapshot(Snapshot&&) = default;
+        Snapshot& operator=(Snapshot&&) = default;
         Snapshot(const Snapshot&) = delete;
+        Snapshot& operator=(const Snapshot&) = delete;
+
     private:
         friend class RuleSetEditor;
         Snapshot(std::string draft_name, std::vector<NamedRule> rules, bool published);
+
         std::string draft_name_;
         std::vector<NamedRule> rules_;
         bool published_;
     };
-
-    Snapshot save() const;
-    void restore(Snapshot snapshot);
-    /* ... */
-};
 ```
 
-A caretaker, the admin screen's controller code in this example, can hold a `Snapshot`, move it into a local variable, and hand it back to `restore()` later, but it cannot read a single field inside one; the friendship that would let it do so is granted to `RuleSetEditor` and nobody else. That is Memento's defining property, stated precisely rather than loosely: capture an object's state in a form a caretaker can store and return, without exposing that state to the caretaker along the way.
+The caretaker, an admin screen's controller, can hold a `Snapshot`, move it and pass it back to `restore()`, but can't read a field of it.
 
 {% include excalidraw.html name="20-memento-save-restore" caption="Figure 20.2: RuleSetEditor saves its whole state into an opaque Snapshot that a caretaker can hold and return, and restore() replaces that state in one call." %}
 
-`save()` does one thing beyond copying three fields: it deep-clones every rule's `RuleExpr` tree with the `clone()` function this chapter's variant form also ships, the same role Chapter 13's Prototype played for a single concrete object.
+`save()` deep-clones every rule's tree with `clone()`:
 
 ```cpp
 RuleSetEditor::Snapshot RuleSetEditor::save() const {
     std::vector<NamedRule> cloned_rules;
+    cloned_rules.reserve(rules_.size());
     for (const NamedRule& rule : rules_) {
         cloned_rules.push_back(NamedRule{rule.label, clone(rule.expr)});
     }
@@ -185,22 +254,25 @@ RuleSetEditor::Snapshot RuleSetEditor::save() const {
 }
 ```
 
-Without that clone, a `Snapshot` would hold pointers into the same `RuleExpr` trees the live `RuleSetEditor` keeps mutating, and "restoring" an old snapshot would hand back whatever those trees had become by the time `restore()` ran, not what they were at `save()` time. `restore()` is the mirror operation: it replaces `draft_name_`, `rules_`, and `published_` wholesale, in one call, with whatever the `Snapshot` captured.
+A snapshot that shared trees with the live editor would restore whatever those trees had become, not what they were at `save()` time. `restore()` replaces `draft_name_`, `rules_` and `published_` in one call.
 
-Memento differs from Chapter 11's Command-based undo in one specific way. `CommandHistory` in Chapter 11 reverses one `InventoryCommand` at a time, walking backward through a stack of operations that each know their own inverse; undoing three operations means running three inverses in sequence, and anything in between is still visible to a caller who only asked to undo once. `RuleSetEditor::restore()` does not know or care how many `add_rule()`, `remove_rule()`, or `set_published()` calls happened since `save()`; it replaces the whole object in a single assignment, as if none of them had ever run. Reach for Command's per-operation undo when an operator needs to step backward and forward through a sequence of discrete actions, one at a time, the way a text editor's Ctrl-Z does. Reach for Memento when a caller wants to discard an entire batch of changes in one call and does not care how many changes that batch contained.
+### Memento or Command undo
 
-> **AI sidebar.** Ask an LLM pairing partner to "let me undo editing this rule set" and a common first answer is Command: wrap every `add_rule()` and `set_published()` call in an `InventoryCommand`-shaped object with its own `undo()`. That is the right shape for Chapter 11's warehouse editor, where each operation has a natural, cheap inverse. It is the wrong shape here, where the request is "go back to how the whole draft looked a minute ago," not "reverse my last five edits one at a time." Writing a bespoke inverse for `add_rule()` (remove the rule just added), `remove_rule()` (re-add whatever was removed, in its original position, with its original tree), and `set_published()` (restore the prior flag) is real, fiddly code that a whole-state `Snapshot` sidesteps entirely by never needing an inverse for anything. Before accepting a generated Command-undo stack, ask whether the request is "reverse my last operation" or "throw away everything since this point," because the two map to different patterns in this book, Command and Memento, with different amounts of code behind each one.
+| | Command undo | Memento |
+| --- | --- | --- |
+| Unit | One operation, with its own inverse | The whole object state |
+| Going back three steps | Three inverses in sequence | One `restore()` |
+| Code per operation | An inverse for each | None |
+| Cost | Small per step | A full copy per snapshot |
+| Fits | Step-by-step undo and redo, like Ctrl-Z | Discard a batch of edits since a known point |
 
-## A typed rule lookup: C++20 versus C++23
+### A typed rule lookup
 
-`RuleSetEditor::evaluate_rule()` looks a named rule up by label and throws `std::out_of_range` when the label is missing, which works but forces every caller either to wrap the lookup in a `try` block or accept that an unhandled exception can propagate out of a filter evaluation. C++23's `std::expected` gives the same lookup a typed alternative: a return type that carries either the match result or a specific reason the lookup failed, checkable with an `if` and no exception machinery at all. `try_evaluate_rule()` in this example is guarded behind `#if __cplusplus >= 202302L` precisely so the mandatory C++20 build path never needs `std::expected`, while the C++23 build gets the more precise contract.
+`evaluate_rule()` throws `std::out_of_range` for a missing label, so every caller wraps it in `try` or lets the exception leave filter evaluation. `std::expected`, new in C++23, reports the failure as a value. `try_evaluate_rule()` sits behind `#if __cplusplus >= 202302L`, so the C++20 build never sees it.
 
 {% include codetabs.html langs="C++20|C++23" %}
 
 ```cpp
-// C++20: throwing on a missing label works, but it forces every caller
-// to wrap the lookup in a try block or accept an unhandled exception
-// propagating out of a filter evaluation.
 bool RuleSetEditor::evaluate_rule(const std::string& label, const Shipment& shipment) const {
     const NamedRule* rule = find_rule(label);
     if (rule == nullptr) {
@@ -210,10 +282,8 @@ bool RuleSetEditor::evaluate_rule(const std::string& label, const Shipment& ship
 }
 ```
 ```cpp
-// C++23: std::expected reports the same missing-label failure as a typed
-// error, checkable with an if and no exception machinery.
-std::expected<bool, std::string> RuleSetEditor::try_evaluate_rule(
-    const std::string& label, const Shipment& shipment) const {
+std::expected<bool, std::string> RuleSetEditor::try_evaluate_rule(const std::string& label,
+                                                                    const Shipment& shipment) const {
     const NamedRule* rule = find_rule(label);
     if (rule == nullptr) {
         return std::unexpected<std::string>("no such rule: " + label);
@@ -222,28 +292,30 @@ std::expected<bool, std::string> RuleSetEditor::try_evaluate_rule(
 }
 ```
 
-Both versions look the same label up against the identical set of named rules. Only how a caller learns about a missing one changes between the two columns, the same narrow scope this book's codetabs convention has held to since Chapter 8's typed Strategy error and Chapter 16's typed Proxy access check.
+Both look up the same rules. Only how a caller learns about a missing label changes.
 
-## When not to use Visitor, Interpreter, or Memento
+## When not to use it
 
-All three patterns in this chapter earn their cost when the force behind them is real and not merely anticipated. Outside that, each one adds a layer with nothing underneath it to justify the cost.
+- **Visitor.** A rule tree with one operation evaluated in one place needs a few branches in one function, not a `RuleVisitor` hierarchy or an overload set. Add a visitor when a second operation, or a plugin-supplied node kind, is a real requirement.
+- **Interpreter.** Build one when the grammar is open-ended, assembled from user input or configuration. A single hard-coded condition in checkout code is a boolean expression written where it's checked.
+- **Memento.** An object with no multi-step editing workflow and no "discard this batch" request needs no `Snapshot`. And when the request is to undo one keystroke at a time, cloning the whole object on every edit costs far more than one cheap inverse; use Command.
 
-Visitor pays for itself when a structure stays fixed and the operations over it multiply. A rule tree with exactly one operation, "does this shipment match," evaluated in exactly one place, needs neither a `RuleVisitor` hierarchy nor a `std::variant` overload set; it needs the handful of `if`/`else if` branches a single function can hold, read start to finish by one reviewer. The moment that changes is the moment a second operation, a third, or a plugin-supplied node kind becomes a real requirement, not before: introducing either Visitor shape ahead of a second operation is this chapter's version of the branch-inside-the-method trap Chapter 16 described for a premature Decorator, a vtable or a template instantiation paid for before anything needs it.
-
-Interpreter pays for itself when a grammar is open-ended, built from user input or configuration rather than fixed at compile time by the handful of call sites that use it. A single hard-coded filter condition, checked once in checkout code with no merchant-facing editor anywhere near it, does not need an AST, a `RuleExpr` tree, or an `evaluate()` walking it; it needs a plain boolean expression written directly where it is checked. Building an interpreter for a grammar with one fixed expression and no second expression coming is solving a parsing-and-evaluation problem nobody has.
-
-Memento pays for itself when a whole-state rollback is a real requirement, not a hypothetical one. An object with no multi-step editing workflow, no "discard this batch of changes" operation a caller ever asks for, does not need a `Snapshot` nested class and a `save()`/`restore()` pair sitting unused beside it; it needs to be mutated directly, with no undo path at all until somebody asks for one. The sharper trap is reaching for Memento when Command's per-operation undo is what the problem calls for, cloning an entire object on every edit to support undoing one keystroke, when a single cheap inverse operation would do the same job for a fraction of the cost. Name which rollback shape a caller needs, one step back or one whole batch discarded, before building either pattern's machinery.
+> **🤖 Explore with your agent**
+>
+> "Add whole-state undo to `RuleSetEditor` as a Memento. `save()` returns a nested `RuleSetEditor::Snapshot` with private members, a private constructor and `RuleSetEditor` as its only friend; it is move-only. `save()` deep-copies every rule with `clone(rule.expr)`, and `restore(Snapshot)` replaces `draft_name_`, `rules_` and `published_` in one call. Don't write per-operation inverses for `add_rule()`, `remove_rule()` or `set_published()`."
+>
+> Run `ctest --preset cpp23 -R RuleSetEditor`, and check that no public accessor on `Snapshot` exposes its fields.
 
 ## Build, run, observe
 
-Every command below runs with the local clang, CMake, Ninja, and Conan toolchain Chapter 0 installs; there is no container anywhere in this loop. From the repository root, the root superbuild picks up `examples/20-visitor-memento-interpreter` automatically:
+From the repository root, the superbuild picks up `examples/20-visitor-memento-interpreter`:
 
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23
 scripts/build.sh cpp20 && scripts/verify.sh cpp20
 ```
 
-This example is also standalone-buildable on its own; the run script there builds and runs it, and its `README.md` covers what it does and how to drive it:
+It also builds standalone from its own directory; its `README.md` covers driving it:
 
 ```sh
 cd examples/20-visitor-memento-interpreter
@@ -254,20 +326,11 @@ cmake --build --preset cpp23
 ctest --preset cpp23 --output-on-failure
 ```
 
-`scripts/verify.sh` (or `ctest --preset <preset>` run directly from this example's own directory) discovers this example's GoogleTest cases through `gtest_discover_tests`: 20 cases under the `cpp23` preset, 18 under `cpp20`, the difference being the two `std::expected`-specific cases that only compile under C++23. Observed locally on Fedora 44 / clang 22.1.8:
-
-```
-100% tests passed, 0 tests failed out of 20   # cpp23
-100% tests passed, 0 tests failed out of 18   # cpp20
-```
-
-To see the classic and variant visitors agree, the interpreter's nesting change the answer, and the memento restore a whole draft, run the example's own demo script:
+All 20 cases pass under `cpp23` and 18 under `cpp20`; the two `std::expected` cases compile only under C++23. To see the visitors agree, the nesting change the answer and the memento restore a draft:
 
 ```sh
 examples/20-visitor-memento-interpreter/demo.sh cpp23
 ```
-
-It evaluates one rule two ways, evaluates two differently-nested trees built from the same three predicates, and walks a draft rule set through an edit-then-restore cycle:
 
 ```
 == Visitor 1: classic double dispatch vs Visitor 2: std::variant + std::visit ==
@@ -292,12 +355,12 @@ Restored rule evaluates: true
 Rejected lookup: no such rule: ghost-rule
 ```
 
-The first block's two "match=true" lines, printed from two independently implemented visitors walking two independently built trees, are the classic-versus-variant agreement this chapter's test suite also asserts. The second block's "true" then "false", computed from the identical three predicates nested two different ways, is nesting deciding an interpreted grammar's answer, visible at the terminal rather than only in an assertion. The memento block's final line, "rules=1" again after "rules=2" mid-edit, and the restored rule still evaluating correctly against the same shipment, is a whole batch of edits discarded in one `restore()` call, not reversed one at a time. Running `examples/20-visitor-memento-interpreter/demo.sh cpp20` prints the same output minus the final `std::expected` block, which only compiles under the `cpp23` preset.
+Two separately built visitors agree, the same predicates nested two ways give `true` and `false`, and one `restore()` discards a rename, an added rule and a publish. Under `cpp20` the output stops before the `std::expected` block.
+
+- **Drop a case from the overload set.** In a scratch copy, delete the `NotExpr` lambda from `evaluate()` in `src/rule_expr.cpp`. The build fails inside `std::visit` with `no type named 'type' in 'std::invoke_result<...>'` for `const rules::NotExpr &`.
 
 ## For deeper coverage
 
-Visitor, Interpreter, and Memento are the last three patterns in the Gang of Four's original 23. Every chapter from here back to Chapter 2 has now worked through one, several, or, in this chapter's case, three of them, each against new, real-domain C++20/23 code rather than the book's own illustrations.
-
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the original Visitor, Interpreter, and Memento entries, including the "represent an operation to be performed on the elements of an object structure," "given a language, define a representation for its grammar," and "capture and externalize an object's internal state" intent statements this chapter's rule tree, grammar walk, and draft snapshot each build on.
-- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/20-visitor-memento-interpreter`'s suite, which asserts that two independently built visitors agree on one tree, that nesting order changes an interpreted result, and that a restored snapshot evaluates identically to the state it was taken from, rather than only checking that each class constructs without error.
-- The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the original Visitor, Interpreter, and Memento entries, including the "represent an operation to be performed on the elements of an object structure," "given a language, define a representation for its grammar," and "capture and externalize an object's internal state" intent statements.
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/20-visitor-memento-interpreter`.
+- The full reading list lives on the [bibliography page]({{ '/bibliography/' | relative_url }}).

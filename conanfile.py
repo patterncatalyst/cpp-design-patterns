@@ -22,7 +22,7 @@ class CppDesignPatternsConan(ConanFile):
         deps.generate()
 
         tc = CMakeToolchain(self)
-        # `conan install` runs once per preset (build/cpp23, build/cpp20 —
+        # `conan install` runs once per preset (build/cpp23, build/cpp20;
         # see scripts/build.sh), each with its own --output-folder. Conan's
         # default behavior also merges a same-named "conan-release" entry
         # into the repo-root CMakeUserPresets.json on every install, which

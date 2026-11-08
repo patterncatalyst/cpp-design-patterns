@@ -6,7 +6,7 @@ description: A shipment audit log built first as a Meyers singleton, then as an 
 github_path: examples/14-singleton-and-di
 card_eyebrow: "Chapter 14 · Singleton"
 card_title: "Audit log: singleton vs DI"
-card_blurb: "A thread-safe Meyers singleton shown honestly alongside its costs, then the same capability as a constructor-injected abstraction that a test can swap for a fake."
+card_blurb: "A thread-safe Meyers singleton shown alongside its costs, then the same capability as a constructor-injected abstraction that a test can swap for a fake."
 ---
 
 A shipment-fulfillment audit log built two ways so the trade-off is concrete:

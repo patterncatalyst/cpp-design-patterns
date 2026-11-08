@@ -10,60 +10,35 @@ duration: "30 min"
 
 By the end of this chapter you can:
 
-- Choose between a plain `TEST` and a `TEST_F` fixture, and say what a
-  `SetUp`/`TearDown` pair buys you that constructing an object inline in
-  the test body does not.
-- Replace a handful of near-identical `TEST` functions with one `TEST_P`
-  suite driven by a table of cases, and name each case so `ctest -N`
-  reads like a requirements list.
-- Prove the same contract holds across more than one concrete type with a
-  `TYPED_TEST_SUITE`, instead of writing the same checks out once per type.
-- Use `ASSERT_*` where a failure must stop the test immediately and
-  `EXPECT_*` where it must not, and explain the difference in terms of
-  what runs after each one fails.
-- Write a GoogleMock `EXPECT_CALL` with a matcher and an action to verify
-  that a collaborator was called correctly, not only that a function
-  returned the right value.
-- Write an `EXPECT_DEATH` test for a precondition, and say why this
-  book's examples check that precondition with something other than the
-  standard `assert()` macro.
-- Recognize an over-mocked or tautological test, including one an LLM
-  pairing partner is likely to hand you, and say what to write instead.
+- Choose between a plain `TEST` and a `TEST_F` fixture, and say what `SetUp`/`TearDown` buy over constructing objects inline.
+- Replace near-identical `TEST` functions with one `TEST_P` suite driven by a table, with each case named so `ctest -N` reads like a requirements list.
+- Check one contract across several concrete types with `TYPED_TEST_SUITE`.
+- Use `ASSERT_*` where a failure must stop the test and `EXPECT_*` where it mustn't.
+- Write a GoogleMock `EXPECT_CALL` with a matcher and an action to verify how a collaborator was called.
+- Write an `EXPECT_DEATH` test for a precondition, and say why the precondition isn't checked with `assert()`.
+- Recognize an over-mocked or tautological test, and say what to write instead.
 
 ## Why this matters
 
-Every pattern chapter in this book makes a specific claim: this Strategy
-prices a shipment the same way no matter which of three mechanisms quotes
-it, this `InvoiceRule` can be added without editing `InvoiceCalculator`,
-this subtype keeps its parent's promise under substitution. None of those
-claims hold any weight the moment they are unverified, which is why
-Chapter 0's build-and-test loop ends every edit with `ctest`, not with
-"it compiled." GoogleTest is the only testing idiom this book uses, and
-this chapter is where the book trains it once, so every pattern chapter
-after this one can spend its test suite proving the pattern's claim
-instead of re-explaining how a fixture or a mock works.
+Every pattern chapter makes a claim: a Strategy prices a shipment the same way whichever mechanism quotes it, an `InvoiceRule` can be added without editing `InvoiceCalculator`, a subtype keeps its parent's promise. An unverified claim is worth nothing, which is why the build loop from Chapter 0 ends with `ctest`, not with "it compiled." GoogleTest is the only testing framework used, and its styles are covered once, here.
 
-That single foundation has to cover more ground than one test style can.
-Some components carry mutable state a test needs to reset between runs.
-Some behaviors are best proven as a table of inputs and expected outputs
-rather than five near-identical functions. Some claims are about a
-contract that more than one concrete type must honor. Some failures are
-about whether a collaborator was called correctly, not just about a
-return value. And some failures are not supposed to be recoverable at
-all; a violated precondition should stop the program, and a test needs a
-way to assert that it does. GoogleTest and GoogleMock give this book one
-mechanism for each of those five shapes, and the component this chapter
-builds, a freight carrier's quote intake, uses every one of them where it
-fits a real need in the suite, never for completeness.
+One style can't cover every claim:
+
+| Claim | Style |
+| --- | --- |
+| a component with mutable state needs a clean start for each test | fixture, `TEST_F` |
+| one function, many inputs and expected outputs | parameterized, `TEST_P` |
+| several types honor one contract | typed, `TYPED_TEST` |
+| a collaborator was called, or not, with the right arguments | GoogleMock, `EXPECT_CALL` |
+| a violated precondition ends the program | death test, `EXPECT_DEATH` |
+
+A freight carrier's quote intake uses each one where it fits.
 
 {% include excalidraw.html name="07-test-styles" caption="Figure 7.1: Five GoogleTest/GoogleMock styles, each with the question it answers, funneling into the same CTest discovery and run flow." %}
 
 ## The domain: validating and recording a freight quote
 
-The example behind this chapter lives in `examples/07-testing-with-gtest`.
-A `ShipmentRequest` arrives with a weight, a `ServiceZone`, and a declared
-value; `QuoteIntake` is the component that decides whether to quote it,
-prices it if so, and asks a ledger to make the quote durable:
+The code is in `examples/07-testing-with-gtest`. A `ShipmentRequest` has a weight, a `ServiceZone` and a declared value. `QuoteIntake` decides whether to quote it, prices it, and asks a ledger to record the quote:
 
 ```cpp
 struct ShipmentRequest {
@@ -82,27 +57,11 @@ private:
 };
 ```
 
-`submit()` validates the request, and only an accepted request goes on to
-be priced and handed to the ledger. `QuoteIntake` depends on two
-collaborators through interfaces it never implements itself,
-`QuoteLedger` and `QuoteIdGenerator`, injected by reference and owned by
-the caller. That dependency shape, the same inversion Chapter 4 trained
-on a notification gateway, is what lets this chapter's tests swap a real
-collaborator for a test double without `QuoteIntake`'s own code noticing
-the difference. Every GoogleTest style below proves one fact about this
-component; none of them duplicate each other's job.
+`QuoteIntake` takes its two collaborators, `QuoteLedger` and `QuoteIdGenerator`, as interfaces by reference, the same inversion as Chapter 4. That's what lets a test put a double in place of either one.
 
 ## A table of rules: the parameterized test
 
-`validate_shipment()` checks a `ShipmentRequest` against three
-independent rules: weight must be positive, the destination zone must be
-resolved, and the declared value must sit under the carrier's insurable
-limit. Writing one `TEST` function per rule, plus one for the shipment
-that passes all three, would work, but it scales badly: a fourth rule
-means a fourth copy-pasted function, and a reviewer has to read five
-functions to confirm the five cases agree on what "valid" means. `TEST_P`
-plus `INSTANTIATE_TEST_SUITE_P` collapses that into one assertion and a
-table:
+`validate_shipment()` applies three rules: the weight is positive, the zone is set, and the declared value is within the insurable limit. One `TEST` per rule plus one for the valid case means a new copy-pasted function for each new rule, and a reviewer reading five functions to confirm they agree on "valid." `TEST_P` with `INSTANTIATE_TEST_SUITE_P` makes it one assertion and a table:
 
 ```cpp
 struct ValidationCase {
@@ -129,32 +88,11 @@ INSTANTIATE_TEST_SUITE_P(
     [](const ::testing::TestParamInfo<ValidationCase>& info) { return info.param.name; });
 ```
 
-The lambda in the last argument is doing real work, not decoration.
-Without it, GoogleTest names each instance by its index in the table,
-`MatchesExpectedOutcome/0`, `MatchesExpectedOutcome/1`, and so on; a
-failing test tells a reader which number broke, and the reader has to go
-count rows in the table to find out what that number means. With it,
-`ctest -N` prints `MatchesExpectedOutcome/declared_value_over_the_limit_is_rejected`,
-and a failure is legible from the test name alone, before anyone opens
-the source file. Adding a sixth intake rule later means adding a row to
-the table, not a new function; the assertion logic, and the risk of a
-copy-paste mistake between near-identical functions, exists exactly once.
+Without the final lambda, GoogleTest names instances by index, `MatchesExpectedOutcome/0`, `/1`, and a failure sends the reader off counting rows. With it, `ctest -N` lists `MatchesExpectedOutcome/declared_value_over_the_limit_is_rejected`, and the failure explains itself. A new rule is a new row; the assertion exists once.
 
 ## One contract, two generators: the typed test
 
-`QuoteIntake` needs a way to hand out quote ids, and this example ships
-two: `SequentialQuoteIdGenerator`, which formats an id from a
-process-wide counter, and `PrefixedQuoteIdGenerator`, which formats one
-from an instance-local counter with a different prefix. Both satisfy the
-same unwritten contract: `next_id()` never returns an empty string, and
-never repeats within the process. That contract is exactly the kind of
-claim Chapter 3 trained a test to make concrete for Liskov Substitution,
-a function written once against a base type and called with every
-subtype, except here the two types do not share a base class at all;
-they only share a method name and a promise.
-
-`TYPED_TEST_SUITE` is GoogleTest's answer to proving a shared contract
-against a type list, without inheritance tying the types together:
+`QuoteIntake` needs quote ids, and there are two `QuoteIdGenerator` implementations: `SequentialQuoteIdGenerator`, which formats ids from a process-wide counter, and `PrefixedQuoteIdGenerator`, which uses an instance counter and a prefix. Both promise that `next_id()` never returns an empty string and never repeats. That's a substitutability claim like Chapter 3's, checked against a list of concrete types. `TYPED_TEST_SUITE` runs the same checks for each:
 
 ```cpp
 template <typename GeneratorType>
@@ -175,24 +113,16 @@ TYPED_TEST(QuoteIdGeneratorContractTest, NeverRepeatsAcrossOneHundredCalls) {
 }
 ```
 
-The fixture class is a template, instantiated once per entry in
-`QuoteIdGeneratorTypes`, and GoogleTest runs every `TYPED_TEST` body
-against every instantiation. Adding a third generator later, say one
-backed by a UUID library, means adding its name to the `::testing::Types`
-list; the two checks above run against it automatically, with no new test
-code. Reach for a typed test specifically when the thing under test is a
-contract more than one concrete type must honor; a parameterized test
-covers the opposite shape, one type and many input values, and the two
-are not substitutes for each other.
+The fixture is a template, instantiated once per type in the list, and every `TYPED_TEST` body runs against each. A third generator, say one backed by a UUID library, is one more name in `::testing::Types`. The fixture instantiates the concrete type directly, so the types don't need a common base; any type with a matching `next_id()` works.
 
-## Shared state across tests: the fixture
+| Shape | Style |
+| --- | --- |
+| one type, many input values | parameterized |
+| many types, one contract | typed |
 
-`QuoteIntakeTest` is where the test suite needs more than a value table.
-Every test in this suite needs a `QuoteLedger`, a `QuoteIdGenerator`, and
-a `QuoteIntake` wired to both, and most of them reuse the same baseline
-`ShipmentRequest`. A plain `TEST` could construct all four inline at the
-top of every function, but that duplicates four lines across nine tests
-for no benefit; a `TEST_F` fixture builds them once as protected members:
+## Shared state: the fixture
+
+Every intake test needs a `QuoteLedger`, a `QuoteIdGenerator`, a `QuoteIntake` wired to both, and usually the same valid request. A `TEST_F` fixture declares them once instead of in each of the four tests:
 
 ```cpp
 class QuoteIntakeTest : public ::testing::Test {
@@ -207,36 +137,13 @@ protected:
 };
 ```
 
-The member declarations alone would be enough if every piece of state
-this fixture touches were local to one `QuoteIntakeTest` instance, since
-GoogleTest constructs a fresh fixture object for every `TEST_F`. What
-makes `SetUp`/`TearDown` necessary here is that
-`SequentialQuoteIdGenerator`'s counter is not local to one instance; it
-is a static member, because a real backing sequence lives in a database
-shared across every `QuoteIntake` in the process, not inside whichever
-generator object happens to be running. A fresh fixture
-member does not reset that shared counter, so without an explicit reset
-the quote id a test observes would depend on how many ids every earlier
-test in the binary already consumed. `SetUp()` puts the counter back to a
-known value before the test body runs.
+GoogleTest builds a fresh fixture object for every `TEST_F`, so members alone would be enough for per-instance state. `SequentialQuoteIdGenerator`'s counter is static instead, because the real sequence lives in a database shared by every `QuoteIntake` in the process. A fresh member doesn't reset it, and without `SetUp()` the id a test sees would depend on how many ids earlier tests consumed.
 
-`TearDown()` resets it again, not only `SetUp()`, and the reason is the
-same fact the next section trains directly: a fatal assertion failure
-partway through a test body skips the rest of that body and jumps
-straight to `TearDown()`. Cleanup written only at the bottom of a test
-function, after the last assertion, would silently never run on exactly
-the test run where something already went wrong. Putting the reset in
-`TearDown()` instead guarantees it runs whether the test passed, failed
-non-fatally, or aborted early on a fatal check.
+`TearDown()` resets it too. A fatal assertion skips the rest of the test body and goes straight to `TearDown()`, so cleanup written after the last assertion would never run on exactly the runs where something went wrong.
 
-## Choosing when a failure must stop the test: `ASSERT_*` versus `EXPECT_*`
+## `ASSERT_*` versus `EXPECT_*`
 
-GoogleTest's two assertion families differ in exactly one way: what
-happens immediately after one of them fails. `EXPECT_*` records the
-failure and lets the test function keep running; `ASSERT_*` records the
-failure and returns from the test function on the spot, skipping
-everything after it. That difference is a design decision, not a style
-preference, and `QuoteIntakeTest`'s first test makes the choice visible:
+`EXPECT_*` records a failure and keeps going. `ASSERT_*` records it and returns from the test function.
 
 ```cpp
 TEST_F(QuoteIntakeTest, AcceptsAndRecordsAValidShipment) {
@@ -250,28 +157,16 @@ TEST_F(QuoteIntakeTest, AcceptsAndRecordsAValidShipment) {
 }
 ```
 
-`result` is a `std::optional<Quote>`. If `submit()` returned
-`std::nullopt`, the line `result->amount_cents` would be undefined
-behavior, not a clean test failure; the test has to stop before it gets
-there, which is exactly what `ASSERT_TRUE` does. The two `EXPECT_EQ`
-checks after it are independent facts about the same quote, the price
-and the id, and both deserve to run and both deserve to report even if
-only one of them is wrong; a regression that breaks the price while
-leaving the id correct, or the reverse, shows up as one failing line
-instead of a test that stops after the first problem and hides the
-second. The streamed message on each assertion is doing real work too:
-`ASSERT_TRUE(...) << "..."` prints that string only when the check fails,
-so a future reader sees a sentence that names what probably broke,
-`check quote_cost()'s weight and zone math`, instead of a bare `1225 !=
-980` with no context pointing at where to look.
+| Check | Family | Why |
+| --- | --- | --- |
+| `result.has_value()` | `ASSERT_TRUE` | if `submit()` returned `std::nullopt`, `result->amount_cents` would be undefined behavior, not a clean failure |
+| the price and the id | `EXPECT_EQ` | independent facts; a regression in one shouldn't hide the other |
 
-## Verifying the call, not just the result: GoogleMock
+The streamed message prints only on failure, so the reader sees `check quote_cost()'s weight and zone math` instead of a bare `1225 != 980`.
 
-Every test above this one asks what `submit()` returns. The next
-question GoogleTest alone cannot answer is whether `QuoteIntake` talked
-to its ledger correctly, and that is GoogleMock's job. `MockQuoteLedger`
-implements the same `QuoteLedger` interface the real ledger does, with
-one method turned into a mock:
+## Verifying the call: GoogleMock
+
+A return value can't show whether `QuoteIntake` talked to its ledger correctly. `MockQuoteLedger` implements `QuoteLedger` with one mocked method:
 
 ```cpp
 class MockQuoteLedger : public QuoteLedger {
@@ -280,9 +175,7 @@ public:
 };
 ```
 
-`EXPECT_CALL` sets an expectation on that mock before the code under test
-runs, and the test fails if the expectation is not met by the time the
-mock is destroyed:
+`EXPECT_CALL` sets an expectation before the code runs, and the test fails if it isn't met by the time the mock is destroyed:
 
 ```cpp
 TEST_F(QuoteIntakeTest, RejectsAnInvalidShipmentWithoutTouchingTheLedger) {
@@ -295,40 +188,23 @@ TEST_F(QuoteIntakeTest, RejectsAnInvalidShipmentWithoutTouchingTheLedger) {
 }
 ```
 
-`Times(0)` makes the interaction itself the assertion: a shipment that
-fails validation must never reach the ledger at all, not reach it and get
-declined. A test that only checked `result.has_value()` would pass even
-if `QuoteIntake` called `record()` first and ignored the answer, a bug
-this interaction check catches and a return-value check cannot.
-`PassesTheComputedAmountToTheLedgerBeforeRecording` goes one step
-further, matching on the argument `record()` receives:
+`Times(0)` makes the interaction the assertion: an invalid shipment never reaches the ledger. Checking only `result.has_value()` would pass even if `QuoteIntake` called `record()` and ignored the answer. A matcher on the argument goes further:
 
 ```cpp
 EXPECT_CALL(ledger_, record(Field(&Quote::amount_cents, Eq(1225)))).WillOnce(Return(true));
 ```
 
-`Field` reaches into the `Quote` argument and matches on one member,
-`Eq(1225)` pins the exact value, and `WillOnce(Return(true))` is the
-action, telling the mock what to hand back to `QuoteIntake` when the call
-arrives. This is the check that would catch a bug where `QuoteIntake`
-records the wrong price while still returning the right one to its own
-caller, a class of bug a test that only inspects `submit()`'s return
-value structurally cannot see. `ReturnsNulloptWhenTheLedgerDeclinesToRecord`
-uses the same action mechanism the other way, returning `false` from the
-mock to prove that `submit()` defers to the ledger's answer and not only
-to its own validation.
+| Piece | Does |
+| --- | --- |
+| `Field(&Quote::amount_cents, ...)` | matches one member of the `Quote` argument |
+| `Eq(1225)` | pins its value |
+| `WillOnce(Return(true))` | the action: what the mock returns to `QuoteIntake` |
+
+That catches `QuoteIntake` recording the wrong price while returning the right one to its caller, which no return-value check can see. Returning `false` from the same action shows that `submit()` returns `std::nullopt` when the ledger declines, not only when validation fails.
 
 ## A failure that must not be recoverable: the death test
 
-`quote_cost()` has a precondition: its caller must have already validated
-the request, because this function assumes `weight_kg` is non-negative
-and does not check it the way `validate_shipment()` does. Calling it
-directly with a malformed request, bypassing validation the way a
-careless future caller might, must not silently return a nonsense price;
-it must abort. `EXPECT_DEATH` is GoogleTest's way of asserting that a
-statement terminates the process, running the statement in a forked
-child process and checking both that it dies and that it prints a
-matching message:
+`quote_cost()` assumes its caller already validated the request and that `weight_kg` is non-negative. Called directly with a malformed request, it must abort, not return a nonsense price. `EXPECT_DEATH` runs the statement in a child process and checks that it dies with a matching message:
 
 ```cpp
 TEST(QuoteCostDeathTest, AbortsWhenCalledWithANegativeWeightPrecondition) {
@@ -337,15 +213,7 @@ TEST(QuoteCostDeathTest, AbortsWhenCalledWithANegativeWeightPrecondition) {
 }
 ```
 
-The precondition check behind this test is not the standard library's
-`assert()`. This book's CMake presets build every example as Release
-(`CMakePresets.json`'s `cpp23` and `cpp20` presets both set
-`CMAKE_BUILD_TYPE: Release`), and CMake's default Release flags add
-`-DNDEBUG`, which compiles `assert()` down to nothing. A precondition
-that only fires in a debug build nobody runs in CI is not checked
-anywhere this book's examples ship, so `quote_cost()` guards
-itself with `FREIGHT_REQUIRE`, a small macro that checks its condition
-and calls `std::abort()` unconditionally, in every build configuration:
+The check isn't `assert()`. Both presets set `CMAKE_BUILD_TYPE` to `Release`, CMake's Release flags add `-DNDEBUG`, and `assert()` compiles to nothing. `quote_cost()` uses `FREIGHT_REQUIRE`, which aborts in every configuration:
 
 ```cpp
 #define FREIGHT_REQUIRE(condition, message)                                  \
@@ -357,95 +225,35 @@ and calls `std::abort()` unconditionally, in every build configuration:
     } while (false)
 ```
 
-Reach for a death test specifically when a precondition or an invariant
-is supposed to be fatal, not recoverable; a test that only confirmed
-`quote_cost()` threw an exception or returned a sentinel for the same
-input would be testing a different, gentler contract than the one this
-function promises. Death tests run the checked statement in a
-subprocess, so they are slower and less parallel-friendly than an
-ordinary assertion; reserve them for the handful of invariants whose
-violation should end the program, not for routine input validation that
-has a normal return-value contract already.
+Use a death test when a violation is meant to be fatal. A check that `quote_cost()` threw or returned a sentinel would test a gentler contract than the one it promises. Death tests fork, so they're slower and less parallel-friendly; keep them for the few invariants that should end the program, not for input validation with a normal return-value contract.
 
-> **AI sidebar.** Ask an LLM pairing partner to "write tests for
-> `QuoteIntake`" and a common result compiles, runs green, and proves
-> almost nothing. Two failure shapes show up constantly enough to check
-> for by name. The first is the tautological test: an assertion that
-> restates the code under test rather than an independent expectation,
-> for instance mocking `QuoteLedger::record()` to always return `true`
-> and then asserting `submit()` returned a value, which only proves the
-> mock did what it was told, not that `QuoteIntake` behaves correctly.
-> The second is over-mocking: a generated test that mocks `QuoteLedger`
-> and `QuoteIdGenerator` even for `ShipmentValidationTest`'s pure
-> `validate_shipment()` checks, which need neither collaborator and
-> should stay plain `TEST_P` cases with zero mocks. Read every generated
-> `EXPECT_CALL` the way this chapter trained: is this checking a real
-> interaction a bug could break, or is it restating what the test just
-> told the mock to do? A generated suite with high line coverage and zero
-> `Times(0)` or argument-matcher expectations is a strong sign the model
-> reached for the mechanics of GoogleMock without reaching for the actual
-> question an interaction test exists to answer.
+> **🤖 Explore with your agent**
+>
+> "In `examples/07-testing-with-gtest`, add cases for `QuoteIntake::submit()` to `tests/quote_intake_test.cpp` using the existing `QuoteIntakeTest` fixture and `MockQuoteLedger` from `tests/mock_quote_ledger.hpp`. For an invalid request, expect `record(_)` with `Times(0)`. For a valid one, match the argument with `Field(&Quote::amount_cents, Eq(...))` using the price `quote_cost()` gives. Use `ASSERT_TRUE` on `has_value()` before dereferencing the result. Don't mock anything in the `validate_shipment()` or `quote_cost()` cases; call them directly."
+>
+> Check with `ctest --preset cpp23 -R QuoteIntake`, and reject any case whose only assertion restates what the mock was told to return.
 
 ## When not to use these styles
 
-Every style in this chapter pays for itself when the shape it answers is
-present in the component under test, and each one has a plain
-alternative that is the better engineering choice everywhere else.
+| Style | Skip it when | Write instead |
+| --- | --- | --- |
+| `TEST_F` | there's no shared mutable state and no costly setup | plain `TEST`s that each build what they need; no scrolling back to member declarations |
+| `TEST_P` | there's only one case | a `TEST`; a one-row instantiation is machinery around nothing |
+| typed test | only one type exists and no second one is coming | a `TEST`; the typed contract is justified here because `PrefixedQuoteIdGenerator` exists |
+| GoogleMock | the collaborator is pure, like `quote_cost()` or `validate_shipment()` | call the real function and assert on its result |
 
-A `TEST_F` fixture with no shared mutable state and no expensive setup is
-solving a problem the test suite does not have; a handful of independent
-`TEST` functions, each constructing the one or two objects it needs
-inline, is easier to read top to bottom than a fixture whose member
-declarations a reader has to scroll back to before understanding any one
-test. `TEST_P` pays off only once a second or third case of the
-same assertion shows up; writing a one-row `INSTANTIATE_TEST_SUITE_P` for
-a single case adds machinery around a test that could have stayed a
-`TEST`. A typed test is premature when only one concrete type exists and
-no second one is coming; `QuoteIdGeneratorContractTest` is justified here
-because `PrefixedQuoteIdGenerator` already exists as a second
-implementation, not because typed tests are a more sophisticated-looking
-way to test one generator.
-
-GoogleMock's cost is the easiest one to overspend without noticing. A
-collaborator with no side effect worth checking, a pure function like
-`quote_cost()` or `validate_shipment()`, never needs a mock; calling the
-real function with a real input and asserting on the real return value is
-both the simplest test to write and the one closest to what users of the
-function depend on. Reach for `MockQuoteLedger` only because
-`QuoteLedger::record()` has a side effect, writing a quote to storage,
-that a real implementation's test would need a real database or a slow
-integration test to observe. Mocking a pure function to "isolate" a test
-from code that has nothing to isolate from makes the test slower to read
-and no more trustworthy than calling the function directly.
+Mock `QuoteLedger` because `record()` has a side effect, writing to storage, that a real implementation would need a database to observe. Mocking a pure function makes the test slower to read and no more trustworthy.
 
 ## Build, run, observe
 
-Every command below runs with the local clang, CMake, Ninja, and Conan
-toolchain Chapter 0 installs; there is no container anywhere in this
-loop. From the repository root, the root superbuild picks up
-`examples/07-testing-with-gtest` automatically:
+From the repository root:
 
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23
 scripts/build.sh cpp20 && scripts/verify.sh cpp20
 ```
 
-`scripts/verify.sh` runs CTest, which discovers this example's test cases
-through `gtest_discover_tests`: all five styles in this chapter, the
-fixture, the parameterized suite, the typed suite, the mock interaction
-tests, and the death test, land in one binary and are discovered the same
-way. This example carries no C++23-only code, so the count does not
-change between presets, 15 cases under both. Observed locally on Fedora
-44 / clang 22.1.8:
-
-```
-100% tests passed, 0 tests failed out of 15   # cpp23
-100% tests passed, 0 tests failed out of 15   # cpp20
-```
-
-`ctest -N` shows each parameterized case under the name its instantiation
-gave it, not a bare index, which is the payoff of the name-generator
-lambda from earlier in this chapter:
+All five styles land in one binary and are discovered the same way. There's no C++23-only code, so all 15 cases pass under both presets. `ctest -N` lists each parameterized case by the name its instantiation gave it:
 
 ```
 IntakeRules/ShipmentValidationTest.MatchesExpectedOutcome/valid_regional_shipment
@@ -453,18 +261,13 @@ IntakeRules/ShipmentValidationTest.MatchesExpectedOutcome/zero_weight_is_rejecte
 IntakeRules/ShipmentValidationTest.MatchesExpectedOutcome/declared_value_over_the_limit_is_rejected
 ```
 
-To see the component validate, price, and record a shipment rather than
-just reading an assertion that says it works, run the example's own demo
-script:
+Then run the demo:
 
 ```sh
 examples/07-testing-with-gtest/demo.sh cpp23
 ```
 
-It validates five sample requests, submits two of them through intake,
-and then seeds the ledger with the id the generator is about to hand out
-next, so a third submission is rejected by the ledger itself rather than
-by validation:
+It validates five requests, submits two, then seeds the ledger with the next id so a third submission is declined by the ledger rather than by validation:
 
 ```
 == Validation: checking five requests before any of them is priced ==
@@ -485,8 +288,9 @@ by validation:
 Ledger now holds 3 quotes.
 ```
 
-Running `examples/07-testing-with-gtest/demo.sh cpp20` prints the
-identical output; nothing in this example's demo path is standard-specific.
+Under `cpp20` the output is identical.
+
+- **Use `assert()`.** In a scratch copy, replace the `FREIGHT_REQUIRE` call in `quote_cost()` with `assert(request.weight_kg >= 0.0 && "...")`. The death test fails: Release defines `NDEBUG`, the check disappears, and `quote_cost()` returns a price instead of aborting.
 
 ## For deeper coverage
 

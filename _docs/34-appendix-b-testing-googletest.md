@@ -5,27 +5,35 @@ layout: tutorial
 sectionid: docs
 part: appendices
 appendix: "B"
-description: "A reference for the GoogleTest macros, assertions, fixtures, and parameterized/typed/death tests this book's examples use, and how they run through CTest."
+description: "A reference for the GoogleTest macros, assertions, fixtures, and parameterized/typed/death tests the examples use, and how they run through CTest."
 duration: "15 min"
 ---
 
-## What this appendix covers
+## Learning objectives
 
-Every example's test suite in this book is built on GoogleTest. The testing
-chapter builds that foundation narratively, against a freight carrier's quote
-intake. This appendix is the lookup table: the macros, what each one expands
-to or guarantees, and when to reach for which one. Mocking with GoogleMock has
-its own appendix; nothing here covers `MOCK_METHOD` or `EXPECT_CALL` beyond
-this one line.
+By the end of this appendix you can:
 
-## TEST, TEST_F, and TEST_P: three ways to register a case
+- Pick `TEST`, `TEST_F`, `TEST_P` or `TYPED_TEST` for a case.
+- Choose between a fatal `ASSERT_*` and a nonfatal `EXPECT_*`.
+- Put setup and cleanup in the fixture method that runs when you need it.
+- Name parameterized instances so a failure points at its row.
 
-`TEST(Suite, Name)` is the plain form. It expands to a class derived from
-`::testing::Test`, named from the suite and test name, with the macro's body
-poured into an overridden `TestBody()` method. A file-scope static object
-registers that class with GoogleTest's global test registry before `main()`
-runs, which is how `ctest -N` can list every case without executing any of
-them: discovery walks the registry, not the test bodies.
+## Why this matters
+
+Every example's tests use GoogleTest. [Testing with GoogleTest]({{ '/docs/07-testing-with-googletest/' | relative_url }}) builds the foundation against a freight carrier's quote intake; this page is the lookup table. Mocking (`MOCK_METHOD`, `EXPECT_CALL`) is in [Appendix C]({{ '/docs/35-appendix-c-mocking-with-gmock/' | relative_url }}).
+
+| Need | API |
+| --- | --- |
+| One independent case | `TEST(Suite, Name)` |
+| Several cases sharing setup | `TEST_F(Fixture, Name)` |
+| One behavior over a table of inputs | `TEST_P` + `INSTANTIATE_TEST_SUITE_P` |
+| One contract over several types | `TYPED_TEST` + `TYPED_TEST_SUITE` |
+| A contract instantiated in another translation unit | `TYPED_TEST_P` + `REGISTER_TYPED_TEST_SUITE_P` |
+| A statement that must end the process | `EXPECT_DEATH` |
+
+## TEST, TEST_F and TEST_P
+
+`TEST(Suite, Name)` expands to a class derived from `::testing::Test`, with the macro body as its overridden `TestBody()`. A file-scope static object registers the class with GoogleTest's registry before `main()` runs, so `ctest -N` lists every case without running one: discovery walks the registry, not the bodies.
 
 ```cpp
 TEST(RateCardTest, RegionalZoneUsesTheBaseRate) {
@@ -34,27 +42,22 @@ TEST(RateCardTest, RegionalZoneUsesTheBaseRate) {
 }
 ```
 
-`TEST_F(Fixture, Name)` is the same expansion, except the generated class
-derives from `Fixture` instead of `::testing::Test` directly, so the test body
-runs with that fixture's members and its `SetUp()`/`TearDown()` already wired
-in. `TEST_P(Fixture, Name)` goes one step further: `Fixture` must derive from
-`::testing::TestWithParam<T>`, and the generated `TestBody()` calls
-`GetParam()` to read whichever value `INSTANTIATE_TEST_SUITE_P` is currently
-feeding it. All three macros produce a class and register it; they differ
-only in what that class inherits and how many instances the registry ends up
-holding.
+| Macro | Generated class derives from | Body reads |
+| --- | --- | --- |
+| `TEST` | `::testing::Test` | nothing extra |
+| `TEST_F(Fixture, Name)` | `Fixture` | the fixture's members, after `SetUp()` |
+| `TEST_P(Fixture, Name)` | `Fixture`, itself a `::testing::TestWithParam<T>` | the current row, through `GetParam()` |
 
-## Assertions: EXPECT_* versus ASSERT_*
+## EXPECT_* versus ASSERT_*
 
-GoogleTest's two assertion families differ in exactly one respect: what
-happens immediately after one of them fails. `EXPECT_*` records the failure
-and lets the rest of the test function keep running. `ASSERT_*` records the
-failure and returns from the enclosing function on the spot, skipping
-everything after it, but it does not end the program or the test binary;
-`TearDown()` and every other test in the suite still run.
+The two families differ only in what happens after a failure.
 
-Use `ASSERT_*` where running the next line after a failure would be undefined
-behavior or meaningless, not merely undesirable:
+| Family | On failure |
+| --- | --- |
+| `EXPECT_*` | Records the failure; the test body keeps running. |
+| `ASSERT_*` | Records the failure and returns from the enclosing function. `TearDown()` and the other tests still run. |
+
+Use `ASSERT_*` where the next line would be undefined behavior or meaningless after a failure:
 
 ```cpp
 TEST_F(ShipmentTrackerTest, RecordsAndReturnsTheStoredShipment) {
@@ -68,17 +71,9 @@ TEST_F(ShipmentTrackerTest, RecordsAndReturnsTheStoredShipment) {
 }
 ```
 
-`found` is a `std::optional<Shipment>`. Dereferencing it after a failed
-`has_value()` check would be undefined behavior, so that check has to be
-`ASSERT_TRUE`. The two `EXPECT_EQ` checks after it are independent facts
-about the same shipment; both deserve to run and both deserve to report even
-if only one is wrong, so a regression that corrupts the weight while leaving
-the carrier correct shows up as exactly one failing line, not a test that
-stops after the first problem and hides the second.
+Dereferencing an empty `std::optional` is undefined behavior, so the presence check is fatal. The two field checks are independent, so each is nonfatal: a regression that corrupts only the weight reports one failing line, and the carrier check still runs.
 
 ## Common assertions and EXPECT_THAT
-
-The assertions that cover most test bodies:
 
 | Macro | Checks |
 |-------|--------|
@@ -89,8 +84,7 @@ The assertions that cover most test bodies:
 | `EXPECT_NO_THROW(stmt)` | `stmt` throws nothing |
 | `EXPECT_THAT(value, matcher)` | `value` satisfies a GoogleMock matcher |
 
-Every one of these has an `ASSERT_*` counterpart with the same arguments and
-the fatal-versus-nonfatal difference above.
+Each has an `ASSERT_*` counterpart with the same arguments.
 
 ```cpp
 TEST(RateCardTest, UnresolvedZoneThrows) {
@@ -99,9 +93,7 @@ TEST(RateCardTest, UnresolvedZoneThrows) {
 }
 ```
 
-`EXPECT_THAT` is the one assertion that takes a matcher instead of a value to
-compare against, and it is the entry point into GoogleMock's matcher library
-even outside of `EXPECT_CALL`:
+`EXPECT_THAT` takes a matcher instead of a value, and it's the entry point to GoogleMock's matcher library with no mock involved:
 
 ```cpp
 TEST_F(ShipmentTrackerTest, FindsByPartialCarrierName) {
@@ -113,16 +105,11 @@ TEST_F(ShipmentTrackerTest, FindsByPartialCarrierName) {
 }
 ```
 
-`Eq`, `Gt`, `HasSubstr`, `Field`, `Property`, and `ElementsAre` are matchers
-from the same library `EXPECT_CALL` uses to constrain an argument; the
-GoogleMock appendix covers the full matcher vocabulary and how to combine
-matchers with `EXPECT_CALL` actions. `EXPECT_THAT` on a plain value, with no
-mock involved, is ordinary GoogleTest.
+`Eq`, `Gt`, `HasSubstr`, `Field`, `Property` and `ElementsAre` are the same matchers `EXPECT_CALL` uses to constrain arguments. The full vocabulary is in Appendix C.
 
-## Fixtures: SetUp, TearDown, and per-test lifecycle
+## Fixtures: SetUp, TearDown and the per-test lifecycle
 
-A test fixture is a class deriving from `::testing::Test` that groups the
-objects a related set of tests all need:
+A fixture is a class deriving from `::testing::Test` that holds what a group of tests needs:
 
 ```cpp
 class ShipmentTrackerTest : public ::testing::Test {
@@ -136,21 +123,11 @@ protected:
 };
 ```
 
-GoogleTest constructs a fresh `ShipmentTrackerTest` instance for every
-`TEST_F` that uses it, runs `SetUp()`, runs the test body, runs `TearDown()`,
-and destroys the instance, so member variables declared directly on the
-fixture never leak state between tests on their own. `SetUp()`/`TearDown()`
-are preferable to a constructor and destructor for two things a
-constructor cannot do: resetting state that is not local to this fixture
-instance, such as a shared static counter or an on-disk file, and running
-cleanup that still executes when a fatal `ASSERT_*` cut the test body short.
-A fatal assertion skips the rest of the test function and jumps straight to
-`TearDown()`, so cleanup belongs there, not at the bottom of the test body
-after the last assertion.
+For every `TEST_F`, GoogleTest constructs a fresh fixture, runs `SetUp()`, the body and `TearDown()`, then destroys it. Members never carry state from one test to the next.
 
-`SetUpTestSuite()` and `TearDownTestSuite()` are static methods on the same
-fixture class for state that is expensive to build and safe to share read-only
-across every test in the suite, built once rather than once per test:
+`SetUp()` and `TearDown()` do two things a constructor and destructor can't: reset state outside the instance, such as a static counter or a file on disk, and run cleanup after a fatal `ASSERT_*` cuts the body short. A fatal assertion jumps straight to `TearDown()`, so cleanup belongs there, not at the bottom of the body.
+
+`SetUpTestSuite()` and `TearDownTestSuite()` are static and run once per suite, for state that's expensive to build and read-only across every test:
 
 ```cpp
 class CarrierRateTableTest : public ::testing::Test {
@@ -162,17 +139,15 @@ protected:
 };
 ```
 
-Reach for `SetUpTestSuite()` only when the setup is read-only for the whole
-suite and expensive enough to matter, loading a reference rate table from
-disk once instead of once per test case. A fixture member that any test
-mutates belongs in `SetUp()` instead, so a mutation in one test cannot bleed
-into the next.
+| Method | Runs | Use for |
+| --- | --- | --- |
+| Constructor / `SetUp()` | Before each test | State any test may change |
+| `TearDown()` | After each test, even after a fatal assertion | Cleanup |
+| `SetUpTestSuite()` / `TearDownTestSuite()` | Once per suite | Expensive, read-only state, such as a reference rate table loaded from disk |
 
-## Parameterized tests: TestWithParam, GetParam, INSTANTIATE_TEST_SUITE_P
+## Parameterized tests
 
-A parameterized test proves one behavior holds across a table of inputs,
-without writing one `TEST` function per row. The fixture derives from
-`::testing::TestWithParam<T>` instead of `::testing::Test`:
+A parameterized test checks one behavior across a table of inputs without one `TEST` per row. The fixture derives from `::testing::TestWithParam<T>`:
 
 ```cpp
 struct CapacityCase {
@@ -199,19 +174,13 @@ INSTANTIATE_TEST_SUITE_P(
     [](const ::testing::TestParamInfo<CapacityCase>& info) { return info.param.name; });
 ```
 
-`GetParam()` reads whichever row GoogleTest is currently driving the test
-body with. The lambda passed to `INSTANTIATE_TEST_SUITE_P` names each
-instance from the row's own `name` field, so `ctest -N` prints
-`MatchesExpectedLimit/one_gram_over` instead of an index; without that
-lambda, instances are numbered and a failure points at a row a reader has to
-go count to identify. Reach for `TEST_P` when one behavior needs checking
-against many input values; a fixture with `TEST_F` is the right tool when the
-shape is the opposite, many behaviors sharing one setup.
+The last argument to `INSTANTIATE_TEST_SUITE_P` names each instance from its row, so `ctest -N` prints `MatchesExpectedLimit/one_gram_over` instead of an index. Without it, instances are numbered and a failure points at a row you have to count to find.
+
+`TEST_P` is for one behavior over many inputs. `TEST_F` is the opposite shape: many behaviors over one setup.
 
 ## Typed and type-parameterized tests
 
-A typed test proves a contract holds across more than one concrete type, when
-the types share a method name and a promise but not a common base class.
+A typed test checks one contract across several concrete types that share a method name and a promise but no common base class:
 
 ```cpp
 template <typename StrategyType>
@@ -230,26 +199,21 @@ TYPED_TEST(RateStrategyContractTest, NeverQuotesANegativeAmount) {
 }
 ```
 
-The fixture is a class template, instantiated once per entry in
-`RateStrategyTypes`; GoogleTest runs every `TYPED_TEST` body against every
-instantiation. Adding a third strategy later means adding its name to the
-`::testing::Types` list, with no new test code.
+The fixture is a class template instantiated once per entry in the `::testing::Types` list, and every `TYPED_TEST` body runs against each instantiation. A third strategy is one more name in the list, with no new test code.
 
-`TYPED_TEST_SUITE` needs the full type list at the point the fixture is
-declared. When the type list is not known until a later file includes a
-shared contract header, perhaps a carrier plugin shipped and tested outside
-this repository, `TYPED_TEST_P` plus `REGISTER_TYPED_TEST_SUITE_P` split the
-contract's declaration from its instantiation: the contract header declares
-the test bodies once with `TYPED_TEST_P` and registers them with
-`REGISTER_TYPED_TEST_SUITE_P`, and each consumer instantiates that same
-contract against its own type list with `INSTANTIATE_TYPED_TEST_SUITE_P`.
-Reach for the plain `TYPED_TEST_SUITE` form unless the type list actually
-has to live in more than one translation unit.
+`TYPED_TEST_SUITE` needs the full type list where the fixture is declared. When the list isn't known until a later file includes a shared contract header, such as a carrier plugin tested outside this repository, split declaration from instantiation:
 
-## Death tests: EXPECT_DEATH
+| Step | Where | Macro |
+| --- | --- | --- |
+| Declare the test bodies | Contract header | `TYPED_TEST_P` |
+| Register them | Contract header | `REGISTER_TYPED_TEST_SUITE_P` |
+| Instantiate against a type list | Each consumer | `INSTANTIATE_TYPED_TEST_SUITE_P` |
 
-A death test proves that a statement terminates the process, for a
-precondition or invariant whose violation must not be recoverable:
+Use the plain `TYPED_TEST_SUITE` form unless the type list has to live in more than one translation unit.
+
+## Death tests
+
+A death test checks that a statement terminates the process, for a precondition whose violation must not be recoverable:
 
 ```cpp
 TEST(RateCardDeathTest, AbortsWhenCalledWithANegativeWeight) {
@@ -257,36 +221,22 @@ TEST(RateCardDeathTest, AbortsWhenCalledWithANegativeWeight) {
 }
 ```
 
-`EXPECT_DEATH` runs the statement in a forked child process and checks both
-that it dies and that it writes output matching the given pattern. Death
-tests are slower and less parallel-friendly than an ordinary assertion
-because of that fork, so reserve them for the handful of invariants that
-should end the program, not for routine input validation that has a normal
-return-value or exception contract already.
+`EXPECT_DEATH` runs the statement in a forked child and checks that it dies with output matching the pattern. The fork makes death tests slower and less parallel-friendly than an ordinary assertion, so keep them for invariants that should end the program. Input validation with a return-value or exception contract uses an ordinary assertion.
 
 ## Running through CTest
 
-Every example registers its GoogleTest cases with `gtest_discover_tests`,
-which asks the compiled test binary for its test list at build time and
-registers each case with CTest individually, so a failure is reported per
-case rather than per binary:
+`gtest_discover_tests` asks each compiled test binary for its list at build time and registers every case with CTest, so a failure is reported per case, not per binary:
 
 ```sh
 ctest --preset cpp23 --output-on-failure
 ```
 
-The build and preset mechanics behind that command, the toolchain, Conan,
-and the two presets, are covered in the
-[build and toolchain reference]({{ '/docs/33-appendix-a-build-and-toolchain/' | relative_url }}).
-GoogleMock's interaction-based mocks, `MOCK_METHOD` and `EXPECT_CALL`, are
-covered in the
-[mocking with gMock appendix]({{ '/docs/35-appendix-c-mocking-with-gmock/' | relative_url }}),
-not here.
+The toolchain, Conan and the two presets are in the [build and toolchain reference]({{ '/docs/33-appendix-a-build-and-toolchain/' | relative_url }}). `MOCK_METHOD` and `EXPECT_CALL` are in the [mocking with gMock appendix]({{ '/docs/35-appendix-c-mocking-with-gmock/' | relative_url }}).
 
 ## For deeper coverage
 
 - Hyuk Myeong, *Googletest in Practice*, self-published: the GoogleTest
-  idioms this appendix and every example in this book are verified against.
+  idioms every example follows.
 - The official [GoogleTest documentation](https://google.github.io/googletest/)
   for the full macro and matcher reference.
 - The official [GoogleTest primer](https://google.github.io/googletest/primer.html)

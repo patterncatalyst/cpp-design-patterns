@@ -8,35 +8,39 @@ appendix: "F"
 description: "A code-first review of the wider programming-principle vocabulary beyond SOLID: the names an engineer is expected to know, each grounded in a before-and-after shipping-domain C++ snippet and a note on where the principle costs something."
 ---
 
-## How to read this appendix
+## Learning objectives
 
-A principle is force-level guidance that sits beneath a pattern. A pattern names a structure, Strategy, Observer, Decorator, built to answer a specific force; a principle names the force itself, in a form general enough to apply whether or not a named pattern is anywhere nearby. This book teaches the five SOLID principles in full, with a runnable example and a GoogleTest suite proving each one, in the SOLID chapters. This appendix does two things the SOLID chapters do not: it recaps SOLID in a few sentences each, pointing back at the fuller treatment rather than repeating it, and it catalogs the broader vocabulary of principles an engineer is expected to recognize by name, each reviewed against a small before-and-after in this book's shipping domain, carriers, rate quotes, tracking, invoices.
+By the end of this appendix you can:
 
-The short way to hold the distinction: a principle says *why*, a pattern is a *how* that honors it. DRY is a why. Extracting a shared `shipment_total_cents()` function is a how. Encapsulate What Changes is a why. Strategy is one how that answers it. Every entry below follows the same shape: why the principle matters, code that violates it, code that honors it, and a tension note, because every principle on this list has a cost or a counter-force, and naming the principle is not the same as knowing when to stop applying it.
+- Tell a principle (the force) from a pattern (one structure that answers it).
+- Recognize a violation of each principle in shipping-domain C++ and write the fix.
+- Say where each principle costs something and when to stop applying it.
+
+## Why this matters
+
+A principle names a force in a form general enough to apply with or without a pattern nearby. A pattern is one structure that answers it. DRY is a why; extracting a shared `shipment_total_cents()` is a how. Encapsulate What Changes is a why; Strategy is one how.
+
+SOLID is taught in full in [SOLID I]({{ '/docs/03-solid-first-principles/' | relative_url }}) and [SOLID II]({{ '/docs/04-solid-dependency-inversion/' | relative_url }}) and only recapped here. Each other entry gives the principle, a violation, the fix, and the tension: every principle has a counter-force, and knowing its name isn't knowing when to stop.
 
 {% include excalidraw.html name="38-principle-families" caption="Figure F.1: The programming-principle vocabulary grouped into six families, from a tight SOLID recap through a process family with no code shape at all." %}
 
 ## Substitutability and responsibility (SOLID, recapped)
 
-The SOLID chapters build these five principles in full against a billing engine and an order-notification system, with a GoogleTest suite proving each claim directly rather than describing it. What follows is a pointer back to that material, not a restatement of it.
+| Principle | Statement | In the SOLID examples |
+| --- | --- | --- |
+| Single Responsibility | A class has one reason to change. | A billing engine splits into `InvoiceCalculator`, `InvoiceFormatter` and `InMemoryInvoiceRepository`, answering to a tax-rate update, a receipt wording change and a storage migration. |
+| Open/Closed | Open to new behavior, closed against edits to working behavior. | `FlatServiceFeeRule` arrives as one new `InvoiceRule`; `InvoiceCalculator::totals_for()` and the older rules don't change. |
+| Liskov Substitution | A subtype honors the base's whole contract, not just its signatures. | `PercentageDiscountRule` clamps the rate in a `final` method, so `LoyaltyDiscountRule`, which overrides only the protected rate hook, can't discount past the subtotal. |
+| Interface Segregation | No client depends on a capability it never uses. | A fat `NotificationGateway` splits into `MessageSender`, `TemplateRenderer` and `DeliveryStatusProvider`; `SmsGateway` implements only its one role. |
+| Dependency Inversion | Policy and detail both depend on an abstraction. | `OrderNotificationPolicy` holds a `MessageSender&`, never an `EmailGateway`, so it links and tests without naming a channel. |
 
-**Single Responsibility.** A class should have exactly one reason to change. The SOLID chapters split a billing engine's calculation, formatting, and persistence into `InvoiceCalculator`, `InvoiceFormatter`, and `InMemoryInvoiceRepository`, each answerable to one of three unrelated schedules of change, a tax-rate update, a receipt wording change, a storage migration.
-
-**Open/Closed.** A module should be open to new behavior and closed against edits to behavior that already works. The `InvoiceRule` abstraction in the SOLID chapters lets a new `FlatServiceFeeRule` arrive as one new file; `InvoiceCalculator::totals_for()` and every rule that predates it stay byte-for-byte unchanged.
-
-**Liskov Substitution.** A subtype must honor its base type's whole contract, not just its method signatures. `PercentageDiscountRule` clamps its discount rate in a `final` method so that `LoyaltyDiscountRule`, which only overrides the protected rate hook, cannot discount an invoice past its own subtotal no matter what rate the hook computes.
-
-**Interface Segregation.** A client should not be forced to depend on a capability it never uses. The SOLID chapters split a fat `NotificationGateway` into `MessageSender`, `TemplateRenderer`, and `DeliveryStatusProvider`, so an `SmsGateway` implements exactly the one role it has.
-
-**Dependency Inversion.** High-level policy and low-level detail should both depend on an abstraction, not on each other. `OrderNotificationPolicy` holds a `MessageSender&`, never an `EmailGateway`, so the policy links and tests without ever naming a concrete channel.
-
-The SOLID chapters are also where "when SOLID works against you" lives in full: none of the five is free, and all five earn their cost only when a second case, a second rule, a second implementation, is in hand or clearly coming.
+None of the five is free. Each pays off once a second case, rule or implementation is in hand or clearly coming.
 
 ## Simplicity and scope
 
 ### KISS (Keep It Simple)
 
-A design with fewer moving parts is cheaper to verify and cheaper to change later, because there is less structure standing between a reader and the one fact that matters.
+Fewer moving parts are cheaper to verify and to change.
 
 ```cpp
 // Violates KISS: a rule-engine abstraction built for a carrier that
@@ -63,11 +67,11 @@ Cents fuel_surcharge_cents(Cents base_rate_cents) {
 }
 ```
 
-Tension: once a second surcharge arrives, KISS yields to the Open/Closed force; keeping the function simple past that point means a growing chain of `if` statements, which is a different and worse kind of complexity.
+**Tension:** once a second surcharge arrives, KISS yields to Open/Closed. Past that point the simple function grows a chain of `if` statements, a worse kind of complexity.
 
 ### YAGNI (You Aren't Gonna Need It)
 
-Code built for a need that has not arrived yet costs the same to read, review, and maintain as code answering a need that has, with nothing exercising it to prove it is correct.
+Code for a need that hasn't arrived costs as much to read and maintain as code for one that has, and nothing exercises it.
 
 ```cpp
 // Violates YAGNI: fields added for a multi-currency, multi-leg
@@ -89,11 +93,11 @@ struct RateQuoteRequest {
 };
 ```
 
-Tension: YAGNI is not license to skip an extension point a second carrier integration is already scheduled to need next sprint; the test is whether the need is clearly coming, not whether it is merely imaginable.
+**Tension:** YAGNI doesn't excuse skipping an extension point a second carrier integration needs next sprint. The question is whether the need is clearly coming, not whether it's imaginable.
 
 ### Do The Simplest Thing That Could Possibly Work
 
-Write the plain code that passes the test in front of you before reaching for a general structure, and promote it once a second case shows up. This is a discipline about implementation order; KISS is about the shape you land on once you are done.
+Write the plain code that passes the failing test, and promote it when a second case shows up. This is about implementation order; KISS is about the shape you land on.
 
 ```cpp
 // Skips the simplest thing: a Strategy hierarchy built for a
@@ -113,11 +117,11 @@ std::string status_for(std::string_view tracking_id, const CarrierClient& client
 }
 ```
 
-Tension: "simplest" is a starting point, not a place to stay once a second carrier's tracking API shows up; this is the same candidate-pattern-versus-candidate-non-pattern judgment the Strategy pattern trains in full.
+**Tension:** "simplest" is a start, not a place to stay once a second carrier's tracking API appears. [Strategy]({{ '/docs/08-strategy/' | relative_url }}) covers the same pattern-or-plain-code judgment.
 
 ### Avoid Premature Optimization
 
-Spend engineering effort on a bottleneck a profiler has shown you, not on a guess about where one might be. The guess is usually wrong, and the code built to chase it usually costs more to maintain than the performance it was meant to buy.
+Spend effort on a bottleneck a profiler has shown you. A guessed bottleneck is usually wrong, and the code built to chase it costs more to maintain than it buys.
 
 ```cpp
 // Premature: a hand-rolled freelist for Quote objects, written
@@ -139,11 +143,11 @@ std::vector<Quote> quotes;
 quotes.reserve(expected_shipment_count);
 ```
 
-Tension: the principle cuts both ways. Once a profiler does name quote construction as a hot loop under real load, declining to optimize out of general caution becomes its own mistake; measure, then decide, in either direction.
+**Tension:** it cuts both ways. Once a profiler names quote construction as a hot loop under real load, declining to optimize is its own mistake. Measure, then decide.
 
 ### Curly's Law (Do One Thing)
 
-A function or a module that does one thing is easier to name precisely, test in isolation, and reuse somewhere its sibling logic does not belong.
+A function that does one thing is easier to name, test alone and reuse.
 
 ```cpp
 // Violates Curly's Law: validating, pricing, and logging in one
@@ -172,13 +176,13 @@ void log_quote(Cents rate, Logger& logger) {
 }
 ```
 
-Tension: splitting past the point where a reviewer would want to call a piece on its own produces a maze of one-line functions, the same over-segregation failure the SOLID recap above warns about for Interface Segregation.
+**Tension:** splitting past the point where anyone would call a piece on its own gives a maze of one-line functions, the over-segregation failure Interface Segregation warns about.
 
 ## Structure and change
 
 ### DRY (Don't Repeat Yourself)
 
-One fact should live in exactly one place, so fixing it once fixes it everywhere it is used. The target is duplicated *knowledge*, a business rule written twice, not duplicated *text* that happens to look similar.
+One fact lives in one place, so fixing it once fixes it everywhere. The target is duplicated knowledge, a business rule written twice, not text that happens to look alike.
 
 ```cpp
 // Violates DRY: the same subtotal-plus-fuel-surcharge formula
@@ -203,11 +207,11 @@ Cents shipment_total_cents(const Shipment& shipment) {
 }
 ```
 
-Tension: two functions that happen to both add two numbers but encode unrelated business rules should stay separate; merging them under DRY's name means a later change to one rule silently changes a rule it was never meant to touch.
+**Tension:** two functions that both add two numbers but encode unrelated rules stay separate. Merged under DRY, a change to one rule silently changes the other.
 
 ### Separation of Concerns
 
-Keep unrelated concerns, parsing a request, pricing a shipment, writing to storage, in separate modules, so a change to one does not ripple into code that has nothing to do with it. Single Responsibility makes the same claim at the scale of one class; this principle makes it at the scale of a module or a layer.
+Parsing, pricing and storage live in separate modules, so a change to one doesn't ripple into the others. Single Responsibility says the same at the scale of one class; this says it for a module or layer.
 
 ```cpp
 // Violates Separation of Concerns: parsing, pricing, and persistence
@@ -229,11 +233,11 @@ void handle_quote_request(const HttpRequest& request, Database& db) {
 }
 ```
 
-Tension: splitting every layer into its own module or service because "concerns are separate" ignores the real cost of the hop between them; apply it where the concerns change on different schedules, not wherever a boundary could theoretically be drawn.
+**Tension:** every boundary has a cost for the hop across it. Split where concerns change on different schedules, not wherever a boundary could be drawn.
 
 ### Encapsulate What Changes
 
-Isolate the part of a design expected to vary behind a stable interface, so the part that never varies never has to be touched when the varying part does. This is the exact force the Strategy pattern answers in full; the principle names the force on its own, with or without a pattern attached to it.
+Put the part expected to vary behind a stable interface, so the stable part is never touched when it varies. Strategy answers this force in full.
 
 ```cpp
 // Violates the principle: the varying part (how to price) sits
@@ -253,11 +257,11 @@ Cents checkout_total(const Shipment& shipment, const RateStrategy& strategy) {
 }
 ```
 
-Tension: reach for the interface once a second pricing model is in hand, not on the first one; an interface with a single implementation is this principle's cost with none of its benefit yet.
+**Tension:** add the interface when the second pricing model is in hand. An interface with one implementation pays the cost with none of the benefit yet.
 
 ### Hide Implementation Details
 
-A caller should depend on what a type does, not on how it stores the data behind it, so the representation can change without touching every caller.
+Callers depend on what a type does, not how it stores its data, so the representation can change without touching them.
 
 ```cpp
 // Violates the principle: callers reach into the raw event list, and
@@ -279,19 +283,20 @@ private:
 };
 ```
 
-Tension: hiding a representation every caller legitimately needs, iterating all events for an audit, for example, just adds a wrapper method per field; hide what varies, expose what a caller computes.
+**Tension:** hiding a representation every caller legitimately needs, such as iterating all events for an audit, adds a wrapper per field. Hide what varies; expose what callers compute from.
 
 ### Composition Over Inheritance
 
-Prefer assembling an object out of small collaborators to building a deep inheritance tree purely to reuse behavior. Inheritance is still the right choice when a real is-a relationship holds and a caller needs to substitute the derived type polymorphically; that case belongs to Liskov Substitution, not to this one.
+Assemble an object from small collaborators instead of inheriting purely to reuse behavior. A real is-a relationship with polymorphic substitution is Liskov's territory, and inheritance is right there.
 
 ```cpp
 // Violates the principle: inheritance reused for convenience, not
-// for an is-a relationship, reaching into the base's internals.
+// for an is-a relationship. Every public TrackingRecord member is now
+// part of PriorityTrackingRecord's interface too.
 class PriorityTrackingRecord : public TrackingRecord {
 public:
     void record_priority_event(TrackingEvent event) {
-        events_.push_back(std::move(event));  // reaches into base state
+        record_event(std::move(event));  // inherited only to reuse it
         is_priority_ = true;
     }
 private:
@@ -314,11 +319,11 @@ private:
 };
 ```
 
-Tension: composition that forwards every single method of the composed type is reinventing inheritance by hand, with more boilerplate and none of the type relationship; reach for composition when reuse, not substitutability, is what is being asked for.
+**Tension:** composition that forwards every method of the composed type is hand-written inheritance with more boilerplate and no type relationship. Compose when the ask is reuse, not substitutability.
 
 ### Orthogonality
 
-Independent parts of a system should stay independent: changing one should never force an unrelated change somewhere else because of a hidden side effect.
+Changing one part never forces a change in an unrelated part through a hidden side effect.
 
 ```cpp
 // Violates orthogonality: submitting a label flips an unrelated
@@ -338,13 +343,13 @@ LabelReceipt FastShipGateway::submit_label_request(const LabelRequest& request) 
 }
 ```
 
-Tension: pursuing orthogonality past the point of diminishing returns produces parts so decoupled that a legitimate cross-cutting concern, tracing one request across label submission and logging, needs its own plumbing just to reconnect them.
+**Tension:** past diminishing returns, parts become so decoupled that a real cross-cutting concern, such as tracing one request across label submission and logging, needs its own plumbing to reconnect them.
 
 ## Coupling and cohesion
 
-### Minimise Coupling
+### Minimize Coupling
 
-Fewer, narrower dependencies between modules mean a change in one ripples into fewer places. Coupling cannot reach zero; two collaborating modules must agree on something. The question is whether that agreement is a narrow, published interface or a wide, accidental one.
+Fewer, narrower dependencies mean a change ripples into fewer places. Coupling can't reach zero; the question is whether the agreement between modules is a narrow, published interface or a wide, accidental one.
 
 ```cpp
 // High coupling: reaches past CarrierGateway's interface into its
@@ -362,11 +367,11 @@ bool has_pending_shipments(const CarrierGateway& gateway) {
 }
 ```
 
-Tension: minimizing coupling by passing primitive values instead of a small, named type ("stringly typed" calls) trades one kind of coupling, to a type, for a worse kind, to an unenforced convention every call site has to get right on its own.
+**Tension:** passing primitives instead of a small named type ("stringly typed" calls) trades coupling to a type for coupling to an unenforced convention every call site must get right.
 
-### Maximise Cohesion
+### Maximize Cohesion
 
-Group data with the operations that act only on that data, so a reader finds the logic next to the fields it touches instead of scattered across the codebase.
+Put data next to the operations that use only that data.
 
 ```cpp
 // Low cohesion: logic that only ever uses Shipment's own fields
@@ -388,11 +393,11 @@ struct Shipment {
 };
 ```
 
-Tension: pulling every function that merely accepts a `Shipment` parameter onto the class itself, including logic that also depends heavily on unrelated types, produces a god object; keep on the type only the logic that depends solely on that type's own fields.
+**Tension:** moving every function that takes a `Shipment` onto the class, including logic that leans on unrelated types, builds a god object. Keep on the type only logic that depends solely on its own fields.
 
 ### Law of Demeter
 
-A method should talk to itself, its parameters, objects it creates, and its own direct components, not chain through a stranger's stranger to reach a fact three hops away.
+A method talks to itself, its parameters, objects it creates and its direct components, not to a stranger's stranger three hops away.
 
 ```cpp
 // Violates the Law of Demeter: a chain reaching through three
@@ -413,11 +418,11 @@ private:
 };
 ```
 
-Tension: wrapping every possible chain in a delegating method bloats the near object with pass-through methods that exist for no reason but to satisfy the rule; apply it to chains an outside caller walks, not to every getter that could theoretically be chained.
+**Tension:** wrapping every possible chain bloats the near object with pass-through methods. Apply it to chains outside callers walk.
 
 ### Command-Query Separation
 
-A method should either do something or answer something, never both, so a caller can read a query call without worrying it also changed state.
+A method either does something or answers something, never both, so a query can be called without changing state.
 
 ```cpp
 // Violates Command-Query Separation: one method reports a value and
@@ -436,11 +441,11 @@ TrackingEvent peek_next_event() const { return events_[cursor_]; }
 void advance_cursor() { ++cursor_; }
 ```
 
-Tension: strict separation sometimes costs a real feature, an atomic pop-and-return off a queue shared across threads being the common case; some stacks accept a documented command that also returns there rather than pay for two round trips under one lock.
+**Tension:** an atomic pop-and-return on a queue shared across threads needs both in one call under one lock. A documented command that also returns is the usual exception.
 
 ### Inversion of Control
 
-Let a framework, a feed, or a caller decide when your code runs, instead of your code deciding when to go ask. This is the general shape; Dependency Inversion, recapped above, is the specific SOLID claim about which abstraction the dependency points at once control is inverted.
+A framework, feed or caller decides when your code runs, instead of your code polling. Dependency Inversion is the narrower SOLID claim about which abstraction the dependency points at.
 
 ```cpp
 // In control: RateCalculator polls the feed on its own schedule,
@@ -461,13 +466,13 @@ feed.on_rate_update([&calculator](const RateUpdate& update) {
 });
 ```
 
-Tension: inverting control is not the same as inverting a dependency. The callback above can still name a concrete `RateFeed` type directly and violate Dependency Inversion even while correctly inverting who calls whom.
+**Tension:** inverting control isn't inverting a dependency. The callback can still name a concrete `RateFeed` and violate Dependency Inversion while correctly inverting who calls whom.
 
 ## Interoperability and resilience
 
 ### Robustness Principle (Postel's Law)
 
-Be conservative in what you send, liberal in what you accept. At a boundary where another system's payload is outside your control, a carrier's tracking webhook being the common case, tolerate variation defensively on the way in, and never introduce variation of your own on the way out.
+Be conservative in what you send and liberal in what you accept. Jon Postel stated it for TCP. At a boundary you don't control, such as a carrier's tracking webhook, tolerate variation coming in and introduce none going out.
 
 ```cpp
 // Violates the Robustness Principle: throws on any field the schema
@@ -492,26 +497,24 @@ TrackingUpdate parse_webhook(const JsonValue& body) {
 }
 ```
 
-Tension: "liberal in what you accept" taken past its limit can mask a real producer bug, silently absorbing a field that should have raised an alert; log what was ignored even while tolerating it, or a real data problem becomes indistinguishable from a clean parse.
+**Tension:** tolerated without limit, it masks a producer bug that should raise an alert. Log what was ignored, or a real data problem looks like a clean parse.
 
 ## Principles for teams and process
 
-These five are not code-expressible; they describe how people and schedules behave around code, not a shape a compiler checks.
+These have no code shape; they describe how people and schedules behave around code.
 
-**Boy-Scout Rule.** Leave the code you touch a little cleaner than you found it: rename the misleading variable in the function you are already editing, delete the dead comment next to the line you are fixing. The rule scales a codebase's quality up over many small, incidental improvements instead of waiting for a dedicated cleanup project that rarely gets scheduled. The tension: a boy-scout cleanup folded into an unrelated bug-fix pull request makes the diff harder to review and can bury the actual fix; keep the cleanup small and visible, in its own commit, so a reviewer can tell the fix from the tidying.
-
-**Code For The Maintainer.** Write code assuming the next reader does not have the context sitting in your head right now, and remember that the next reader is often you, six months later, having forgotten exactly this detail. In practice this means naming a variable for what it represents rather than what type it is, and writing a comment that explains why a check exists rather than restating what the line already says. The tension: optimizing purely for an inattentive reader produces comments that repeat the code and defensive checks for conditions that structurally cannot occur, burying the real logic in noise; write for a competent engineer unfamiliar with this specific change, not for a careless one.
-
-**Murphy's Law.** Whatever can go wrong will go wrong, and it tends to happen under load, at the worst time. For a shipping system that means a carrier's API will time out, a network partition will land during the one deploy that mattered, and a field a contract promised would always be present will eventually arrive empty. The practical response is defensive design concentrated at a boundary: a retrying carrier gateway, a validating invoice intake, rather than trusting that a failure mode hasn't happened yet as evidence it never will. The tension: treating every internal call site as if the worst case applies duplicates defensive code everywhere; put the defenses at the boundary where the real uncertainty lives, not on every call downstream of it.
-
-**Brooks's Law.** Adding people to a software project that is already late makes it later, a result Fred Brooks observed directly while running IBM's OS/360 project. New engineers need ramp-up time from people already stretched thin, and the number of communication paths across a team grows faster than the team itself. A shipment-tracking migration running two weeks behind does not get rescued by doubling the engineers assigned to it mid-sprint. The tension: the law describes a late project specifically, not team growth in general; a team with slack, brought on well ahead of a deadline rather than in a crunch, is a different situation the law does not cover.
-
-**Linus's Law.** Given enough eyeballs, all bugs are shallow: a maxim from open-source review culture, associated with Linus Torvalds, claiming that more independent reviewers surface more of a change's defects than one reviewer working alone. Code review on a carrier-integration pull request is this principle applied directly, a second reviewer catching the retry logic a sole author missed because they were too close to it. The tension: the law assumes reviewers bring independent context; ten reviewers skimming the same invoice-calculation diff without understanding the billing domain do not multiply scrutiny, they multiply rubber stamps. The quality of review matters more than the headcount of reviewers.
+| Principle | Statement | In practice | Tension |
+| --- | --- | --- | --- |
+| Boy-Scout Rule | Leave the code you touch a little cleaner than you found it. | Rename the misleading variable in the function you're already editing; delete the dead comment beside the line you fix. Quality rises through small changes instead of a cleanup project that rarely gets scheduled. | Cleanup folded into an unrelated bug fix buries the fix. Keep it small, in its own commit. |
+| Code For The Maintainer | Assume the next reader lacks your current context; often it's you in six months. | Name a variable for what it represents, not its type; comment why a check exists, not what the line says. | Writing for a careless reader produces comments that repeat the code and checks for impossible conditions. Write for a competent engineer new to this change. |
+| Murphy's Law | Whatever can go wrong will, usually under load at the worst time. | A carrier API times out, a partition lands during the deploy that mattered, a promised field arrives empty. Concentrate defenses at boundaries: a retrying carrier gateway, a validating invoice intake. | Defending every internal call site duplicates checks. Defend where the uncertainty enters. |
+| Brooks's Law | Adding people to a late project makes it later (Fred Brooks, from IBM's OS/360). | Newcomers need ramp-up time from people already stretched, and communication paths grow faster than headcount. Doubling a late tracking migration's team mid-sprint doesn't rescue it. | It covers late projects. Growth with slack, well ahead of a deadline, is a different case. |
+| Linus's Law | Given enough eyeballs, all bugs are shallow (Eric S. Raymond, after Linus Torvalds). | A second reviewer on a carrier-integration pull request catches the retry logic the author was too close to see. | It assumes independent context. Ten reviewers who don't know the billing domain multiply rubber stamps, not scrutiny. |
 
 ## For deeper coverage
 
 - David Thomas, Andrew Hunt, [*The Pragmatic Programmer: Your Journey to Mastery*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/) (20th Anniversary Edition, Addison-Wesley / Pragmatic Bookshelf): the source for DRY, orthogonality, and the Robustness Principle reviewed in this appendix.
 - Robert C. Martin, [*Clean Code: A Handbook of Agile Software Craftsmanship*](https://www.pearson.com/en-us/subject-catalog/p/clean-code-a-handbook-of-agile-software-craftsmanship/P200000009044/9780132350884) (Prentice Hall): the source for the Boy-Scout Rule, Code For The Maintainer, and the do-one-thing discipline behind Curly's Law.
 - Frederick P. Brooks Jr., [*The Mythical Man-Month: Essays on Software Engineering*](https://www.pearson.com/en-us/subject-catalog/p/Brooks-Mythical-Man-Month-Anniversary-Edition-The-Essays-On-Software-Engineering-2nd-Edition/P200000000149/9780132119160) (Anniversary Edition, Addison-Wesley): the source for Brooks's Law.
-- Robert C. Martin, [*Agile Software Development: Principles, Patterns, and Practices*](https://www.pearson.com/store/p/agile-software-development-principles-patterns-and-practices/P200000003363/9780135974445) (Prentice Hall): the original statement of the five SOLID principles the first family above recaps, taught in full in the SOLID chapters.
+- Robert C. Martin, [*Agile Software Development: Principles, Patterns, and Practices*](https://www.pearson.com/store/p/agile-software-development-principles-patterns-and-practices/P200000003363/9780135974445) (Prentice Hall): the original statement of the five SOLID principles the first family above recaps, taught in full in SOLID I and SOLID II.
 - Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the Gang of Four's own advice to favor composition over inheritance and to program to an interface, the root of several principles in the structure-and-change family.

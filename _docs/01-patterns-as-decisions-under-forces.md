@@ -2,7 +2,7 @@
 title: "Patterns as decisions under forces"
 order: 1
 part: "recognizing-design"
-description: "Why a design pattern is a named response to a recurring set of trade-offs rather than a recipe to apply from memory, and the five-step arc this book trains for every pattern that follows."
+description: "Why a design pattern is a named response to a recurring set of trade-offs rather than a recipe to apply from memory, and the five steps every pattern chapter follows."
 duration: "20 min"
 ---
 
@@ -10,65 +10,79 @@ duration: "20 min"
 
 By the end of this chapter you can:
 
-- Explain why a pattern is a name for a recurring trade-off, not a template to copy into new code.
-- Name the forces behind a design decision: the competing requirements a single piece of code cannot satisfy all at once.
-- Walk the five-step arc this book trains for every pattern: recognize the forces, name a candidate pattern and a candidate non-pattern, choose the idiomatic C++ expression, test the behavior, and know when not to use it.
-- Explain why this arc matters more for a new or intermediate engineer than memorizing the Gang of Four catalogue does.
-- State what Chapter 2 adds to this vocabulary once you can already recognize a pattern by its forces.
+- Say why a pattern is a name for a recurring trade-off, not a template to copy.
+- Name the competing requirements (the forces) behind a design choice in a piece of code.
+- Walk the five steps every pattern chapter follows: recognize the forces, name a pattern and a plain alternative, choose the C++ expression, test the behavior, and know when not to use it.
+- Pick between a pattern and its plain alternative for a concrete case.
 
 ## Why this matters
 
-A pattern applied for the wrong reason costs more than the problem it was supposed to solve. Picture an engineer who has just read the Gang of Four book cover to cover, feels the Strategy pattern fresh in mind, and reaches for it the next time a function has an `if` statement. The resulting code has an abstract base class, a handful of one-line overrides, and a factory to pick among them, all standing in for a branch that would have read more clearly as three lines inside the original function. Nothing in that code is wrong syntactically. It compiles, it runs, it even demonstrates real knowledge of the pattern's shape. It is also worse than what it replaced, because the engineer reached for a name before asking what problem the name was supposed to solve.
+An engineer fresh from the Gang of Four book meets a function with an `if` and turns it into Strategy: an abstract base class, three one-line overrides and a factory to pick among them. It compiles and it runs. It's also worse than the three-line branch it replaced, because the name came before the question of what the code needed.
 
-This book trains the opposite habit. A pattern is not a recipe to apply by reflex when its shape comes to mind; it is a name attached to a recurring set of forces, trade-offs that pull against each other and that no single piece of code can resolve without giving up something on one side. Recognizing those forces first, and only then reaching for a name, is what separates a design decision from decoration. That recognition is also what makes code review and architecture discussions substantive instead of a trivia contest over which pattern a block of code technically resembles. This chapter builds the vocabulary and the five-step habit every later pattern chapter in this book runs through in turn; Chapter 2 extends that vocabulary into something a team, and an AI pairing partner, can share without talking past each other.
+A pattern is a name for a recurring set of forces: requirements that pull against each other so that no single piece of code satisfies all of them at no cost. Find the forces first and reach for the name second.
 
 {% include excalidraw.html name="01-forces-and-decisions" caption="Figure 1.1: The arc this book trains for every pattern: recognize the forces, name a candidate pattern and a candidate non-pattern, choose the idiomatic C++ expression, test the behavior, and know when not to use it." %}
 
 ## A pattern is a name, not a recipe
 
-The Gang of Four's original definition is easy to misquote from memory and easy to under-read on a first pass. Their book does not define a pattern as a reusable block of code; it defines one as a description of a problem that recurs, together with the core of a solution to that problem, stated generally enough to apply the same way twice without being the same code twice. The emphasis belongs on *recurs*. A pattern earns its name because the same underlying tension shows up again, in different code, in different domains, and the name lets two engineers who have both seen it before skip past re-deriving the trade-off from scratch.
+The Gang of Four define a pattern as a description of a problem that recurs, with the core of its solution, stated generally enough to apply again without writing the same code twice. A recipe says what to type. A pattern says what problem you're looking at and leaves the code open.
 
-That is a sharply different thing from a recipe. A recipe tells you what to type. A pattern tells you what problem you are looking at, and leaves the actual code, the actual types, the actual idiom, entirely open. Two engineers who both correctly identify a Strategy situation can write different C++ for it: one reaches for an abstract base class and virtual dispatch, because the strategies need to be swapped at runtime from configuration; another reaches for a template parameter resolved entirely at compile time, because the strategy is known before the program starts and the cost of a virtual call is one it cannot afford on this code path. Both are Strategy. Neither is wrong. A recipe cannot survive that kind of divergence; a named response to a force can, because the name was never about the code shape to begin with.
+Two engineers who both see a Strategy problem can write different C++ for it:
 
-This matters for how you read every chapter from here forward. Each pattern chapter shows you the forces first, then more than one idiomatic way modern C++ can resolve them, side by side in the codetabs convention Chapter 0 introduced. If you remember one code shape per pattern name and look for an excuse to reuse it, you will misapply that shape the first time the forces underneath it are different from the example you memorized. If you remember the forces and treat the code as one answer among several, you will recognize the same pattern again in code that looks nothing like the example that taught it to you.
+| Situation | Expression | Why |
+| --- | --- | --- |
+| The pricing rule is picked from configuration at run time | abstract base class, held by `std::unique_ptr` | the choice happens after the program starts |
+| The rule is fixed when the program is built, on a hot path | template parameter | no virtual call, resolved at compile time |
+| The rule is a small function chosen once at startup | `std::function` holding a lambda | no class hierarchy at all |
 
-## Forces: the vocabulary of trade-offs
+All three are Strategy. Remember the forces and you'll recognize the pattern in code that looks nothing like the listing that taught it to you. Remember one code shape and you'll misapply it the first time the forces differ.
 
-A force, in this book's vocabulary, is a requirement that competes with another requirement inside the same piece of code. Neither one is wrong to want. The tension between them is the actual design problem, and a pattern is what a team calls the shape of code that resolves one particular, recurring version of that tension.
+## Forces that recur
 
-Some forces repeat across nearly every pattern in this book, in different proportions each time. Flexibility pulls against simplicity: a system that can swap its behavior at runtime is more adaptable and also has more moving parts than one that cannot. Compile-time cost pulls against runtime cost: a template-based design resolves its polymorphism before the program ever runs, at the price of longer builds and code that is harder to read in a debugger; a virtual-dispatch design keeps builds fast and stack traces legible, at the price of an indirect call and a vtable lookup on every invocation. Testability pulls against directness: a dependency injected through an interface is trivial to replace with a test double, while the same dependency called directly is one line shorter and one test harder to write in isolation. Extensibility pulls against YAGNI, the discipline of not building a seam for a requirement nobody has asked for yet: an abstraction that anticipates three future implementations that never arrive is a cost paid today for a benefit that may never be collected.
+A force is a requirement that competes with another one in the same code. These pairs come up in nearly every pattern chapter:
 
-None of these forces resolves to a universal winner. A telemetry pipeline that must swap its backend between a local file and a network exporter at runtime, based on an environment variable read once at startup, has a flexibility requirement the code must actually meet; a billing engine's tax calculation, fixed by the jurisdictions a single deployment serves, usually does not, and an abstraction built for a hypothetical "swap the tax rule set" requirement only pays for itself in the deployment that needs it. Reading which forces are actually present in the code in front of you, rather than which forces a pattern's name usually implies, is the first and hardest skill this book trains, and it is the subject of the next section.
+| This | pulls against | Example |
+| --- | --- | --- |
+| Flexibility | simplicity | a swappable backend has more moving parts than a fixed one |
+| Compile-time resolution | build time and readability | templates remove the indirect call but lengthen builds and debugger traces |
+| Run-time dispatch | call cost | virtual calls keep builds fast and traces legible, at a vtable lookup per call |
+| Testability | directness | an injected interface takes a fake; a direct call is one line shorter and one test harder |
+| Extensibility | YAGNI | a seam for a requirement nobody asked for is paid for now and may never be used |
 
-## The arc: recognize, name, express, test, and know when not to
+None of them has a universal winner. A telemetry pipeline that picks a file or network exporter from an environment variable at startup has a real flexibility requirement. A billing engine's tax calculation, fixed by the jurisdictions one deployment serves, usually doesn't, and an abstraction built for "swap the tax rules" pays only in the deployment that needs it.
 
-Every pattern chapter in this book, from Strategy through the final project in Part 11, works through the same five movements in the same order. Naming them up front here means you will recognize the shape immediately the first time a pattern chapter runs through it.
+## The five steps
 
-**Recognize the forces.** Before any pattern name enters the conversation, ask what varies in this code, what stays fixed, and what is expensive to get wrong. A billing engine that charges different fees depending on account tier has something that varies, the fee calculation, and something that stays fixed, the rest of the checkout flow around it. A connection pool that must never let two threads hand out the same database connection has something expensive to get wrong, a correctness property a design has to protect by construction, not by convention. This step produces a plain description of the tension in the code, with no pattern name attached yet, because naming too early anchors your thinking on one answer before you have finished describing the question.
+Every pattern chapter runs the same five steps in the same order.
 
-**Name a candidate pattern, and a candidate non-pattern.** Only once the forces are on the table does a name enter the picture, and it enters alongside a plain, boring alternative named just as explicitly. For the billing engine's fee calculation, the candidate pattern might be Strategy: one interface, one implementation per account tier, selected at checkout time. The candidate non-pattern might be a single function with a `switch` over account tier, no interface at all. Naming both, every time, is what keeps pattern selection from becoming reflexive. If the switch statement is three tiers wide, changes twice a year, and is read by one team that already understands the whole thing at a glance, the non-pattern might be the better engineering decision even though the pattern's name fits. If the switch is already eleven cases wide, changes every sprint as new partner tiers launch, and different teams own different tiers' logic, the forces favor the pattern: each tier's fee logic can live in its own file, owned by its own team, added without touching a switch statement anyone else depends on. The forces decide which candidate wins; the two candidates existing side by side is what makes that decision visible instead of assumed.
+**1. Recognize the forces.** Ask what varies, what stays fixed, and what's expensive to get wrong. In a billing engine that charges a different fee per account tier, the fee calculation varies and the rest of checkout stays fixed. In a connection pool, handing the same connection to two threads is expensive to get wrong, so the design has to prevent it by construction. Describe the tension before you name anything.
 
-**Choose the idiomatic C++ expression.** A pattern name constrains the shape of a solution; it does not dictate the code. This is where modern C++ gives you real choices the Gang of Four's 1994 vocabulary, written against a different language generation, did not have available. The same Strategy decision can resolve as a classic abstract base class with virtual dispatch, as a template parameter resolved at compile time with zero runtime indirection, or as a `std::function` holding a lambda, each one trading flexibility, compile time, and call overhead differently. Later chapters in Part 4 and Part 8 walk through exactly these trade-offs with real, compiling code; the discipline to take from this chapter is that choosing among them is itself part of the design decision, not an afterthought once "the pattern" has been picked.
+**2. Name a pattern and a plain alternative.** For the fee calculation the pattern is Strategy, one implementation per tier. The plain alternative is one function with a `switch` over the tier. Name both every time, then let the forces choose:
 
-**Test it.** A pattern claims a behavior: a Strategy claims that swapping the implementation changes the outcome without changing the caller; a connection pool claims that no two callers ever receive the same live connection. A test that only confirms the binary compiles and exits zero proves none of that. Every example in this book carries a GoogleTest suite written to exercise the claimed behavior directly, following the idiom in *GoogleTest in Practice* and the official GoogleTest documentation, discovered automatically by `ctest` through `gtest_discover_tests`. If a chapter's claim about a pattern cannot be written as an assertion that fails when the behavior is wrong, the claim has not actually been pinned down yet, and the pattern has not actually been verified, only typed.
+| Fee logic | Choose |
+| --- | --- |
+| Three tiers, changes twice a year, one team owns it | the `switch` |
+| Eleven tiers, a new partner tier every sprint, separate teams per tier | Strategy: each tier in its own file, added without touching shared code |
 
-**Know when not to use it.** Every pattern in this book's catalogue earns a point past which applying it further stops helping. A Strategy with exactly one implementation and no credible second one on the horizon is an abstraction paying rent for a future that has not arrived. A Factory wrapping a constructor that never does anything more complex than its own constructor adds a layer with nothing underneath it. Every pattern chapter in this book closes with a short, explicit section on exactly this: not a hedge or a disclaimer, but the other half of the same decision that chose the pattern in the first place. Knowing when a pattern stops paying for itself is not a lesser skill than knowing when to reach for it; it is the same skill, applied to the same forces, checked against whether they are still present.
+**3. Choose the C++ expression.** The name constrains the shape, not the code. Modern C++ offers choices the 1994 catalogue didn't have, as the Strategy table above shows, and picking among them is part of the design. Part 4 and Part 8 compare them with compiling code.
 
-## Why this matters for leveling up
+**4. Test it.** A pattern claims a behavior. A Strategy claims that swapping the implementation changes the outcome without changing the caller; a connection pool claims that no two callers hold the same live connection. A binary that compiles and exits zero proves neither. Every example carries a GoogleTest suite that checks the claimed behavior, so a claim you can't write as a failing assertion isn't pinned down yet.
 
-A pattern name shows up often enough in technical interviews that it is tempting to treat the whole catalogue as trivia: memorize what Observer looks like, memorize what Visitor looks like, be ready to recite the definition on request. That kind of knowledge answers an interview question and does nothing for the code you write the next day, because the question an interview asks, "what is this pattern," is not the question real code asks, which is "what forces are actually present here, and does naming one of these patterns actually help."
+**5. Know when not to use it.** A Strategy with one implementation and no second one coming is an abstraction paying rent for a future that hasn't arrived. A Factory around a constructor that does nothing more than construct adds a layer with nothing under it. Every pattern chapter ends with this section, because it's the other half of the same choice.
 
-An engineer who has internalized the five-step arc in this chapter brings something different to a code review than one who has memorized the catalogue: the ability to ask "what is this abstraction actually buying us" about an existing Strategy, or "what would make this switch statement worth replacing" about an existing non-pattern, and to have a real answer either way. That question is what a senior engineer asks by instinct and a newer engineer has to learn to ask as a matter of habit, and it is exactly the question this book's chapter structure trains, one pattern at a time, by insisting on the candidate non-pattern and the "when not to use it" section every single time. Recognizing what to build, and why, is the actual skill underneath the Gang of Four's catalogue; the catalogue itself is just the vocabulary for talking about it once you can.
+## In review and with an AI assistant
 
-## A shared vocabulary, for a team and for an AI
+A pattern name turns a paragraph of trade-offs into one review comment: "this needs to be a Strategy, not a switch, because partner tiers are now owned by separate teams." That works only while everyone means the same forces by the word.
 
-Naming a pattern correctly does more than help you reason about one piece of code alone. It gives a team a word that compresses a whole paragraph of trade-off discussion into a sentence a reviewer can act on: "this needs to be a Strategy, not a switch, because partner tiers are now owned by separate teams" says in one line what the previous section took several paragraphs to walk through from first principles. That compression only works if everyone on the team means the same thing by the word, which is a harder property to maintain than it sounds, because a pattern's name is easy to use loosely once it stops being attached to the forces that justified it.
+The same holds for an AI pairing partner. A model has read a lot of code that uses pattern names loosely, so a suggestion carrying a pattern's name gets the same two questions: what are the forces here, and would the plain alternative answer them? Chapter 2 covers prompting and reviewing with pattern names.
 
-The same compression, and the same risk, now extends to an AI pairing partner. A large language model has read a great deal of code that uses pattern names loosely, reaching for a familiar shape because it is familiar rather than because the forces call for it, which means an AI suggestion carrying a pattern's name deserves exactly the scrutiny this chapter just trained: what are the actual forces here, and does the suggested pattern, or a plainer non-pattern alternative, actually answer them. The chapter on naming patterns picks this up directly. It turns the vocabulary this chapter builds into a shared reference a team and an AI pairing partner can both be held to, and it is where the discipline of naming a candidate pattern alongside a candidate non-pattern gets its sharpest treatment yet.
+## Where the steps lead
 
-## How the rest of the book applies the arc
-
-Part 2 takes the forces vocabulary this chapter introduces and sharpens it against the SOLID principles, because a force like "testability pulls against directness" is close kin to the Dependency Inversion Principle stated formally. Part 3 grounds the whole discussion in the C++ substrate every later pattern depends on: RAII, value semantics, and the GoogleTest discipline every example's claims are tested against. From Part 4 onward, every pattern chapter runs the five-step arc from this chapter against one specific, named pattern and one new, real-domain example: a reservation system here, a telemetry pipeline there, never a placeholder class standing in for a problem nobody actually has. Each of those chapters closes with its own "when not to use it" section and exactly one short sidebar on how an AI pairing partner tends to reach for that particular pattern, continuing the thread this chapter opened. The catalogue changes chapter to chapter. The arc does not.
+| Part | Adds |
+| --- | --- |
+| Part 2 | SOLID, which states several of these forces as principles; "testability against directness" is close kin to Dependency Inversion |
+| Part 3 | the C++ substrate every pattern depends on: RAII, value semantics, and GoogleTest |
+| Part 4 onward | one pattern per chapter, run through the five steps against a real-domain example such as a reservation system or a telemetry pipeline |
 
 ## For deeper coverage
 

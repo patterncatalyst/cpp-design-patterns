@@ -1,11 +1,11 @@
 {%- comment -%}
 Diagram gallery card. Used by /diagrams/. Required parameters:
 
-  file     — basename without extension; resolves to
+  file    , basename without extension; resolves to
              /diagrams/<file>.svg + /diagrams/<file>.excalidraw
-  section  — short label like "§3"
-  title    — short title for card and modal heading
-  caption  — one-line description shown under the card and in the modal
+  section , short label like "§3"
+  title   , short title for card and modal heading
+  caption , one-line description shown under the card and in the modal
 {%- endcomment -%}
 
 {%- assign svg_url = include.file | prepend: '/diagrams/' | append: '.svg' | relative_url -%}

@@ -47,7 +47,7 @@ find_package(GTest REQUIRED)
 
 # OBJECT, not STATIC, for consistency with this repo's library convention.
 # grace_policy_production.cpp and tests/grace_policy_test_double.cpp are
-# deliberately NOT part of this library: each one is compiled directly
+# not part of this library: each one is compiled directly
 # into exactly one of the two executables below, which is the whole
 # mechanism the link seam demonstrates.
 add_library(seam27_core OBJECT

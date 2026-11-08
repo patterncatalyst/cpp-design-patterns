@@ -6,30 +6,30 @@ description: "A fixed algorithm skeleton that calls private virtual hooks for th
 duration: "30 min"
 ---
 
+
 ## Learning objectives
 
 By the end of this chapter you can:
 
-- State the force Template Method answers: an algorithm's sequence of steps is fixed, but some of those steps vary by context, and the sequence itself must stay out of reach of every variant.
-- Build a Template Method as a public, non-virtual method that calls private virtual hooks, and explain why that combination, not virtual dispatch alone, is the Non-Virtual Interface (NVI) idiom.
-- Tell a hook from an invariant: a step a subclass overrides versus a precondition or postcondition the base class enforces for every subclass without exception.
-- Contrast a hook resolved at runtime through a vtable with the same hook resolved at compile time, first through C++20's Curiously Recurring Template Pattern, then through C++23's deducing this.
-- Read a GoogleTest suite that asserts a fixed call order directly, not just a finished document that happens to look right.
-- Recognize when Template Method's base class is solving a problem a single free function already solves, and say what to write instead.
+- State the force Template Method answers: a fixed sequence of steps, some of which vary, with the sequence out of reach of every variant.
+- Build a Template Method as a public, non-virtual method that calls private virtual hooks, the Non-Virtual Interface (NVI) idiom.
+- Tell a hook from an invariant: a step a subclass overrides versus a precondition or postcondition the base class enforces for every subclass.
+- Resolve a hook at compile time, first with the Curiously Recurring Template Pattern, then with deducing this, new in C++23.
+- Recognize when Template Method's base class does what one free function already does, and say what to write instead.
 
 ## Why this matters
 
-A warehouse system has to hand an order off to three downstream systems that each want something different: one wants a comma-separated manifest, one wants newline-delimited JSON, one wants a fixed-width feed a trading partner's twenty-year-old EDI parser still expects. The sequence that produces any one of those documents never changes. Validate the order. Write a header. Write one line per item. Write a footer. Append a trailer naming the format and the unit count. Three downstream systems, one sequence, three different outputs for exactly three of its five steps.
+A warehouse hands each order to three downstream systems: one wants a comma-separated manifest, one wants newline-delimited JSON, one wants the fixed-width feed a trading partner's old EDI parser expects. The sequence never changes: validate the order, write a header, write one line per item, write a footer, append a trailer with the format and unit count. Three of the five steps differ per format. The order of the five must not.
 
-That is the shape Chapter 1 called a force: the sequence is fixed, the content of a few steps inside it varies, and the two must not be allowed to mix. Template Method is the Gang of Four's name for resolving it with inheritance: a base class owns the sequence in one method, and each step that varies becomes a separate method a subclass overrides. The idea sounds close to Chapter 8's Strategy, and the two do solve related forces, but they solve different halves of the same problem. Strategy swaps an entire algorithm for another one of the same shape, carrier A's pricing rule for carrier B's. Template Method keeps one algorithm and varies a handful of its steps while the rest, including the order the steps run in, never moves. A checkout choosing a pricing algorithm wants Strategy; an export pipeline whose five steps always run in the same order, with three of them producing different text per format, wants Template Method.
-
-The refinement this book's C++ examples add to the Gang of Four's shape is the Non-Virtual Interface idiom. A generated version of Template Method, the one you get from describing it to an LLM without more context, usually makes the entry point itself virtual and lets a subclass override it directly. That throws away the one guarantee Template Method exists to provide: nothing stops a subclass from overriding the whole sequence, reordering steps, skipping the precondition, or returning before the trailer runs. NVI closes that gap with two rules applied together. The public entry point is never virtual, so no subclass can touch the sequence. The steps that do vary are private virtual methods, called only from inside the base class, so a subclass supplies their content but has no way to call them directly, and nothing outside the base class can reach them at all.
+Template Method and Strategy solve neighboring problems. Strategy swaps a whole algorithm for another of the same shape. Template Method keeps one algorithm and varies a few of its steps while the rest, including their order, stays fixed.
 
 {% include excalidraw.html name="09-template-method-skeleton" caption="Figure 9.1: OrderExportPipeline's fixed skeleton calls three private virtual hooks in a fixed order; CsvManifestExporter and JsonManifestExporter override the hooks without touching the sequence, validate() and trailer_for() either." %}
 
-## The domain: exporting an order three ways
+## Pattern: Template Method
 
-The example behind this chapter lives in `examples/09-template-method`. `Order` carries an id, a customer name, and a list of `OrderLine` values, each a SKU and a quantity a warehouse picker already confirmed:
+### The problem
+
+An `Order` carries an id, a customer name and a list of `OrderLine` values, each a SKU and a confirmed quantity:
 
 ```cpp
 struct OrderLine {
@@ -44,11 +44,20 @@ struct Order {
 };
 ```
 
-`total_quantity()` in `src/order_domain.cpp` is the one place an order's units get summed, the same shared-core move Chapter 8 used for its three pricing strategies: every exporter's trailer calls this one function, so the unit count a trailer reports can never drift from the order's actual lines, no matter which format produced the body above it.
+Write three exporters as three independent functions and each one carries its own copy of the sequence. One forgets to reject an empty order, another computes the trailer's unit count its own way, and a fix to the sequence has to land three times. Make the entry point virtual and a subclass can override the whole thing: reorder the steps, skip the check, return before the trailer.
 
-## The skeleton: one public, non-virtual method
+### The solution
 
-`OrderExportPipeline::export_order()` is the entry point every caller uses, and it is the only method in the class hierarchy that is both public and non-virtual:
+A **Template Method** defines an algorithm's fixed sequence in one base-class method and leaves the steps that vary to methods a subclass overrides.
+
+The C++ refinement is the **Non-Virtual Interface** idiom, two rules applied together:
+
+- the public entry point is never virtual, so no subclass can touch the sequence;
+- the varying steps are private virtual methods, so a subclass supplies their content but can't call them.
+
+### How C++ models it
+
+`OrderExportPipeline::export_order()` is the only method in the hierarchy that is both public and non-virtual:
 
 ```cpp
 class OrderExportPipeline {
@@ -67,7 +76,7 @@ private:
 };
 ```
 
-Its body is the whole algorithm, five steps, always in this order:
+Its body is the whole algorithm:
 
 ```cpp
 std::string OrderExportPipeline::export_order(const Order& order) const {
@@ -83,11 +92,11 @@ std::string OrderExportPipeline::export_order(const Order& order) const {
 }
 ```
 
-A caller holding any concrete exporter through this base class, a `CsvManifestExporter`, a `JsonManifestExporter`, a `FixedWidthEdiExporter`, gets the exact same five-step sequence every time. The only thing that changes between them is the text three of those steps produce. That is Template Method's whole claim: the algorithm's shape lives in exactly one method, written once, and every variant inherits that shape rather than re-implementing it.
+Any caller holding a `CsvManifestExporter`, `JsonManifestExporter` or `FixedWidthEdiExporter` through the base class gets the same five steps in the same order. Only the text from three of them changes.
 
-## The hooks: private, not protected
+### The hooks: private, not protected
 
-`render_header()`, `render_line()`, and `render_footer()` are the three steps that vary, and each concrete exporter overrides all three:
+Each concrete exporter overrides the hooks and nothing else:
 
 ```cpp
 class CsvManifestExporter : public OrderExportPipeline {
@@ -99,67 +108,34 @@ private:
 };
 ```
 
-`CsvManifestExporter` writes a two-line header naming the order, then one comma-separated row per line item. `JsonManifestExporter` writes newline-delimited JSON instead, one object per line with no wrapping array and no comma bookkeeping between elements, the practical choice when a downstream consumer reads the feed one line at a time rather than parsing one giant array. `FixedWidthEdiExporter` writes fixed-width segments, `ORD` for the header, `LIN` per line, `END` for the footer, each column padded to the width a legacy trading-partner parser expects.
+| Exporter | Header | Per line | Footer |
+| --- | --- | --- | --- |
+| `CsvManifestExporter` | Two lines naming the order and the columns | One comma-separated row | Empty |
+| `JsonManifestExporter` | One JSON object for the order | One JSON object, no wrapping array | Empty |
+| `FixedWidthEdiExporter` | `ORD` segment, padded columns | `LIN` segment | `END` segment with the line count |
 
-Declaring the hooks `private` rather than `protected` matters, because most inheritance tutorials reach for `protected` by reflex whenever a derived class needs to override something. `protected` would let a subclass call `render_header()` directly, from its own constructor, from an unrelated method, from anywhere, and once that is possible a subclass can produce a document fragment that was never run through `export_order()`'s sequence at all. `private` closes that door while still permitting the override: C++ lets a derived class override a private virtual function it has no access to call, because access control is checked at the call site inside the base class, not at the point where the override is declared. The result is a hook a subclass can fill in but never invoke, which is exactly the capability NVI needs and nothing more.
+Newline-delimited JSON suits a consumer that reads one line at a time, and it needs no comma bookkeeping between elements.
 
-## Invariants a hook cannot touch
+`protected` would let a subclass call `render_header()` from its constructor or any other method, producing a fragment that never went through `export_order()`. `private` blocks the call and still permits the override, because C++ checks access where a function is called, inside the base class, and not where an override is declared. A derived class that calls `render_header()` fails to compile with `'render_header' is a private member of 'orderexport::CsvManifestExporter'`.
 
-Two of `export_order()`'s five steps are not hooks at all, and the distinction matters as much as the hooks themselves. `validate()` is a static, non-virtual precondition: an order with no line items is a programming error at this boundary regardless of which format was asked for, so it is checked once, in the base class, before any hook runs. `trailer_for()` is the matching postcondition, a non-virtual method that appends a trailer line after `render_footer()` returns, no matter what `render_footer()` did. Neither method takes a virtual call anywhere in its path, and neither can be overridden, skipped, or reordered by a concrete exporter.
+### Invariants a hook can't touch
 
-This is the half of Template Method a generated base class most often gets wrong, because making every step virtual looks more flexible, right up until a subclass uses that flexibility to break an invariant the design depended on. `examples/09-template-method`'s test suite proves the distinction directly with a `RecordingExporter`, a test-only subclass that logs every hook call into a vector and overrides `render_footer()` to produce a fixed string with no reference to the order's unit count at all:
+Two of the five steps aren't hooks:
 
-```cpp
-TEST(OrderExportPipelineTest, AppendsTheTrailerRegardlessOfWhatRenderFooterProduced) {
-    RecordingExporter exporter;
+- **`validate()`** is a static, non-virtual precondition. An order with no lines is rejected with `std::invalid_argument` before any hook runs, whatever the format.
+- **`trailer_for()`** is the non-virtual postcondition. It appends the trailer after `render_footer()` returns, with the unit count from `total_quantity()` in `order_domain.cpp`, the one place an order's units are summed.
 
-    const std::string document = exporter.export_order(sample_order());
+A subclass whose `render_footer()` returns a fixed string and ignores the order still ends a four-unit document with `-- 4 unit(s) exported via` and its format name, because the base class computes that number. The hooks run in a fixed order, `render_header`, `render_line` once per line, `render_footer`, then `format_name` from inside `trailer_for()`, and an empty order throws with none of them called.
 
-    EXPECT_TRUE(document.ends_with("-- 4 unit(s) exported via RECORDING --\n")) << document;
-}
-```
+Making every step virtual looks more flexible, until a subclass uses that flexibility to break an invariant the design relied on.
 
-The trailer still reports the correct unit count, four, computed from `total_quantity()` in the base class, even though the hook that ran just before it never touched that number. A second test asserts the call order itself, not just the finished text, by reading the same `RecordingExporter`'s log after a call to `export_order()`:
+### Compile-time hooks: CRTP or deducing this
 
-```cpp
-TEST(OrderExportPipelineTest, CallsHooksInTheFixedSkeletonOrder) {
-    RecordingExporter exporter;
-    exporter.export_order(sample_order());
+Everything above resolves its hooks through a vtable: one indirect call per hook, in exchange for a format chosen after the program starts. `src/static_dispatch_variant.hpp` resolves a single hook at compile time instead. It doesn't replace `OrderExportPipeline`; an exporter with three hooks and a precondition keeps the virtual design. It covers the narrower case of one hook with no precondition to protect.
 
-    const std::vector<std::string> expected = {
-        "render_header", "render_line:SKU-100", "render_line:SKU-205",
-        "render_footer", "format_name",
-    };
-    EXPECT_EQ(exporter.calls, expected);
-}
-```
+The C++20 form is the Curiously Recurring Template Pattern (CRTP): a base class template takes its derived type as a template argument, so it can cast `*this` down and call a method it never declared. `CrtpOrderSummary` derives from `CrtpSummarySkeleton<CrtpOrderSummary>`, naming itself in its own base, and the base pays for that with a `static_cast`.
 
-`format_name` shows up last because `trailer_for()` calls it, after `render_footer()`, which is the order the production code runs in rather than an order a reader has to infer from reading `export_order()` a second time. A third test confirms `validate()` runs before any hook does at all: given an order with no line items, `RecordingExporter`'s call log stays empty, because the thrown exception unwinds out of `export_order()` before `render_header()` is ever reached.
-
-## A narrower contrast: CRTP versus deducing this
-
-Everything above resolves its three hooks at runtime, through a vtable, the same tradeoff Chapter 8 named for Strategy's first expression: one indirect call per hook, paid in exchange for a format that can be chosen after the program starts. A narrower illustration in `src/static_dispatch_variant.hpp` shows what changes when one hook is resolved at compile time instead, first the C++20 way, then the C++23 way. Neither of the two classes here replaces `OrderExportPipeline`; a format exporter with three hooks and a precondition to enforce keeps the virtual design above. The contrast exists for a narrower case, a single hook with no precondition to protect, where a reviewer has to choose between a long-standing idiom and a newer one that removes its characteristic awkwardness.
-
-The C++20 way is the Curiously Recurring Template Pattern, CRTP: a base class template that takes its own derived type as a template argument so it can cast `*this` down to that type and call a method the base class never declared.
-
-```cpp
-template <typename Derived>
-class CrtpSummarySkeleton {
-public:
-    std::string summarize(const Order& order) const {
-        return static_cast<const Derived&>(*this).describe(order);
-    }
-};
-
-class CrtpOrderSummary : public CrtpSummarySkeleton<CrtpOrderSummary> {
-public:
-    std::string describe(const Order& order) const {
-        return order.order_id + ": " + std::to_string(order.lines.size()) + " line(s)";
-    }
-};
-```
-
-`CrtpOrderSummary` has to name itself as the template argument to its own base class, a construction every C++ programmer eventually has to have explained to them once, and the `static_cast` inside `summarize()` is the price of a base class that is a template at all. Both of those are accepted costs in codebases that reach for CRTP, but neither is self-explanatory to a reader meeting the pattern for the first time.
+Deducing this, new in C++23, removes both. `summarize()` takes an explicit object parameter, `this const Self& self`, and the compiler deduces `Self` as the calling type:
 
 {% include codetabs.html langs="C++20|C++23" %}
 
@@ -189,43 +165,36 @@ public:
 };
 ```
 
-`DeducingThisSummarySkeleton` is not a template, and `DeducedOrderSummary` inherits from it the same way it would inherit from any ordinary base class, naming nothing about itself in the inheritance list. `summarize()`'s first parameter, `this const Self& self`, is C++23's explicit object parameter: the compiler deduces `Self` from whatever concrete type calls `summarize()`, the same information CRTP's template argument carried, without asking the class hierarchy to carry a template parameter to get it. Both versions compile to the same zero-overhead call, resolved entirely at compile time with no vtable anywhere in either one; the only thing that changed between the two columns is which C++ idiom gets the derived type into the base class's hands.
+`DeducedOrderSummary` inherits from `DeducingThisSummarySkeleton` like any ordinary base. Both forms resolve the call at compile time with no vtable.
 
-> **AI sidebar.** Ask an LLM pairing partner for a Template Method base class and a common result makes the entry point virtual too, because that is the shape that appears most often in tutorials that teach "override this method" as the whole idea without naming the sequence it protects. Check the result the way this chapter trained: is there exactly one non-virtual public entry point, and are the varying steps private, not protected, so a subclass can supply them but never call them directly from somewhere else in its own code? A generated hierarchy that makes `export_order()` itself overridable has reintroduced the exact failure mode NVI exists to close, a subclass free to skip the precondition or run the steps out of order, and it will pass every demo that only ever calls the base class's own sequence. The gap only shows up once someone writes a subclass that does something clever with the override, which is precisely the subclass this design is supposed to make impossible to write.
+## When not to use it
 
-## When not to use Template Method
+- **One format.** With no second format in hand or coming, write a function that validates an order and writes CSV. A virtual base class adds a vtable, a `private`/`virtual` split to learn and another file, to protect a sequence that has nothing to vary against.
+- **A sequence that changes per caller.** If a caller needs only the header and footer, or must interleave other work between steps, one `export_order()` fights the problem. Compose free functions, or one `std::function` per step, in the order each caller needs.
+- **Compile-time hooks without a measured reason.** CRTP and deducing this answer one hook, no precondition and a measured reason to avoid a vtable. Otherwise a plain virtual hook reads start to finish without learning either idiom.
 
-Template Method earns its base class when a multi-step sequence is shared by more than one concrete type and the sequence itself, not just one step in isolation, is the thing worth protecting from drift. It stops paying for itself quickly outside that case.
-
-A single format with no second one in hand or clearly coming does not need `OrderExportPipeline`, `CsvManifestExporter`, and a one-class hierarchy under it; it needs a function that validates an order and writes CSV, the same candidate-non-pattern move Chapter 1 trained for every pattern in this book. Introducing a virtual base class ahead of a second format arriving adds a vtable, a `private`/`virtual` split a reader has to learn, and an extra file, for a design decision, protecting the sequence from variation, that has nothing yet to protect against.
-
-Composition is the stronger choice, over either Template Method or Chapter 8's Strategy, when the steps that vary do not all belong to one coherent sequence a single class should own. If a caller sometimes needs to run only the header and footer without the line loop, or needs to interleave export steps with unrelated work between them, forcing all of that through one `export_order()` method fights the actual shape of the problem. A set of free functions, or a Strategy-shaped `std::function` per step, composed by the caller in whatever order that caller needs, serves a flexible sequence better than a Template Method whose entire premise is a fixed one. The test is the one this book keeps returning to: if the sequence of steps is the fact worth guaranteeing, Template Method is the right name for the base class; if the sequence itself needs to change per caller, the base class is guarding an invariant nobody asked for.
-
-The CRTP-versus-deducing-this contrast matters in an even narrower case than the virtual design above it. A single hook with no precondition to enforce and a real, measured reason to avoid a vtable is the case either idiom answers; absent that reason, a plain virtual hook, resolved at runtime, is the version a reviewer can read start to finish without first learning either idiom at all.
+> **🤖 Explore with your agent**
+>
+> "In `examples/09-template-method`, add `XmlManifestExporter` deriving from `OrderExportPipeline`. Override only `format_name()`, `render_header()`, `render_line()` and `render_footer()`, and keep all four `private`. Don't make `export_order()` virtual, don't touch `validate()` or `trailer_for()`, and don't sum quantities in the new class; the trailer's unit count comes from `total_quantity()`. Add tests that an empty order throws `std::invalid_argument` and that the document ends with the trailer."
+>
+> Run `ctest --preset cpp23` and check that no `virtual` or `protected` was added to `OrderExportPipeline`.
 
 ## Build, run, observe
 
-Every command below runs with the local clang, CMake, Ninja, and Conan toolchain Chapter 0 installs; there is no container anywhere in this loop. From the repository root, the root superbuild picks up `examples/09-template-method` automatically:
+From the repository root, the superbuild picks up `examples/09-template-method`:
 
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23
 scripts/build.sh cpp20 && scripts/verify.sh cpp20
 ```
 
-`scripts/verify.sh` runs CTest, which discovers this example's GoogleTest cases through `gtest_discover_tests`: 10 cases under the `cpp23` preset, 8 under `cpp20`, the difference being the two deducing-this cases that only compile under C++23. Observed locally on Fedora 44 / clang 22.1.8:
-
-```
-100% tests passed, 0 tests failed out of 10   # cpp23
-100% tests passed, 0 tests failed out of 8    # cpp20
-```
-
-To see all three formats export the same order side by side rather than just reading an assertion that says each one is correct, run the example's own demo script:
+All 10 cases pass under `cpp23` and 8 under `cpp20`; the two deducing-this cases compile only under C++23. To see the three formats export one order:
 
 ```sh
 examples/09-template-method/demo.sh cpp23
 ```
 
-It exports a two-line order for Riverside Hardware Co. through all three formats, then prints the CRTP and deducing-this summaries of the same order:
+It exports a two-line order for Riverside Hardware Co. in each format, then prints the CRTP and deducing-this summaries:
 
 ```
 == CSV manifest (CsvManifestExporter) ==
@@ -256,10 +225,13 @@ ORD-77: 2 line(s)
 ORD-77: 2 line(s)
 ```
 
-Notice the trailer on every format agrees on the same unit count, four, and the CRTP and deducing-this summaries agree on the same line count, two. That agreement is `total_quantity()` and each exporter's shared fixed sequence showing up as an observable fact at the terminal, not just as a passing test. Running `examples/09-template-method/demo.sh cpp20` prints the same output minus the final deducing-this block, which only compiles under the `cpp23` preset.
+Every trailer reports four units and both summaries report two lines. Under `cpp20` the output stops before the deducing-this block.
+
+- **Validate after the header.** In a scratch copy, move `validate(order)` below the `render_header()` call. One case fails: an empty order now reaches a hook before it's rejected.
+- **Call a hook from a subclass.** Add a member to a class derived from `CsvManifestExporter` that calls `render_header()`. The build fails with `'render_header' is a private member of 'orderexport::CsvManifestExporter'`.
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the original Template Method entry, including the "hook" and "fixed sequence" framing this chapter's `OrderExportPipeline` builds on.
-- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/09-template-method`'s suite, which asserts a fixed hook-call order directly through a recording subclass rather than only checking a finished document.
-- The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the original Template Method entry, including the "hook" and "fixed sequence" framing `OrderExportPipeline` builds on.
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/09-template-method`, which asserts the hook-call order through a recording subclass.
+- The full reading list lives on the [bibliography page]({{ '/bibliography/' | relative_url }}).

@@ -9,57 +9,42 @@ description: "A reference for gMock: defining mocks with MOCK_METHOD, setting ex
 duration: "15 min"
 ---
 
-## What this appendix covers
+## Learning objectives
 
-Every test double in this book that stands in for a collaborator interface is
-built with GoogleMock, gMock for short. It ships inside the same GoogleTest
-Conan package every example already depends on, so there is no extra
-dependency to add: wherever `#include <gtest/gtest.h>` already works,
-`#include <gmock/gmock.h>` does too. This appendix gathers the mechanics in
-one place: how to define a mock, how to set expectations on it, the matcher
-and action vocabulary, and the nice/strict spectrum that controls what an
-unexpected call does to a test run.
+By the end of this appendix you can:
 
-The [testing with GoogleTest chapter]({{ '/docs/07-testing-with-googletest/' | relative_url }})
-and the [seams chapter]({{ '/docs/27-seams/' | relative_url }}) both build and use mocks
-as part of a larger argument about design; this appendix is the reference you
-return to once that design is in place and you need the exact syntax.
+- Choose between a mock and a hand-written fake for a collaborator.
+- Define a mock with `MOCK_METHOD`, including `const` and `noexcept` methods.
+- Constrain a call with matchers, cardinalities, actions and ordering.
+- Pick a plain, `NiceMock` or `StrictMock` wrapper.
 
-## When a mock is the right double
+## Why this matters
 
-A mock verifies an interaction: that a collaborator was called, how many
-times, with which arguments, and in what order relative to other calls. A
-fake or a stub verifies state: it stores data and hands it back, and a test
-inspects the result after the fact without caring how many calls it took to
-get there.
+gMock ships in the GoogleTest Conan package every example already uses: wherever `#include <gtest/gtest.h>` works, `#include <gmock/gmock.h>` does too. [Testing with GoogleTest]({{ '/docs/07-testing-with-googletest/' | relative_url }}) and [Seams]({{ '/docs/27-seams/' | relative_url }}) use mocks inside a design argument; this page is the syntax reference.
 
-`MockQuoteLedger` from the GoogleTest chapter is a mock because the thing
-worth asserting is the call itself: does `QuoteIntake::submit()` call
-`record()` exactly once, with the price it just computed, and does it skip
-the call entirely when validation fails? No amount of inspecting a ledger's
-final contents answers "did it get called zero times or one time with the
-wrong argument." `MockClock` from the seams chapter is a mock for the same
-reason: a test needs to say "the clock answers this exact instant," not
-"the clock eventually reaches some time in a range."
+## Mock or fake
 
-Contrast that with a connection pool's in-memory test double, which just
-needs to hand back objects and track how many it created. That is state, not
-interaction, and a hand-written fake is usually a better fit. The last
-section in this appendix returns to that line in more detail.
+A mock verifies an interaction: that a collaborator was called, how many times, with which arguments, in what order. A fake verifies state: it stores data and hands it back, and you read the result afterward.
+
+| Double | Assert on | Example |
+| --- | --- | --- |
+| Mock | The call itself | `MockQuoteLedger`: `QuoteIntake::submit()` calls `record()` once with the computed price, and not at all when validation fails |
+| Mock | A scripted answer | `MockClock`: the clock returns this exact instant |
+| Fake | State after several calls | A resource pool's stand-in resource that counts its own constructions |
+
+Inspecting a ledger's final contents can't tell zero calls from one call with the wrong argument; that needs a mock. A resource that counts its constructions is state a member variable tracks naturally. As a mock it would need a `WillOnce` per acquisition, a chain that grows with the test.
+
+The rule of thumb: if "this test checks that..." continues with a method and an argument, use a mock. If it continues with a value the collaborator holds afterward, use a fake.
 
 ## Defining a mock
 
-A mock is a class that inherits from the interface it stands in for and
-replaces each virtual method with `MOCK_METHOD`. The modern macro form takes
-the return type, the method name, the parenthesized argument list, and a
-parenthesized list of specifiers:
+A mock inherits from the interface and replaces each virtual method with `MOCK_METHOD`: return type, name, parenthesized argument list, parenthesized specifiers.
 
 ```cpp
 MOCK_METHOD(ReturnType, method_name, (ArgTypes...), (specifiers...));
 ```
 
-A shipment-tracking store that a label-printing workflow writes to and reads
-back from:
+A tracking store that a label-printing workflow writes to and reads back:
 
 {% raw %}
 ```cpp
@@ -80,9 +65,7 @@ public:
 ```
 {% endraw %}
 
-The specifiers list is where `const`, `noexcept`, and `override` go, each as
-its own entry. A carrier gateway that pricing code calls for a rate quote and
-later calls again to cancel a booking shows both:
+`const`, `noexcept` and `override` each go as their own entry in the specifier list. A carrier gateway shows both:
 
 {% raw %}
 ```cpp
@@ -101,59 +84,34 @@ public:
 ```
 {% endraw %}
 
-The parentheses around the argument list matter even for a single argument,
-and even for zero arguments: `MOCK_METHOD(bool, is_connected, (), (const,
-override))` needs the empty pair. Without them, the macro cannot tell where
-the argument list ends and the specifier list begins, since a bare
-comma-separated argument list and a bare comma-separated specifier list look
-identical to the preprocessor.
+| Rule | Why |
+| --- | --- |
+| Parenthesize the argument list even for one or zero arguments: `MOCK_METHOD(bool, is_connected, (), (const, override))` | The preprocessor can't otherwise tell where the arguments end and the specifiers begin. |
+| Mock every pure virtual method | A mock with an unmocked pure virtual is still abstract and can't be constructed. |
+| Non-pure virtuals may stay unmocked | The mock inherits the base implementation. |
 
-A mock must override every pure virtual method its interface declares. A mock
-that leaves a pure virtual un-mocked is still an abstract class, so a test cannot
-construct it at all, whether or not anything calls that method. Non-pure virtual
-methods are different: leave them unmocked and the mock inherits the base class's
-implementation for those.
+## EXPECT_CALL and ON_CALL
 
-## Setting expectations
-
-`EXPECT_CALL` is both the assertion and the stand-in behavior in one
-statement. It says: this call must happen (or must not, or must happen some
-number of times), and here is what it should return when it does.
+`EXPECT_CALL` is the assertion and the stand-in behavior in one statement: this call must happen, and here's what it returns.
 
 ```cpp
 EXPECT_CALL(mock_carrier_gateway, request_quote(_))
     .WillOnce(Return(CarrierQuote{"GRD-1120", 4'850}));
 ```
 
-Every `EXPECT_CALL` is verified when the mock object is destroyed, not when
-the statement runs. A test that sets an expectation, never triggers it, and
-then falls off the end of the test body fails with a clear message naming
-the unsatisfied expectation, pointing back at the `EXPECT_CALL` line that
-made the promise.
+gMock verifies every `EXPECT_CALL` when the mock is destroyed, not when the statement runs. An expectation that's never triggered fails at the end of the test with a message pointing at the `EXPECT_CALL` line.
 
-`ON_CALL` sets default behavior without making a claim about whether or how
-often the call happens. It answers "if this gets called, answer with this,"
-with no assertion attached:
+`ON_CALL` sets a default with no claim about whether or how often the call happens:
 
 ```cpp
 ON_CALL(mock_clock, now()).WillByDefault(Return(reference_instant));
 ```
 
-Reach for `ON_CALL` when a mock plays a supporting role in a test and only
-one or two calls are the actual subject under test. A pricing test that
-exercises `CarrierGateway::request_quote()` directly still needs a `Clock`
-collaborator wired in for an unrelated timestamp; `ON_CALL` gives that clock
-a sane default so the test body never has to mention it, while the
-`EXPECT_CALL` on `request_quote()` carries the assertion the test is
-actually about. When both an `ON_CALL` and an `EXPECT_CALL` exist for the
-same call, the `EXPECT_CALL`'s action wins; `ON_CALL` only fills in behavior
-for calls no `EXPECT_CALL` covers.
+Use `ON_CALL` for a collaborator in a supporting role, such as a `Clock` a pricing test needs only for an unrelated timestamp, and keep `EXPECT_CALL` for the call under test. When both cover the same call, the `EXPECT_CALL` action wins.
 
 ## Argument matchers
 
-A matcher inside `EXPECT_CALL`'s parentheses narrows which calls the
-expectation applies to, and some matchers reach into the argument itself
-rather than only comparing it whole.
+A matcher inside `EXPECT_CALL`'s parentheses narrows which calls the expectation covers.
 
 | Matcher | Matches |
 |---|---|
@@ -166,9 +124,7 @@ rather than only comparing it whole.
 | `AllOf(m1, m2, ...)` | Every listed matcher matches |
 | `Truly(predicate)` | A free function or lambda returns true for the argument |
 
-`Field` is the one that catches the bug `Eq` on a whole struct cannot: a
-carrier gateway call that passes the right weight but the wrong destination
-zone.
+`Field` catches what `Eq` on the whole struct reports poorly: the right weight with the wrong destination zone.
 
 {% raw %}
 ```cpp
@@ -183,23 +139,15 @@ EXPECT_CALL(mock_carrier_gateway,
 ```
 {% endraw %}
 
-`Truly` covers a check no built-in matcher expresses directly, such as a
-tracking event's timestamp falling inside a business-hours window:
+`Truly` covers a check no built-in matcher expresses, such as a timestamp inside business hours:
 
 ```cpp
 EXPECT_CALL(mock_tracking_store, record_event(_, Truly(is_within_business_hours)));
 ```
 
-A bare literal, like `record(_)` or `cancel_booking("BKG-9")`, is treated as
-`Eq(...)` automatically. Writing `Eq` explicitly only matters when it needs
-to combine with another matcher through `AllOf` or similar.
+A bare literal, as in `cancel_booking("BKG-9")`, is `Eq(...)`. Write `Eq` explicitly only to combine it through `AllOf` or similar.
 
 ## Cardinalities
-
-`Times(n)` states exactly how many calls an expectation covers. `Times(0)`
-is the cardinality that turns a non-interaction into the assertion itself,
-the same pattern `QuoteIntake`'s validation-rejection test uses to prove a
-rejected request never reaches the ledger at all.
 
 | Cardinality | Meaning |
 |---|---|
@@ -208,12 +156,15 @@ rejected request never reaches the ledger at all.
 | `AtMost(n)` | Up to `n` calls |
 | `AnyNumber()` | Zero or more calls, no assertion on the count |
 
-When `Times` is omitted, gMock infers a cardinality from the actions
-attached: one `WillOnce` with no `WillRepeatedly` implies exactly one call;
-each additional `WillOnce` raises that implied count by one; a trailing
-`WillRepeatedly` with no explicit `Times` implies `AtLeast` the number of
-chained `WillOnce` calls. An `EXPECT_CALL` with no actions and no `Times` at
-all implies exactly one call.
+`Times(0)` makes a non-interaction the assertion: a rejected `QuoteIntake` request never reaches the ledger.
+
+Without `Times`, gMock infers the count from the actions:
+
+| Actions attached | Implied cardinality |
+| --- | --- |
+| None | Exactly one call |
+| `n` × `WillOnce` | Exactly `n` calls |
+| `n` × `WillOnce`, then `WillRepeatedly` | `AtLeast(n)` |
 
 ```cpp
 EXPECT_CALL(mock_carrier_gateway, cancel_booking(_))
@@ -223,9 +174,6 @@ EXPECT_CALL(mock_carrier_gateway, cancel_booking(_))
 
 ## Actions
 
-An action is what a mocked call does once it matches: compute or return a
-value, run arbitrary code, or some combination.
-
 | Action | Effect |
 |---|---|
 | `Return(value)` | Returns `value` from the call |
@@ -233,11 +181,7 @@ value, run arbitrary code, or some combination.
 | `Invoke(callable)` | Forwards the call's arguments to `callable` and returns its result |
 | `DoAll(a1, a2, ...)` | Runs every listed action in order; only the last one's return value is used |
 
-`WillOnce` attaches an action to one matching call and is consumed after it
-fires; a second matching call falls through to the next `WillOnce` in the
-chain, or to `WillRepeatedly` if one follows. `WillRepeatedly` attaches an
-action to every matching call that is left once the `WillOnce` chain, if
-any, is exhausted.
+Each `WillOnce` serves one matching call and is consumed. Later calls fall through to the next `WillOnce`, then to `WillRepeatedly`, which serves every call left over.
 
 ```cpp
 EXPECT_CALL(mock_clock, now())
@@ -246,15 +190,9 @@ EXPECT_CALL(mock_clock, now())
     .WillRepeatedly(Return(dispatch_instant + std::chrono::hours(4)));
 ```
 
-The first call to `now()` returns the dispatch instant, the second returns
-two hours later, and every call after that returns four hours later. A
-chain like this lets one test exercise an ETA estimator across several
-readings of the same `Clock` seam the SLA checker uses, without threading a
-real clock through the test or sleeping.
+The first `now()` returns the dispatch instant, the second two hours later, and every later call four hours later. An ETA estimator can read the `Clock` seam several times with no real clock and no sleep.
 
-`DoAll` combines a side effect with a return value, such as recording that a
-call happened in a local counter while still answering with a canned
-result:
+`DoAll` pairs a side effect with a return value:
 
 ```cpp
 EXPECT_CALL(mock_tracking_store, latest_event("SHM-4471"))
@@ -262,9 +200,7 @@ EXPECT_CALL(mock_tracking_store, latest_event("SHM-4471"))
                      Return(TrackingEvent{"SHM-4471", Status::InTransit})));
 ```
 
-`Invoke` is the escape hatch for behavior too specific for a canned
-`Return`, such as a carrier gateway stub that computes its quote from the
-actual request instead of a fixed number:
+`Invoke` computes the answer from the actual arguments when a canned `Return` won't do:
 
 ```cpp
 EXPECT_CALL(mock_carrier_gateway, request_quote(_))
@@ -275,11 +211,7 @@ EXPECT_CALL(mock_carrier_gateway, request_quote(_))
 
 ## Ordered expectations
 
-By default, gMock does not care about the order calls arrive in across
-different `EXPECT_CALL` statements; it only checks that each one is
-satisfied by the time the mock is destroyed. `InSequence` adds that
-constraint when the order itself is part of the contract, such as a booking
-workflow that must request a quote before it ever cancels one:
+By default gMock ignores the order of calls across different `EXPECT_CALL` statements. `InSequence` makes order part of the contract, such as a booking workflow that must request a quote before it cancels:
 
 ```cpp
 {
@@ -289,11 +221,7 @@ workflow that must request a quote before it ever cancels one:
 }
 ```
 
-Every `EXPECT_CALL` inside the `InSequence` object's scope joins one chain,
-each depending on the one before it. `.After(other_expectation)` expresses
-the same dependency one expectation at a time, which is the better fit when
-only one or two calls in a larger set have a real ordering requirement and
-the rest do not:
+Every `EXPECT_CALL` in the `InSequence` scope joins one chain. `.After(other)` states one dependency at a time, which fits when only one or two calls in a larger set have an order:
 
 ```cpp
 auto& quote_call = EXPECT_CALL(mock_carrier_gateway, request_quote(_)).WillOnce(Return(quote));
@@ -302,51 +230,26 @@ EXPECT_CALL(mock_carrier_gateway, cancel_booking(_)).After(quote_call).WillOnce(
 
 ## The nice/strict spectrum
 
-An unexpected call, one that matches no `EXPECT_CALL`, is still answered
-with a default value so the test keeps running, but the three mock base
-behaviors disagree on what else happens.
+An uninteresting call, to a method with no `EXPECT_CALL` at all, returns a default value and execution continues. The wrapper decides what else happens.
 
-| Wrapper | An unexpected call |
+| Wrapper | An uninteresting call |
 |---|---|
 | Plain mock (`MockCarrierGateway`) | Logs a warning, the default |
 | `NiceMock<MockCarrierGateway>` | Stays silent |
 | `StrictMock<MockCarrierGateway>` | Fails the test |
 
-A plain mock is called naggy for exactly this reason: every call a test
-never bothered to expect prints a warning to the test log, which is useful
-while a test is being written and noisy once a suite has dozens of mocks
-with a handful of incidental calls apiece. `NiceMock` quiets a collaborator
-a test only cares about for one or two calls, such as a `Clock` that a
-pricing test wires in purely so a timestamp field is not left default-
-constructed. `StrictMock` goes the other way: wrap `MockTrackingStore` in
-`StrictMock` when a test's whole point is that a particular code path must
-never write to the tracking store at all, and any other call, even one that
-would otherwise go unnoticed, should fail loudly.
+A call that does have an `EXPECT_CALL` but matches none of them is a failure under every wrapper.
+
+| Use | When |
+| --- | --- |
+| Plain ("naggy") | While writing a test; the warnings show calls you haven't decided about. |
+| `NiceMock` | A supporting collaborator, such as a `Clock` wired in only so a timestamp isn't default-constructed. |
+| `StrictMock` | A code path must make no call beyond the expected ones, such as touching `MockTrackingStore` only once. |
 
 ```cpp
 ::testing::StrictMock<MockTrackingStore> tracking_store;
 EXPECT_CALL(tracking_store, record_event("SHM-4471", _)).Times(1);
 ```
-
-## Mock vs fake: when to hand-write a fake
-
-A mock is the right double when the test's assertion is about the call itself.
-A fake is the right double when the test's assertion is about the resulting
-state, and the collaborator's own logic, not just its call count, needs to
-behave consistently across several calls in the same test.
-
-The resource pool chapter's examples lean on hand-written fakes for exactly
-this reason: a test double connection factory that hands back distinct
-connection objects and tracks how many it has created so far is state a
-fake tracks naturally in a member variable, not an interaction a mock needs
-to assert on call by call. Writing that same behavior as a mock would mean
-chaining a `WillOnce` for every connection the test ever acquires, which
-turns a two-line fake into a maintenance burden that grows with the test.
-
-The dividing line is usually this: if the next sentence after "this test
-checks that..." names a method and an argument, reach for a mock. If it
-names a value the collaborator should be holding afterward, reach for a
-fake.
 
 ## For deeper coverage
 
@@ -356,4 +259,4 @@ fake.
   reference for less common recipes: matching on multiple arguments at once, custom
   matchers, and mocking non-virtual interfaces through templates.
 - Hyuk Myeong, *Googletest in Practice*, self-published: the GoogleTest and GoogleMock
-  idioms every mock in this book is verified against.
+  idioms every mock follows.

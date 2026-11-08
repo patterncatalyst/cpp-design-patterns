@@ -10,61 +10,41 @@ duration: "30 min"
 
 By the end of this chapter you can:
 
-- Explain what the Rule of Zero buys a value type, and recognize when a
-  type's compiler-generated copy, move, and destructor are already correct.
-- Transfer sole ownership of an object between two owners with
-  `std::unique_ptr` and `std::move`, and say what "the source is empty
-  afterward" actually guarantees.
-- Write a resource-owning type that needs the Rule of Five, and share it
-  safely between more than one owner with `std::shared_ptr`.
-- Break a reference cycle in a parent/child object graph with
-  `std::weak_ptr`, and explain why a `shared_ptr` in both directions would
-  leak instead.
-- Contrast C++20's manual two-step adoption of a raw pointer from a
-  C-style factory function with C++23's `std::out_ptr`.
-- Recognize when `shared_ptr` is solving an ownership problem a single
-  owner already had solved, and say what to write instead.
+- Say what the Rule of Zero buys a value type, and recognize when the compiler-generated special members are already correct.
+- Transfer sole ownership between two owners with `std::unique_ptr` and `std::move`, and say what "the source is empty afterward" guarantees.
+- Write a resource-owning type that needs the Rule of Five, and share it between owners with `std::shared_ptr`.
+- Break a parent/child reference cycle with `std::weak_ptr`, and say why `shared_ptr` in both directions leaks.
+- Contrast C++20's two-step adoption of a raw pointer from a C factory with C++23's `std::out_ptr`.
+- Recognize a `shared_ptr` that's standing in for a single owner.
 
 ## Why this matters
 
-Chapter 5 tied a dock bay's lease to the lifetime of a C++ object: acquire
-the bay in a constructor, release it in a destructor, and let scope exit
-do the cleanup no matter how that scope ends. That discipline answers
-*when* something gets released. It does not answer a separate question
-this chapter trains: *who* is allowed to release it, and what happens when
-more than one part of a program needs to reach the same object, or when an
-object's own fields reach back toward something that already owns it.
+Chapter 5 answered *when* a resource is released: at scope exit, however the scope ends. The next question is *who* may release it, when several parts of a program reach the same object, or when an object points back at its owner.
 
-A parcel moving through a regional warehouse raises exactly that second
-question three different ways. A dock holds one parcel at a time and
-nobody else may claim it: that is sole ownership, the shape
-`std::unique_ptr` exists for. A carrier's rate contract is negotiated once
-and quoted against by every route running under it: that is shared
-ownership, the shape `std::shared_ptr` exists for. A sub-manifest knows
-which parent manifest it split off from, and the parent's own manifest
-tree holds that sub-manifest as a child: two objects pointing at each
-other, where one direction has to observe without owning or neither object
-ever gets freed. `std::weak_ptr` is C++'s answer to that last shape. None
-of these is a stylistic choice between three ways to hold a pointer; each
-one is the ownership topology the object graph actually has, made explicit
-in the type instead of left to a comment telling a future maintainer who
-is responsible for calling `delete`.
+A parcel moving through a regional warehouse raises that question in three ways:
+
+| Relationship | Shape | Type |
+| --- | --- | --- |
+| A dock holds one parcel, and nobody else may claim it | sole ownership | `std::unique_ptr` |
+| Every route under a carrier's rate contract quotes against the same contract | shared ownership | `std::shared_ptr` |
+| A sub-manifest knows the parent manifest that owns it | an observer that doesn't own | `std::weak_ptr` |
+
+None of these is style. Each is the ownership the object graph has, written into the type instead of a comment saying who calls `delete`.
 
 {% include excalidraw.html name="06-ownership-model" caption="Figure 6.1: Three ownership kinds in one object graph: unique_ptr as a sole owner, shared_ptr as a ref-counted shared owner, and weak_ptr observing without owning to break what would otherwise be a reference cycle." %}
 
 ## The domain: dispatching parcels through a regional warehouse
 
-The example behind this chapter lives in `examples/06-value-semantics-ownership`
-and stays in the same warehouse Chapter 5 used for its dock bay leases. A
-`Parcel` carries a tracking id, a weight, and a label; a `DockSlot` holds at
-most one parcel at a time; a `CarrierContract` is a negotiated per-tier rate
-table a `ShippingRoute` quotes against; a `ManifestNode` is a sub-manifest in
-a shipment's bill-of-lading tree. Four small types, four different ownership
-answers, one coherent object graph.
+The code is in `examples/06-value-semantics-ownership`, in the same warehouse as Chapter 5:
 
-## Value semantics: a Parcel that needs no special members at all
+| Type | Role | Ownership |
+| --- | --- | --- |
+| `Parcel` | tracking id, weight and label | value |
+| `DockSlot` | holds at most one parcel | sole owner |
+| `CarrierContract` | a negotiated per-tier rate table that a `ShippingRoute` quotes against | shared |
+| `ManifestNode` | a sub-manifest in a shipment's bill-of-lading tree | owns children, observes parent |
 
-`Parcel` is a plain value type:
+## Value semantics: a Parcel with no special members
 
 ```cpp
 struct Parcel {
@@ -74,29 +54,11 @@ struct Parcel {
 };
 ```
 
-Nothing here declares a destructor, a copy constructor, a copy assignment
-operator, a move constructor, or a move assignment operator, and nothing
-needs to. Every member is itself a value type with correct copy and move
-behavior already built in: `std::string` owns its own character buffer and
-knows how to deep-copy or steal it, and `double` is a value with no
-ownership question at all. The compiler generates all five special members
-for `Parcel` automatically, and every one of them is already correct. That
-is the Rule of Zero: write no special member yourself when every member
-you hold already has correct ones, and let the compiler's generated
-versions compose theirs. A `Parcel` copy is independent of the original by
-construction. Mutate a copy's `weight_kg` after it has been re-weighed at
-the hub, and the original parcel's weight is untouched, because copying a
-`std::string` and a `double` never shares the thing being copied.
+`Parcel` declares none of the five special members and needs none. `std::string` already copies and moves its own buffer correctly, and `double` has no ownership question. The compiler generates all five, and each is correct. That's the Rule of Zero: write no special member when every member already has correct ones.
 
-This is the baseline this chapter measures the other three types against.
-`Parcel` earns the Rule of Zero because it owns nothing a destructor would
-need to clean up. The next three sections introduce types that do, each
-for a different, concrete reason.
+A copy is independent by construction. Re-weigh a copy at the hub and the original's `weight_kg` is unchanged. `Parcel` earns the Rule of Zero because it owns nothing a destructor must clean up; the next three types do.
 
-## Sole ownership: unique_ptr and moving a parcel between docks
-
-A `DockSlot` holds at most one parcel, and that parcel belongs to exactly
-one slot at a time:
+## Sole ownership: unique_ptr moves a parcel between docks
 
 ```cpp
 class DockSlot {
@@ -111,15 +73,7 @@ private:
 };
 ```
 
-`std::unique_ptr<Parcel>` is not just a pointer with automatic cleanup; it
-is a type-level promise that nothing else holds a copy of this pointer.
-There is no copy constructor to accidentally call, because `unique_ptr`
-deletes its copy constructor and copy assignment operator outright. The
-only way to give a parcel to a different owner is to move it, and moving a
-`unique_ptr` is cheap and exact: the destination's internal pointer
-becomes whatever the source's internal pointer was, and the source's
-internal pointer becomes `nullptr`. `transfer_parcel()` is the whole
-pattern in two lines:
+`std::unique_ptr<Parcel>` promises in the type that nothing else holds this pointer. Its copy operations are deleted, so the only way to hand a parcel on is a move: the destination takes the pointer and the source becomes `nullptr`.
 
 ```cpp
 void transfer_parcel(DockSlot& from, DockSlot& to) {
@@ -127,25 +81,11 @@ void transfer_parcel(DockSlot& from, DockSlot& to) {
 }
 ```
 
-`from.release()` hands back the `unique_ptr` it was holding and sets its
-own member to `nullptr` in the same call, so `from` is left with nothing,
-not a dangling copy of something `to` now also holds. `to.assign()` then
-takes ownership of exactly that `unique_ptr` by move. After `transfer_parcel`
-returns, `from.occupied()` is `false` and `from.peek()` is `nullptr`; the
-parcel itself was never copied, only the single pointer that owns it moved
-from one slot's member to the other's. If `to` already held a different
-parcel when `assign()` ran, that parcel's `unique_ptr` is overwritten and
-its destructor runs immediately, the same automatic cleanup Chapter 5
-covered for a lease object going out of scope. No part of this example
-ever calls `delete` on a `Parcel*` by hand; the ownership transfer and the
-cleanup are both the type system's job, not the programmer's.
+Afterward `from.occupied()` is `false` and `from.peek()` is `nullptr`. The parcel was never copied; only the pointer that owns it moved. If `to` already held a parcel, `assign()` overwrites its `unique_ptr` and that parcel is destroyed on the spot. No code calls `delete` by hand.
 
-## Shared ownership: a contract more than one route depends on
+## Shared ownership: a contract several routes depend on
 
-A carrier publishes one rate table and more than one route can run under
-the same negotiated contract. `CarrierContract` is the type that owns that
-rate table, and it is this chapter's one type that needs the Rule of
-Five:
+One carrier rate table serves several routes. `CarrierContract` owns that table and needs the Rule of Five:
 
 ```cpp
 class CarrierContract {
@@ -168,24 +108,15 @@ private:
 };
 ```
 
-`tier_rates_` is a raw, heap-allocated `Cents*` rather than a
-`std::vector<Cents>`, so this chapter has one real example of a type that
-owns a resource the compiler cannot already copy or move correctly on
-its own. The compiler-generated copy constructor would copy the pointer
-value, not the array it points at, leaving two `CarrierContract` objects
-both convinced they own the same heap block; the first one destroyed would
-free it, and the second's destructor would free it again. Every one of the
-five special members exists to prevent exactly that: the copy constructor
-and copy assignment operator allocate a fresh array and copy the rates
-into it, so two `CarrierContract` values are independent after a copy the
-same way two `Parcel` values are; the move constructor and move assignment
-operator steal the source's pointer with `std::exchange` and leave the
-source's pointer `nullptr`, so a moved-from contract's destructor finds
-nothing to free; and the destructor calls `delete[]` exactly once per
-object, on whichever array that object currently owns.
+`tier_rates_` is a raw heap array instead of a `std::vector<Cents>`, so there's one type whose resource the compiler can't copy or move correctly. A generated copy would copy the pointer, two contracts would own one block, and the second destructor would free it again. Each special member prevents that:
 
-`ShippingRoute` holds a `CarrierContract` through `std::shared_ptr`, not
-by value and not through `unique_ptr`:
+| Member | Does |
+| --- | --- |
+| copy constructor, copy assignment | allocate a fresh array and copy the rates, so copies are independent |
+| move constructor, move assignment | take the source's pointer with `std::exchange` and leave it `nullptr` |
+| destructor | `delete[]` once, on the array this object owns |
+
+`ShippingRoute` holds the contract through `std::shared_ptr`:
 
 ```cpp
 class ShippingRoute {
@@ -199,29 +130,13 @@ private:
 };
 ```
 
-Two routes constructed from the same `std::shared_ptr<CarrierContract>`
-are not holding two independent copies of the contract the way two
-`Parcel` values are independent after a copy. They are holding two
-references to the same `CarrierContract` object, and the reference count
-behind that object counts both of them. Renegotiate a rate through one
-route's contract, `contract->set_tier_rate(1, 475)`, and the other route's
-next quote reflects the new rate immediately, because there is only one
-`CarrierContract` in memory and both routes point at it. This is the exact
-opposite behavior from `Parcel`'s deep-copy independence, and the contrast
-is the point: `shared_ptr` is reference semantics, `Parcel`'s plain copy is
-value semantics, and a type's ownership model decides which one a caller
-gets, not how the caller happens to write the assignment. The
-`CarrierContract` object is destroyed exactly once, when the last
-`shared_ptr` referencing it goes out of scope or is reset, whichever route
-that happens to be.
+Two routes built from the same `shared_ptr<CarrierContract>` refer to one object, and its reference count includes both. Renegotiate through one, `contract->set_tier_rate(1, 475)`, and the other's next quote sees the new rate. That's reference semantics, the opposite of `Parcel`'s independent copies, and the type's ownership model decides which one the caller gets. The contract is destroyed once, when the last `shared_ptr` to it goes away.
 
 {% include excalidraw.html name="06-value-vs-reference" caption="Figure 6.2: a Parcel copy staying independent under value semantics against two routes sharing one CarrierContract under reference semantics." %}
 
 ## Breaking a cycle: weak_ptr observes without owning
 
-A warehouse's manifest tree adds a third ownership direction: a parent
-manifest owns its sub-manifests, and each sub-manifest needs to find its
-way back to the parent it split off from.
+A parent manifest owns its sub-manifests, and each sub-manifest needs a way back to its parent:
 
 ```cpp
 class ManifestNode : public std::enable_shared_from_this<ManifestNode> {
@@ -235,46 +150,20 @@ private:
 };
 ```
 
-`children_` is a vector of `shared_ptr<ManifestNode>`: the parent owns its
-children outright, the same shared-ownership shape `CarrierContract` used
-above. `parent_` is the reverse edge, and it is a `std::weak_ptr`, not a
-`std::shared_ptr`, for a reason that has nothing to do with style. If
-`parent_` were also a `shared_ptr`, every child would hold a strong
-reference keeping its parent alive, at the same time every parent holds a
-strong reference keeping its children alive. Resetting the one external
-`shared_ptr<ManifestNode>` a caller holds to the root would not destroy
-anything: the root is still reachable from each child it created, and each
-child is still reachable from the root's own `children_` vector, so the
-pair's reference counts never reach zero and neither object is ever freed.
-That is a reference cycle, and it is the classic, well-documented failure
-mode of `shared_ptr` used without care.
+The parent owns its children through `children_`. If `parent_` were also a `shared_ptr`, each child would keep its parent alive while the parent keeps the child alive. Resetting the caller's only `shared_ptr` to the root would destroy nothing: the counts never reach zero. That's a reference cycle, the classic `shared_ptr` leak.
 
-`std::weak_ptr` does not participate in that count. Calling `child->parent().lock()`
-while the root is alive returns a usable `shared_ptr<ManifestNode>`
-pointing at it; calling the same `lock()` after the root has been
-destroyed returns an empty `shared_ptr`, and `child->parent().expired()`
-reports `true`. The warehouse example proves this directly: create a root
-manifest, add a child, reset the external `shared_ptr` the caller held to
-the root, and the child, still alive because the test itself holds a
-`shared_ptr` to it, finds its parent gone. The root's destructor ran the
-moment its last strong reference disappeared, exactly as it should, because
-the child's reference back to it was never strong enough to keep it alive
-on its own.
+`std::weak_ptr` doesn't count. While the root is alive, `child->parent().lock()` returns a usable `shared_ptr`. Once the root's last strong reference is gone, the root is destroyed, `lock()` returns an empty `shared_ptr`, and `child->parent().expired()` is `true`, even while the child itself is still held.
 
 ## Adopting a raw pointer from a C factory: C++20 versus C++23
 
-The warehouse's carrier rates sometimes come from an older, C-style rate
-service instead of a negotiated `CarrierContract`: a factory function that
-allocates a `CRateTable` on the heap and hands back a raw pointer through
-an out-parameter, paired with a function that frees it. Wrapping that raw
-pointer in a `std::unique_ptr` immediately, before it can leak or be freed
-twice by accident, is the same sole-ownership idea `DockSlot` used above,
-applied to a pointer this code did not allocate itself.
+Some carrier rates come from an older C-style service: a factory that allocates a `CRateTable` and returns it through an out-parameter, paired with a function that frees it.
 
 ```cpp
 int legacy_open_rate_table(const char* carrier_code, CRateTable** out_table);
 void legacy_close_rate_table(CRateTable* table);
 ```
+
+Wrap the pointer in a `std::unique_ptr` straight away, the same sole ownership `DockSlot` uses, applied to a pointer this code didn't allocate.
 
 {% include codetabs.html langs="C++20|C++23" %}
 
@@ -307,75 +196,41 @@ RateTableHandle open_rate_table(const std::string& carrier_code) {
 }
 ```
 
-Both versions produce the same `RateTableHandle`, a
-`std::unique_ptr<CRateTable, RateTableDeleter>` whose deleter calls
-`legacy_close_rate_table()`. The difference is how long a bare, unmanaged
-`CRateTable*` exists in the function. In the C++20 version, `raw_table` is
-a real variable with real scope between the call and the `return`; nothing
-stops a line inserted later in that gap from reading it, passing it
-somewhere else, or throwing before the handle is ever constructed, and the
-table would leak. `std::out_ptr(handle)` in the C++23 version produces a
-temporary pointer that writes directly into `handle`'s own storage when
-the call that received it returns, so there is no window at all where the
-pointer exists outside a `unique_ptr`'s control. `std::inout_ptr` is the
-companion for a C API that also needs to read the handle's current pointer
-before overwriting it, for instance a resize-in-place function; this
-example's factory only ever allocates fresh, so `out_ptr` is the one it
-needs. `examples/06-value-semantics-ownership/src/rate_table_adapter.cpp`
-guards the C++23 branch behind `#if __cplusplus >= 202302L`, so the
-mandatory C++20 build path never requires `std::out_ptr`.
+`RateTableHandle` is a `std::unique_ptr<CRateTable, RateTableDeleter>` whose deleter calls `legacy_close_rate_table()`. The difference is how long an unmanaged `CRateTable*` exists. In C++20, `raw_table` lives from the call to the `return`, and a line added later in that gap could copy it, pass it on or throw, and the table leaks. `std::out_ptr`, new in C++23, writes the result into `handle` when the call returns, so the pointer is never outside a `unique_ptr`. Its companion `std::inout_ptr` is for a C API that also reads the current pointer before replacing it, such as a resize in place; this factory only allocates. `src/rate_table_adapter.cpp` guards the C++23 branch with `#if __cplusplus >= 202302L`.
 
-> **AI sidebar.** Ask an LLM pairing partner to "add a smart pointer" around a
-> raw pointer a function returns and a common result reaches for
-> `std::shared_ptr` by default, because `shared_ptr` is the smart pointer
-> that appears most often in generated snippets and tolerates being copied
-> carelessly without an immediate compile error. Check the result against
-> the ownership the object graph actually has, the same way this chapter
-> trained: if nothing else needs to reference the object, a `unique_ptr`
-> says that in the type and costs nothing extra at runtime a `shared_ptr`
-> would not also cost; if the object sits in a parent/child graph, check
-> whether a generated back-reference from child to parent is a `shared_ptr`
-> pointing the wrong way, because that specific mistake is exactly the
-> cycle this chapter's `ManifestNode` exists to show how to avoid. A model
-> rarely volunteers `weak_ptr` on its own, since nothing about a single
-> generated snippet forces it to reason about a cycle spanning two classes
-> it is not looking at together.
+> **🤖 Explore with your agent**
+>
+> "In `examples/06-value-semantics-ownership`, add `ManifestNode::sibling_manifests()` returning the other children of this node's parent. Keep `parent_` a `std::weak_ptr<ManifestNode>` and `lock()` it inside the function; don't add any `std::shared_ptr` member that points from a child toward its parent. Return the siblings as `std::vector<std::shared_ptr<ManifestNode>>`. Leave `DockSlot` on `std::unique_ptr<Parcel>`; don't change it to `shared_ptr`."
+>
+> Check with `ctest --preset cpp23 -R ManifestTree`: the expiry cases must still pass after the root is reset.
+
+## When not to reach for shared_ptr
+
+A `DockSlot` holding `shared_ptr<Parcel>` would compile and pass every existing case, because a `shared_ptr` nobody copies acts like a sole owner. It would also let another piece of code keep the parcel after the warehouse considers it transferred, with no compiler error, where `unique_ptr`'s deleted copy would refuse to build.
+
+| | `std::unique_ptr` | `std::shared_ptr` |
+| --- | --- | --- |
+| A second owner | compile error | silently allowed |
+| Cost per copy and destruction | none | an atomic reference-count update |
+| Allocation | the object | the object plus a control block (one allocation with `make_shared`) |
+| Use when | one owner, which is the common case | a second owner is real, not hypothetical |
+
+Value semantics have a limit too. A `Parcel` carrying a full scanned image of its label would deep-copy that image every time a function took it by value. Pass it by `const&` where no copy is needed, and consider `std::shared_ptr<const Image>` for the one large, rarely changed field. The Rule of Zero says whether you must write special members; it doesn't say copying is still cheap.
 
 ## Build, run, observe
 
-Every command below runs with the local clang, CMake, Ninja, and Conan
-toolchain Chapter 0 installs; there is no container anywhere in this loop.
-From the repository root, the root superbuild picks up
-`examples/06-value-semantics-ownership` automatically:
+From the repository root:
 
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23
 scripts/build.sh cpp20 && scripts/verify.sh cpp20
 ```
 
-`scripts/verify.sh` runs CTest, which discovers this example's GoogleTest
-cases through `gtest_discover_tests`: 22 cases under both the `cpp23` and
-`cpp20` presets, because `open_rate_table()` compiles to a different
-implementation under each standard but exposes the identical signature
-either way, so no test is compiled out between them. Observed locally on
-Fedora 44 / clang 22.1.8:
-
-```
-100% tests passed, 0 tests failed out of 22   # cpp23
-100% tests passed, 0 tests failed out of 22   # cpp20
-```
-
-To see all four ownership shapes play out rather than just reading an
-assertion that says they hold, run the example's own demo script:
+All 22 cases pass under both presets: `open_rate_table()` compiles differently under each standard but keeps one signature, so no case is compiled out. Then run the demo:
 
 ```sh
 examples/06-value-semantics-ownership/demo.sh cpp23
 ```
-
-It copies and mutates a `Parcel`, transfers a parcel between two
-`DockSlot`s by move, renegotiates a `CarrierContract` shared by two
-routes, resets a manifest's root and shows its child's `weak_ptr` expire,
-and opens a legacy rate table through `std::out_ptr`:
 
 ```
 == Value semantics: a Parcel copy is independent ==
@@ -401,49 +256,9 @@ cardinal per-kg rate: 310 cents (handle releases it automatically)
 unknown-carrier: rejected, no handle allocated
 ```
 
-Running `examples/06-value-semantics-ownership/demo.sh cpp20` prints
-identical output: `open_rate_table()`'s observable behavior does not
-change between standards, only the mechanism it uses internally to adopt
-the legacy pointer.
+Under `cpp20` the output is identical; only the mechanism inside `open_rate_table()` changes.
 
-## When not to reach for shared_ptr
-
-Every ownership type in this chapter earns its cost only when the object
-graph actually has the shape that type answers. The most common mistake
-going the other direction is reaching for `shared_ptr` by default, the
-same reflex the AI sidebar above named, when a single, clear owner already
-exists.
-
-A `DockSlot` that held its `Parcel` through `shared_ptr` instead of
-`unique_ptr` would compile and run identically for every case this
-chapter's tests cover, because nothing stops a `shared_ptr` from behaving
-like a sole owner when nothing else ever copies it. But that version would
-also silently permit a second piece of code to retain a copy of the
-pointer past the point the warehouse considers the parcel transferred,
-with no compiler error marking the mistake, where `unique_ptr`'s deleted
-copy constructor would have refused to compile the moment a second owner
-tried to hold the same parcel. `shared_ptr` costs more than `unique_ptr`
-too: an atomic reference count updated on every copy and every
-destruction, and in the common `make_shared` form, a control block
-allocated alongside the object. Reach for `shared_ptr` only when a second
-owner is real, not hypothetical, the same forces-over-reflex habit Part 1
-trained for choosing a pattern at all.
-
-The same caution runs the other way for `Parcel`'s value semantics. A
-`Parcel` that carried a large, expensive-to-copy buffer, a full scanned
-image of its shipping label rather than a short string, would make every
-copy in this chapter's demo an expensive deep copy of that image, repeated
-on every function call that took a `Parcel` by value instead of by
-reference. Value semantics are the right default because a copy that is
-independent is easier to reason about than a reference that
-might be shared, but a type whose members are expensive to duplicate
-should pass by `const&` where no copy is needed, and should consider
-`std::shared_ptr<const Image>` for the one field that is big and rarely
-mutated, rather than deep-copying the whole `Parcel` on every pass. The
-Rule of Zero answers whether a type needs special members to write by
-hand; it does not answer whether copying that type by value, as often as
-the surrounding code happens to do it, is still cheap enough to be the
-default.
+- **Own the parent.** In a scratch copy, make `parent_` a `std::shared_ptr<ManifestNode>` and set it from `shared_from_this()`. Two cases fail: after the root is reset, a child and a grandchild still reach a live parent, because the cycle keeps it alive.
 
 ## For deeper coverage
 
@@ -457,10 +272,10 @@ default.
   exists to avoid.
 - *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official
   [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind
-  `examples/06-value-semantics-ownership`'s suite, which asserts observable
+  `examples/06-value-semantics-ownership`, which checks observable
   ownership behavior (an emptied source after a move, an expired
-  `weak_ptr`, a renegotiated rate seen by every sharing route) rather than
-  just checking that the binary exits zero.
+  `weak_ptr`, a renegotiated rate seen by every sharing route) rather
+  than just an exit code.
 - The full reading list behind this book's opinions lives on the
   [bibliography page]({{ '/bibliography/' | relative_url }}); each citation
   there is a pointer to the full book, not a substitute for reading it.

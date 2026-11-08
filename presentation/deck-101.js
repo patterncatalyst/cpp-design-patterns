@@ -35,11 +35,7 @@ function patternSlide(eyebrow, title, bullets, fig, caption, notes) {
     fontSize: hasFig ? 15.5 : 17,
   });
   if (hasFig) {
-    s.addImage({
-      path: `${PNG}/${fig}.png`,
-      x: 6.45, y: 1.75, w: 6.25, h: 4.35,
-      sizing: { type: "contain", w: 6.25, h: 4.35 },
-    });
+    H.addFigure(s, `${PNG}/${fig}.png`, 6.45, 1.75, 6.25, 4.35);
   }
   if (caption) addCaption(s, caption);
   addNotes(s, notes);
@@ -128,9 +124,9 @@ divider("02", "SOLID", "Five principles, one force: this will change",
   addBullets(s, [
     "A billing engine's one Invoice class doing three jobs, totaling, formatting a receipt, and persisting the record, means a tax fix, a wording change, and a storage change all land in the same file.",
     "SRP splits by reason to change, not by line count: a calculator, a formatter, and a repository, each with exactly one reason to change and no knowledge the other two exist.",
-    "Skip the split when nothing has a second reason to change yet; a class with one job and no second job in sight does not need to be carved into pieces in advance.",
+    "Skip the split when nothing has a second reason to change yet; a class with one job does not need to be carved into pieces in advance.",
   ], { x: 0.62, y: 1.85, w: 5.55, h: 4.55, fontSize: 15.5 });
-  s.addImage({ path: `${PNG}/03-solid-before-after.png`, x: 6.45, y: 1.75, w: 6.25, h: 4.35, sizing: { type: "contain", w: 6.25, h: 4.35 } });
+  H.addFigure(s, `${PNG}/03-solid-before-after.png`, 6.45, 1.75, 6.25, 4.35);
   addCaption(s, "A billing engine before and after SOLID: one Invoice type doing three jobs, split by SRP into three focused types, extended by OCP through a rule abstraction, and refined by LSP without breaking the base contract.");
   addNotes(s, "The naive version is one Invoice class with calculate_total, format_receipt, and save methods, each reaching into the same line items and each changing for its own unrelated reason. A reviewer approving a tax fix has to read past formatting code and persistence code to find the three lines that matter. SRP's fix is not making the class smaller for its own sake; it is separating three unrelated reasons to change that were sharing one address. None of the three resulting types knows the other two exist, which is what makes changing the tax calculation a single-file edit instead of a careful read of a tangled class.");
 }
@@ -154,7 +150,7 @@ divider("02", "SOLID", "Five principles, one force: this will change",
     "A loyalty discount rule refines a percentage discount rule by overriding only a protected rate hook; the base method owns a clamp the subtype can never bypass, so a combined rate can never discount more than the invoice is worth.",
     "Skip the protected hook when only one subtype will ever override it; a hook with one caller is a promise of flexibility nobody is going to collect on.",
   ], { x: 0.62, y: 1.85, w: 5.55, h: 4.55, fontSize: 15.5 });
-  s.addImage({ path: `${PNG}/03-lsp-clamp.png`, x: 6.45, y: 1.75, w: 6.25, h: 4.35, sizing: { type: "contain", w: 6.25, h: 4.35 } });
+  H.addFigure(s, `${PNG}/03-lsp-clamp.png`, 6.45, 1.75, 6.25, 4.35);
   addCaption(s, "A subtotal flows through the overridable discount_rate() hook into a clamp the base method owns and never exposes, so every subtype's rate is bounded before it reaches the subtotal.");
   addNotes(s, "A loyalty customer with a steep negotiated base rate and decades on the account would, unclamped, produce a combined rate past one hundred percent, discounting more than the invoice is worth. The subtype never has to defend against that itself, because the clamp runs on whatever the rate hook returns, including a value the subtype never anticipated. The substitution claim gets proven with one function written once against the base class reference, called with both the base rule and the refined rule, behaving correctly both times because neither subtype had the chance to violate the invariant the base class owns.");
 }
@@ -178,7 +174,7 @@ divider("02", "SOLID", "Five principles, one force: this will change",
     "Dependency inversion routes both the policy and the gateway toward one abstraction, a message sender, so the policy depends on what a channel does, never which channel it is; a composition root wires the concrete gateways once, by hand, with no container.",
     "Reach for a DI container only once the object graph is large enough that hand-wiring becomes its own burden; a graph wired once at startup reads better as a few lines in main than as a registration framework.",
   ], { x: 0.62, y: 1.85, w: 5.55, h: 4.55, fontSize: 15.5 });
-  s.addImage({ path: `${PNG}/04-solid-dependency-inversion.png`, x: 6.45, y: 1.75, w: 6.25, h: 4.35, sizing: { type: "contain", w: 6.25, h: 4.35 } });
+  H.addFigure(s, `${PNG}/04-solid-dependency-inversion.png`, 6.45, 1.75, 6.25, 4.35);
   addCaption(s, "Dependency inversion routes a high-level policy through an abstraction instead of straight to a concrete gateway, inverting the dependency arrow; interface segregation splits that abstraction into role interfaces a concrete type implements only where it has the capability.");
   addNotes(s, "C++ ships no reflection and no runtime container that scans a project and wires constructors together, and the idiomatic answer is not to build one. A composition root, usually main or a thin wrapper around it, constructs every concrete type exactly once and passes each abstraction's concrete implementation to whatever constructor asks for it. A reference, not a smart pointer, is the right ownership choice when the composition root and every consumer share one lifetime, which is the common case for a dependency wired once at startup; reach for a smart pointer when a dependency's lifetime has to be managed independently, the way a runtime-swappable strategy does.");
 }

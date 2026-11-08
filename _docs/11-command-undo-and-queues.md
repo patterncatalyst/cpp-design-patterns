@@ -10,26 +10,24 @@ duration: "30 min"
 
 By the end of this chapter you can:
 
-- Encapsulate a request as a Command object with an `execute()` and an `undo()`, rather than calling a receiver's method directly from the code that decides an action should happen.
-- Build an inverse operation two ways: a clean arithmetic inverse for a symmetric action, and a captured prior-state snapshot for an action with no arithmetic inverse at all.
-- Build an undo/redo stack that moves a command between a done stack and an undone stack, and explain why running a new command clears the redo branch.
-- Build a FIFO command queue that defers execution and processes a batch of commands in submission order, optionally recording each one into an undo/redo stack as it runs.
-- Reach for a `std::function` (or C++23's `std::move_only_function`) instead of a full Command object when a queued action has nothing to undo, and say what that shortcut costs.
-- Recognize when Command is solving a problem nobody has yet, and say what to write instead.
+- Encapsulate a request as a Command object with `execute()` and `undo()`, instead of calling the receiver directly from the code that decides an action should happen.
+- Build an inverse two ways: an arithmetic inverse for a symmetric action, and a prior-state snapshot for an action with no inverse.
+- Build an undo/redo stack, and explain why running a new command clears the redo branch.
+- Build a FIFO command queue that defers a batch and can record each command into the undo/redo stack as it runs.
+- Use a `std::function`, or `std::move_only_function`, new in C++23, instead of a Command object when a queued action has nothing to undo, and say what that costs.
+- Recognize when Command solves a problem nobody has yet, and say what to write instead.
 
 ## Why this matters
 
-A warehouse inventory and order editor runs the same handful of operations over and over: receive stock into a bin, move stock between bins, correct a quantity after a cycle count, cancel a picked order line. The first version calls a method on the warehouse object directly from wherever the operation is triggered, a keyboard shortcut handler, an HTTP route, a batch-import script, and the call is gone the instant it returns. That works until the editor needs any of three things an inline method call cannot give it: a way to undo the last thing that happened, a way to queue several operations and run them later as a batch, or a way to let several different triggers (a UI button, a scripted import, a scheduled job) submit the same kind of operation without each one re-deriving how to perform it.
-
-Command is the Gang of Four's answer to that force: turn a request into an object instead of a function call. The object remembers everything it needs to run the operation and, critically, everything it needs to run the operation's inverse. Once a request is an object rather than a call already in flight, it can sit in a list waiting to run, travel across a queue to run somewhere else, or sit on a stack waiting to be reversed. None of that is possible with a bare function call, because a function call has no existence after it returns; a Command object does, for as long as something is holding onto it.
-
-This chapter builds that object against a warehouse inventory and order editor. Four operations, adding stock, moving stock, correcting a quantity, and cancelling an order line, become four `InventoryCommand` implementations sharing one receiver, `WarehouseEditor`. An undo/redo stack, `CommandHistory`, lets an operator step backward and forward through a session the way a text editor's Ctrl-Z does. A `CommandQueue` defers a batch of operations, submitted throughout a shift, and runs them in the order they were submitted when a nightly batch job processes them. Not every queued action needs the full ceremony of a Command object with an `execute()` and an `undo()`, so the chapter closes by showing the idiomatic modern shortcut, a plain callable, for a queued action that has nothing to undo, and what that shortcut costs compared to the full object.
+A warehouse editor runs the same operations all day: receive stock into a bin, move stock between bins, correct a quantity after a cycle count, cancel a picked order line. Called directly from a keyboard handler, an HTTP route or an import script, each operation is gone the moment it returns. That stops working once the editor needs to undo the last change, queue operations for a nightly batch, or accept the same operation from several triggers without each one re-deriving how to perform it.
 
 {% include excalidraw.html name="11-command-undo" caption="Figure 11.1: An invoker drains a FIFO command queue into a receiver; a CommandHistory moves a command between a done stack and an undone stack as undo() and redo() run." %}
 
-## The domain: editing a warehouse's stock and order lines
+## Pattern: Command
 
-The example behind this chapter lives in `examples/11-command`. `WarehouseEditor` is the receiver every command in this chapter mutates: it tracks on-hand quantity per `(bin, sku)` pair and the `OrderLine`s already picked against that stock. It exposes exactly two primitives commands need, `adjust_stock()` and the order-line accessors, and nothing about commands, undo, or queues:
+### The problem
+
+`WarehouseEditor` is the receiver. It tracks on-hand quantity per `(bin, sku)` and the `OrderLine`s picked against that stock, and it knows nothing about commands, undo or queues:
 
 ```cpp
 struct OrderLine {
@@ -50,11 +48,21 @@ public:
 };
 ```
 
-`adjust_stock()` takes a signed delta rather than two separate add/remove methods. That one choice is what lets every command in this example express its undo as the identical operation with the sign flipped, instead of writing a second, separately-tested code path for reversing each kind of change. Keeping the receiver this small mirrors the separation Chapter 8 used for `shipping_domain.cpp`'s pure rate math: the receiver knows how to change warehouse state, and the commands below know when and why to call it, with nothing about undo or queueing leaking into the receiver itself.
+`adjust_stock()` takes a signed delta rather than separate add and remove methods, so each command's undo is the same call with the sign flipped. A method call on this receiver can't be undone, can't wait in a list and can't be submitted from three places as the same kind of thing, because it has no existence after it returns.
 
-## The command object: encapsulating a request
+### The solution
 
-Every command in this example implements the same two-method interface:
+A **Command** turns a request into an object that holds everything needed to perform it and to reverse it, so it can be queued, logged or undone after the call that created it.
+
+Use a Command when a request must:
+
+- be undone or redone;
+- wait in a queue or run in a batch;
+- come from several triggers that shouldn't each know how to perform it.
+
+### How C++ models it
+
+Every command implements the same two methods:
 
 ```cpp
 class InventoryCommand {
@@ -65,7 +73,7 @@ public:
 };
 ```
 
-`AddStockCommand` is the simplest concrete case. It stores exactly what it needs to run and reverse one stock receipt: a bin, a SKU, and a quantity.
+`AddStockCommand` stores what it needs to run and reverse one receipt:
 
 ```cpp
 class AddStockCommand : public InventoryCommand {
@@ -82,13 +90,13 @@ private:
 };
 ```
 
-The constructor captures the bin, the SKU, and the quantity once; `execute()` calls `editor_.adjust_stock(bin_, sku_, quantity_)` and `undo()` calls the same method with the quantity negated. Nothing about `AddStockCommand` knows whether it is about to run immediately, sit in a queue for an hour, or get replayed by `redo()` after being undone; it only knows how to run itself and how to run its own inverse, which is exactly what makes it safe to hand to an invoker that treats every command the same way, whether that invoker is a `CommandHistory`, a `CommandQueue`, or a caller holding the pointer directly.
+`execute()` calls `editor_.adjust_stock(bin_, sku_, quantity_)` and `undo()` calls it with the quantity negated. The command doesn't know whether it runs now, waits an hour in a queue or gets replayed by `redo()`. That's what lets any invoker treat every command the same way.
 
-`MoveItemCommand` follows the identical shape with two bins instead of one: `execute()` subtracts the quantity from the source bin and adds it to the destination; `undo()` runs both halves in reverse. Both of these commands get a clean, symmetric inverse at no extra design cost, because the operation they perform is itself symmetric: moving a quantity from A to B undoes by moving the same quantity from B back to A.
+`MoveItemCommand` has the same shape with two bins: `execute()` subtracts from the source and adds to the destination, and `undo()` reverses both. A symmetric operation gets a symmetric inverse with no extra state.
 
-## Undo, two ways: an inverse operation and a captured snapshot
+### Undo by snapshot
 
-Not every operation has an arithmetic inverse. "Set this bin's quantity to 12 after a cycle count" has no opposite number to add back; the only way to undo it is to remember what the quantity was before it ran. `AdjustQuantityCommand` captures that prior value inside `execute()`, not the constructor:
+"Set this bin to 12 after a cycle count" has no opposite number to add back. The only undo is to remember the quantity before it ran. `AdjustQuantityCommand` captures that in `execute()`, not in the constructor:
 
 ```cpp
 void AdjustQuantityCommand::execute() {
@@ -101,9 +109,9 @@ void AdjustQuantityCommand::undo() {
 }
 ```
 
-Capturing `previous_quantity_` at execute time rather than construction time matters once a command can be queued. A command built now and run an hour later, after a `CommandQueue` has drained several other commands ahead of it, must read the quantity the moment it runs, not the moment somebody wrote `new AdjustQuantityCommand(...)`. Capturing state in the constructor would silently record a stale value if anything else touched that bin in between; capturing it in `execute()` is correct no matter how long the command waited or what ran before it.
+The timing matters once commands are queued. A command built now and run an hour later, after the queue has drained others ahead of it, must read the quantity when it runs. Captured in the constructor, the snapshot goes stale if anything touches the bin in between.
 
-`CancelLineCommand` is the same idea against a richer piece of state: an `OrderLine` rather than a single integer. Cancelling a picked line has to return its reserved quantity to the bin it came from and mark the line cancelled; undoing that cancellation has to reverse both parts at once.
+`CancelLineCommand` snapshots a whole `OrderLine`. Cancelling returns the reserved quantity to its bin and marks the line cancelled; undoing reverses both:
 
 ```cpp
 void CancelLineCommand::execute() {
@@ -118,11 +126,18 @@ void CancelLineCommand::undo() {
 }
 ```
 
-Capturing the whole `OrderLine` rather than just the quantity means `undo()` restores the line exactly as it was, including a `cancelled` flag that was already true if this line had somehow been cancelled twice. All four commands share the same `InventoryCommand` interface despite the two different undo strategies behind it: the invoker never has to know or care which strategy a given command used, which is the entire point of hiding both behind `execute()`/`undo()`.
+| Command | Undo strategy |
+| --- | --- |
+| `AddStockCommand` | Arithmetic inverse: negate the delta |
+| `MoveItemCommand` | Arithmetic inverse: move the quantity back |
+| `AdjustQuantityCommand` | Snapshot of the prior quantity, taken in `execute()` |
+| `CancelLineCommand` | Snapshot of the prior `OrderLine`, taken in `execute()` |
 
-## The undo/redo stack
+The invoker never knows which strategy a command uses. Both sit behind `execute()` and `undo()`.
 
-`CommandHistory` owns two stacks of commands, done and undone, and is the piece that makes undo and redo available to a caller:
+### The undo/redo stack
+
+`CommandHistory` owns a done stack and an undone stack:
 
 ```cpp
 class CommandHistory {
@@ -133,13 +148,13 @@ public:
 };
 ```
 
-`execute()` runs the command immediately and pushes it onto the done stack, clearing the undone stack first. `undo()` pops the most recently done command, calls its `undo()`, and moves it onto the undone stack. `redo()` does the mirror image: pop the most recently undone command, call its `execute()` again, and move it back onto the done stack. Clearing the undone stack inside `execute()` is the rule every text editor's undo history already follows: once a new edit happens, whatever you had undone away from is no longer reachable by `redo()`, because redoing it now would silently overwrite the new edit that has already happened in its place. A history that kept the old redo branch around after a new command ran would let `redo()` jump to a state that contradicts whatever the operator just did, which is worse than discarding that branch.
+`execute()` runs the command, clears the undone stack and pushes the command onto the done stack. `undo()` pops the latest done command, calls its `undo()` and pushes it onto the undone stack. `redo()` is the mirror image. Each call returns `false` when its stack is empty.
 
-The stack shape also explains why this chapter calls it a stack and not a list: both operations only ever touch the most recent end. `undo()` can only step back one command at a time, in the exact reverse of the order those commands ran, and `redo()` can only step forward through the branch that undo just walked back from. That is the same discipline every mainstream undo implementation uses, from a text editor to a drawing program, because it is the only ordering that keeps every intermediate state consistent: skipping around to an arbitrary earlier command without undoing everything after it first would leave the receiver in a state no sequence of real operations would ever produce.
+Clearing the undone stack is the rule every text editor follows. After a new edit, the branch you had undone away from is gone, because redoing it would overwrite the edit that took its place. Both operations touch only the most recent end, so undo walks back in exact reverse order. Jumping to an arbitrary earlier command without undoing everything after it would leave the receiver in a state no real sequence of operations produces.
 
-## The command queue: deferred, batched execution
+### The command queue
 
-`CommandHistory` runs a command the instant `execute()` is called. `CommandQueue` is for the opposite case: operations submitted over time that should not run until a batch step decides to process them.
+`CommandHistory` runs a command the moment it's called. `CommandQueue` holds operations submitted over a shift until a batch step runs them:
 
 ```cpp
 class CommandQueue {
@@ -149,13 +164,15 @@ public:
 };
 ```
 
-`enqueue()` only records submission order; nothing runs until `process_all()` drains the queue, FIFO, oldest command first. That ordering guarantee is not cosmetic. If a shift queues an `AddStockCommand` for five units ahead of a `MoveItemCommand` that moves ten units out of the same bin, running them out of order would make the move fail or quietly produce a different final quantity than the warehouse floor intended. FIFO processing is what lets several different triggers, a handheld scanner, a manual correction, a scheduled replenishment job, all queue into the same `CommandQueue` over the course of a shift and trust that a nightly batch step reproduces exactly the sequence of events that happened on the floor.
+`enqueue()` records submission order, and `process_all()` drains the queue oldest first. The order matters: an `AddStockCommand` for five units queued ahead of a `MoveItemCommand` taking ten out of the same bin runs the move against stock that hasn't arrived yet if they swap, and `adjust_stock()` doesn't refuse a bin going negative. FIFO lets a handheld scanner, a manual correction and a replenishment job share one queue and trust the batch to replay the floor's sequence.
 
-The optional `CommandHistory*` parameter is what connects the queue back to undo. Pass one in and `process_all()` runs every command through `history->execute()` instead of calling `execute()` directly, so the entire batch remains individually undoable afterward, one command at a time, the same as if an operator had run each one by hand. Pass `nullptr` and the batch is fire-and-forget, appropriate for a queue of actions nobody will ever want to step back through.
+Pass a `CommandHistory*` and `process_all()` runs each command through `history->execute()`, so every command in the batch stays individually undoable. Pass `nullptr` and the batch is fire-and-forget.
 
-## The std::function shortcut and its trade-off
+The same shape, a queue of deferred work drained in order, returns under concurrency as Active Object, where a separate thread drains the queue.
 
-Logging that a restock happened has no undo at all; there is nothing to reverse about having written a line to an audit log. Wrapping that in a class implementing `execute()` and `undo()` would be ceremony with no second method to justify it, the same non-pattern this book has flagged before: when a shape has exactly one real operation, that operation is a function, not an interface. `RestockLogFn` is a type alias for a plain callable instead:
+### The callable shortcut
+
+Logging a restock has nothing to undo. A class with `execute()` and an empty `undo()` would be ceremony around one function, so `RestockLogFn` is a callable. Its definition depends on the standard:
 
 {% include codetabs.html langs="C++20|C++23" %}
 
@@ -187,43 +204,38 @@ RestockLogFn make_logging_restock(std::unique_ptr<RestockReceipt> receipt) {
 }
 ```
 
-Both columns return the same callable shape and the demo calls it the same way either way; only what the callable is allowed to capture changes between standards. The trade-off this shortcut makes is explicit: a `RestockLogFn` has no `undo()`, so it cannot be pushed onto a `CommandHistory` and cannot be stepped backward through. That is the right trade for a side effect with no meaningful reverse, and the wrong one the instant a queued action needs to be undoable, which is exactly the line this chapter draws between the four `InventoryCommand` types above and this one callable.
+`std::function` requires a copyable target, so under C++20 a lambda that captures the `unique_ptr` by move fails with `std::function target must be copy-constructible`, and the receipt is promoted to a `shared_ptr` to get around it. `std::move_only_function` drops that requirement. Both return the same callable shape, called the same way.
 
-> **AI sidebar.** Ask an LLM pairing partner for "an undo system" and a common result reaches for a single global stack of closures, each one a lambda that mutates state directly, because that shape is quick to produce and compiles on the first try. Check it the way this chapter trained: a closure-based undo stack works until two different kinds of undo logic need two different kinds of state, at which point every closure needs its own ad hoc capture list, and a reviewer can no longer tell by looking at the stack's declared type what any entry is capable of. An explicit `InventoryCommand` interface costs one extra virtual call per operation and buys a named, swappable, type-checked contract: a function signature a reviewer can read, a queue that can hold commands from multiple unrelated call sites without those sites agreeing on a closure shape in advance, and a place, `undo()`, for the model to be asked directly "does this command's undo actually reverse what execute does," a question a bare lambda has no slot to answer. A generated command slot that is just `std::function<void()>` with a comment reading "assumes caller tracks how to undo this" is the clearest sign the model reached for the closure shape instead of the object shape the forces call for.
+The trade-off is explicit: a `RestockLogFn` has no `undo()`, so it can't go on a `CommandHistory`. That's right for a side effect with no reverse and wrong the moment a queued action needs undoing.
 
-## When not to use Command
+## When not to use it
 
-Command earns its cost when a request needs to outlive the call that created it: because it must be undoable, because it must be queued for later or batched with others, or because more than one trigger submits the same kind of request and none of them should have to re-derive how to perform it. It stops paying for itself the moment none of those three is true.
+- **One trigger, no undo, runs immediately.** Call `editor.adjust_stock(bin, sku, delta)`. A command object adds a virtual call, a heap allocation for the `unique_ptr` and a class to read for a single call site. Introduce Command when undo, batching or a second submitter appears.
+- **A side effect with no reverse.** Logging, a notification or a webhook gets a callable, not an `InventoryCommand` subclass with an empty `undo()`.
+- **A `std::function<void()>` undo stack.** Closures work until different undo logic needs different state. Then each closure carries an ad hoc capture list, and nothing in the stack's type says what an entry can do. An `InventoryCommand` interface gives every undo a named slot to review.
 
-An operation triggered from exactly one place, that nobody has ever asked to undo, and that always runs immediately, does not need an `InventoryCommand` wrapped around it; it needs a method call. Wrapping `editor.adjust_stock(bin, sku, delta)` in a command object before any of undo, queueing, or multiple triggers is in hand or clearly coming adds a virtual call, a heap allocation for the `unique_ptr`, and a reader's detour through a class definition to find a single call site that will ever use it. The plainer non-pattern is the direct call, the same candidate-non-pattern move Chapter 1 trained for every pattern in this book: name the abstraction and the plain alternative side by side, and let whether a second concern (undo, batching, multiple submitters) is present decide between them.
-
-The `std::function` shortcut earlier in this chapter is itself a smaller version of the same caution in the other direction. Reaching for a full `InventoryCommand` subclass for an action with no undo and no batching requirement, logging an event, sending a notification, firing a webhook, buys nothing a bare callable does not already provide, at the cost of a class definition, a header, and two methods where one function would do. The forces decide which of the two shapes an operation gets, not which one appeared most recently in this chapter.
-
-Part 9 revisits this same shape, a queue of deferred work drained in order, under concurrency: the Active Object pattern decouples a method's invocation from its execution by handing work to a queue that a separate processor thread drains on its own schedule, the same FIFO discipline this chapter's `CommandQueue` uses single-threaded, now running concurrently with whatever submitted the work.
+> **🤖 Explore with your agent**
+>
+> "In `examples/11-command`, add `WriteOffDamagedCommand` implementing `InventoryCommand`: it removes a damaged quantity from one `(bin, sku)` through `WarehouseEditor::adjust_stock()` with a negative delta, and `undo()` adds it back. Take no snapshot in the constructor; if the command reads editor state, read it in `execute()`. Don't use `std::function` for it, and don't add undo logic to `WarehouseEditor`. Add tests that run it through `CommandHistory` and through `CommandQueue::process_all()` with a history, then undo and redo it, and check the bin's quantity after each step."
+>
+> Run `ctest --preset cpp23 -R Command` and check that `CommandHistory` and `CommandQueue` are unchanged.
 
 ## Build, run, observe
 
-Every command below runs with the local clang, CMake, Ninja, and Conan toolchain Chapter 0 installs; there is no container anywhere in this loop. From the repository root, the root superbuild picks up `examples/11-command` automatically:
+From the repository root, the superbuild picks up `examples/11-command`:
 
 ```sh
 scripts/build.sh cpp23 && scripts/verify.sh cpp23
 scripts/build.sh cpp20 && scripts/verify.sh cpp20
 ```
 
-`scripts/verify.sh` runs CTest, which discovers this example's GoogleTest cases through `gtest_discover_tests`: 20 cases under both the `cpp23` and `cpp20` presets. Unlike Chapter 8's `std::expected` split, the C++20/C++23 difference here sits entirely behind the `RestockLogFn` alias rather than behind an extra test case, so the count does not move between presets. Observed locally on Fedora 44 / clang 22.1.8:
-
-```
-100% tests passed, 0 tests failed out of 20   # cpp23
-100% tests passed, 0 tests failed out of 20   # cpp20
-```
-
-To see the commands, the undo/redo stack, the queue, and the `std::function` shortcut run end to end rather than just reading assertions that say they work, run the example's own demo script:
+All 20 cases pass under both presets; the standards differ only behind the `RestockLogFn` alias. To see the commands, the stack, the queue and the shortcut run:
 
 ```sh
 examples/11-command/demo.sh cpp23
 ```
 
-It receives 50 units of `WIDGET-100` into bin `A1`, moves 20 of them to a pick face, undoes and redoes that move, corrects a quantity after a cycle count, cancels and un-cancels an order line, then queues and batch-processes three operations against a second SKU before logging a restock through the `std::function` shortcut:
+It receives 50 units of `WIDGET-100` into bin `A1`, moves 20 to a pick face, undoes and redoes the move, corrects a quantity, cancels and restores an order line, batch-processes three queued operations on `GASKET-7`, then logs two restocks:
 
 ```
 == Command objects: execute changes state, undo restores it ==
@@ -250,10 +262,13 @@ GASKET-7: +30 into B2
 GASKET-7: +5 into B2
 ```
 
-Running `examples/11-command/demo.sh cpp20` prints the same output; the `std::function`/`std::move_only_function` choice behind `RestockLogFn` is an implementation detail that does not change what the demo prints.
+The `cpp20` build prints the same output.
+
+- **Keep the redo branch.** In a scratch copy, delete `undone_.clear()` from `CommandHistory::execute()`. One case fails: after a new command, `redo()` still reaches the branch it should have discarded.
+- **Capture the `unique_ptr` under C++20.** In the C++20 branch of `make_logging_restock`, capture the receipt by move instead of through a `shared_ptr`. The `cpp20` build fails with `std::function target must be copy-constructible`.
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the original Command entry, including the undo-support discussion this chapter's `CommandHistory` directly implements.
-- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/11-command`'s suite, which asserts that execute changes state, undo restores it, redo reapplies it, and a FIFO batch lands on the same final state regardless of how many commands ran before it.
-- The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.
+- Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the original Command entry, including the undo-support discussion `CommandHistory` implements.
+- *GoogleTest in Practice* (Hyuk Myeong, self-published) and the official [GoogleTest documentation](https://google.github.io/googletest/): the testing idiom behind `examples/11-command`.
+- The full reading list lives on the [bibliography page]({{ '/bibliography/' | relative_url }}).
