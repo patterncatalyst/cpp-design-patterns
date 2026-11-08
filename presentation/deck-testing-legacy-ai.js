@@ -128,7 +128,7 @@ function addDenseRefTable(slide, rows, opts = {}) {
 // SECTION 1 - Testing the work
 // =============================================================================
 divider("01", "Testing the work", "GoogleTest, gMock, and the xUnit vocabulary behind every pattern's proof",
-  "This section is the shared testing foundation the rest of the deck assumes: the GoogleTest styles " +
+  "The shared testing foundation: the GoogleTest styles " +
   "that prove a pattern does what it claims, gMock for verifying an interaction rather than just a " +
   "return value, and the xUnit vocabulary, the four-phase test and the test-double taxonomy, that gives " +
   "a team shared words for what a test double is actually doing. Every example from here on uses a real " +
@@ -1112,7 +1112,7 @@ divider("05", "Appendix", "Reference tables: the test-double taxonomy and the de
   addNotes(s,
     "This is the first half of Feathers' full 24-technique catalogue, each one modernized to the " +
     "C++20/23 tool that expresses it today. Several deserve a note beyond the table: Extract and Override " +
-    "Call is the one entry with a genuine standard-to-standard difference, a protected virtual method a " +
+    "Call is the one entry that differs between standards: a protected virtual method a " +
     "test subclass overrides at runtime under C++20, or a deducing-this hook resolved at compile time " +
     "under C++23 with no vtable at all. Reach for Parameterize Constructor or Parameterize Method, on the " +
     "next slide, before any of these whenever a dependency already enters through a parameter list a " +

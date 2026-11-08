@@ -1,4 +1,4 @@
-// deck-201.js -- "Design Patterns with C++" / 201: Idiomatic C++ Implementations
+// deck-201.js: "Design Patterns with C++" / 201: Idiomatic C++ Implementations
 // Red Hat-branded 16:9 companion deck. Build: node deck-201.js (from this dir).
 
 "use strict";
@@ -14,7 +14,7 @@ const OUT = "./cpp-design-patterns-201-idiomatic-cpp.pptx";
 const REV = "r01.0";
 
 const pres = newDeck();
-pres.title = "Design Patterns with C++ -- 201: Idiomatic C++ Implementations";
+pres.title = "Design Patterns with C++ 201: Idiomatic C++ Implementations";
 let pageNum = 0;
 
 function S() {
@@ -120,9 +120,9 @@ divider("00", "The C++ substrate",
   addNotes(s,
     "A move constructor copies the source's state into the new object and then flips the source's " +
     "owns_bay flag to false. Both objects still destruct, but only one of them finds anything to " +
-    "release; the moved-from object's destructor short-circuits into a no-op. The quantitative proof " +
-    "worth mentioning: a test moves a lease and lets both the moved and moved-from objects destruct, " +
-    "then asserts the registry's release count is exactly one, not zero and not two. That is the same " +
+    "release; the moved-from object's destructor short-circuits into a no-op. Move a lease and let " +
+    "both the moved and moved-from objects destruct, and the registry's release count is exactly one, " +
+    "not zero and not two. That is the same " +
     "guarantee std::unique_ptr gives a raw pointer, a move transfers responsibility for releasing " +
     "exactly once, no matter how many objects the ownership passed through.");
 }
@@ -456,7 +456,7 @@ divider("01", "Idiomatic C++ expressions",
     "RateQuoteLedger needs an out-of-line destructor because std::default_delete<Impl> requires Impl's " +
     "full definition, a hand-written copy constructor that deep-clones Impl rather than copying the " +
     "pointer, and defaulted move members because transferring a pointer never requires seeing what it " +
-    "points to. The sharp edge worth flagging: unique_ptr does not propagate constness, so a const " +
+    "points to. One sharp edge: unique_ptr does not propagate constness, so a const " +
     "method of RateQuoteLedger can still call a non-const method on *impl_ with no compiler complaint; " +
     "that discipline is a convention the type system does not enforce.");
 }
@@ -570,7 +570,7 @@ divider("01", "Idiomatic C++ expressions",
     "the registry with no include anywhere naming the concrete class. The idiom earns its cost for a " +
     "closed, growing set of kinds that all need the same treatment through the same mechanism; a " +
     "registry with one concrete type, or no second type ever coming, is paying genericity's complexity " +
-    "for no benefit a direct function call would not give more plainly. This is also a clean answer to " +
+    "for nothing a direct function call would not give. This is also a clean answer to " +
     "the question a reviewer should always ask of generated registration code: does the registration " +
     "call live inside the concrete type's own file, or did it land in a central main() that reintroduces " +
     "the list this idiom exists to remove.");
@@ -600,7 +600,7 @@ divider("02", "Patterns, expressed in C++",
     "Builder: a product with required fields, optional fields, and a cross-field invariant that only a single, centralized check can enforce.",
   ], { fontSize: 16 });
   addNotes(s,
-    "This slide is the map for the rest of the section. Every pattern here is the one the audience " +
+    "Every pattern here is one the audience " +
     "already knows from the Gang of Four catalogue; what is new is which concrete C++ construct " +
     "resolves each force in this codebase, and in several cases, which construct C++23 adds on top of " +
     "the C++20 baseline without changing the pattern's shape. Keep returning to one discipline across " +
@@ -646,7 +646,7 @@ divider("02", "Patterns, expressed in C++",
   addNotes(s,
     "Lead with the composition story, it is the real reason this deck treats std::function as a " +
     "distinct idiom rather than a stylistic variant of the interface version. with_insurance_surcharge " +
-    "takes an existing RateFn and returns a new one that wraps it, which a std::function does for free " +
+    "takes an existing RateFn and returns a new one that wraps it, which a std::function does with no extra class, " +
     "because it is a value closing over whatever state it needs. Getting the identical effect from the " +
     "interface version means introducing a Decorator class, a second pattern, just to wrap one " +
     "RateStrategy around another. Flag the common LLM reflex here: a model trained on tutorials reaches " +
@@ -733,7 +733,7 @@ divider("02", "Patterns, expressed in C++",
     "Every production thread or command queue written against C++20 pays this tax or hand-rolls the fix.",
     { fontSize: 11 });
   addNotes(s,
-    "This is not a cosmetic difference, it is worth saying plainly. std::function requires its target " +
+    "std::function requires its target " +
     "to be copy-constructible even when a queue slot never actually copies the callable; std::" +
     "packaged_task is move-only by design because a packaged task owns a promise that should not be " +
     "duplicated. The C++20 workaround wraps the move-only task in a shared_ptr purely to satisfy std::" +
@@ -754,7 +754,7 @@ divider("02", "Patterns, expressed in C++",
     "decides which one product gets built. Compare this to Abstract Factory's job: a single factory " +
     "call producing a matching family of three related products, a label formatter, a rate quoter, a " +
     "tracking client, so nothing downstream can end up holding a mismatched set from two different " +
-    "carriers. The test worth repeating: Factory Method varies one product inside a fixed sequence; " +
+    "carriers. Factory Method varies one product inside a fixed sequence; " +
     "Abstract Factory varies a whole family a caller asks for in one call.");
 }
 {
@@ -784,7 +784,7 @@ divider("02", "Patterns, expressed in C++",
     "ShipmentProcessor's own code never names either concrete factory class regardless of which lookup " +
     "produced it. The C++23 version is additive, not a replacement: a caller on a request path that " +
     "cannot tolerate an unhandled exception reaches for try_make_carrier_factory, while existing " +
-    "callers keep the throwing form. Tie this back to the AI-sidebar habit worth naming in review: a " +
+    "callers keep the throwing form. In review, a " +
     "generated fix for a new carrier should add a new concrete factory class, leaving this lookup " +
     "function's existing branches untouched, not thread a new concrete type's name into code that is " +
     "supposed to depend only on the abstraction.");
@@ -815,7 +815,7 @@ divider("02", "Patterns, expressed in C++",
   addNotes(s,
     "Every chained setter returns a reference to the same builder, which is what lets a caller supply " +
     "fields in whatever order is convenient rather than a fixed constructor parameter list, and nothing " +
-    "is validated as the chain runs. The discipline worth repeating from the AI-sidebar habit: a common " +
+    "is validated as the chain runs. A common " +
     "generated Builder validates inside every setter instead of once at build(), because fail-fast " +
     "sounds like good advice in isolation, but that reintroduces the fixed-ordering problem Builder " +
     "exists to remove, just spread across several methods instead of one constructor. build() moves the " +
@@ -966,8 +966,8 @@ divider("03", "In the wild",
     "Both presets build and pass the identical AllSubmittedTasksRunExactlyOnce test either way.",
     { fontSize: 11 });
   addNotes(s,
-    "Worth naming out loud that this is the same fix, in the same shape, as the Command queue's task " +
-    "type earlier in this deck; a std::move_only_function-storing queue is now the default answer " +
+    "This is the same fix, in the same shape, as the Command queue's task type: " +
+    "a std::move_only_function-storing queue is now the default answer " +
     "anywhere a move-only packaged task needs to sit behind a type-erased callable. The worker loop " +
     "pulling from this queue uses std::jthread and std::stop_token together so no hand-kept stop flag " +
     "is needed: the condition variable's stop-token overload wakes every waiting worker the instant the " +
@@ -1136,8 +1136,8 @@ divider("03", "In the wild",
 // ============================================================================
 divider("Appendix", "Reference material",
   "The build toolchain and a one-page C++20-to-C++23 feature map. Keep this open in another window.",
-  "This appendix is reference material, not a narrative arc; it is meant to stay open in a second " +
-  "window while working through the rest of the deck's examples, not to be read front to back. The " +
+  "This appendix is reference material, meant to stay open in a second window rather than be read " +
+  "front to back. The " +
   "first slide covers the local build-and-test loop every example in the source book follows; the " +
   "second is a single-page map of every C++20-to-C++23 upgrade this deck showed, for a quick lookup " +
   "when a reviewer asks which standard a given refinement belongs to.");
@@ -1174,7 +1174,7 @@ divider("Appendix", "Reference material",
   addNotes(s,
     "Use this as the lookup slide, not a teaching slide: every row names the exact mechanism shown " +
     "earlier in this deck, with the C++20 baseline on the left and the C++23 refinement on the right. " +
-    "The pattern worth repeating one last time is visible across every single row: the C++20 column " +
+    "Every row follows one rule: the C++20 column " +
     "always compiles and always ships correct behavior on its own, and the C++23 column never replaces " +
     "it, it only adds a typed error, removes an allocation, or narrows an unsafe window. A team on a " +
     "C++20-only toolchain loses none of the patterns or idioms in this deck; they only give up these " +
