@@ -12,7 +12,7 @@ By the end of this chapter you can:
 
 - Recognize a singleton used as global mutable state and show the cost it imposes.
 - Recognize a god object by what it knows, not by its line count.
-- Recognize speculative generality: an interface or factory with one implementation and no second in sight.
+- Recognize speculative generality: an interface or factory with one implementation and no second one planned.
 - Recognize a leaky abstraction whose public surface exposes call-order-dependent state.
 - Use the forces vocabulary as a diagnostic: a pattern applied where no force calls for it is the anti-pattern, even when the code works.
 - Rewrite an over-patterned design down to the shape its requirements justify, and show it's equivalent and more testable.
@@ -70,7 +70,7 @@ That's *spooky action at a distance*: two objects that look independent share on
 
 ## Speculative generality: an interface with no second implementation
 
-`RateCalculator` and `RateCalculatorFactory`, in `rate_calculator.hpp` and `rate_calculator_factory.hpp`, each have one concrete type, `StandardRateCalculator` and `StandardRateCalculatorFactory`, and no second one on the horizon. That's *speculative generality*: an abstraction built for a variation that hasn't arrived. Factory Method earns its place when choosing the type is a decision made from a config value, a runtime flag or a registered family. This factory makes no decision:
+`RateCalculator` and `RateCalculatorFactory`, in `rate_calculator.hpp` and `rate_calculator_factory.hpp`, each have one concrete type, `StandardRateCalculator` and `StandardRateCalculatorFactory`, and no second one on the horizon. That's *speculative generality*: an abstraction built for a variation that hasn't arrived. Factory Method pays off when choosing the type is a decision made from a config value, a runtime flag or a registered family. This factory makes no decision:
 
 ```cpp
 std::unique_ptr<RateCalculator> StandardRateCalculatorFactory::create_calculator() const {
@@ -100,7 +100,7 @@ Check: `ctest --preset cpp23 -R 'AntiPatternEquivalenceTest|ShipmentPricingServi
 
 ## The god object: a class that knows everything
 
-`ShipmentOperationsManager` resolves a calculator through both singletons, validates that the base cost is positive, writes an audit log entry for every shipment, and formats a receipt string. It's about 100 lines across header and source, so length isn't the test. The test is whether a reviewer can say what it does in one clause. Here it takes four:
+`ShipmentOperationsManager` resolves a calculator through both singletons, validates that the base cost is positive, writes an audit log entry for every shipment, and formats a receipt string. It's about 100 lines across header and source, so length isn't the measure. Ask whether a reviewer can say what it does in one clause. Here it takes four:
 
 - pricing orchestration;
 - input validation;
@@ -193,11 +193,18 @@ Region A quote (surcharge 1.10): $110.00
 ORD-3001 priced via the manager: $110.00
 ORD-3002 priced via the manager: $130.00
 Region A quote, re-read with no code touching it: $130.00
+(the surcharge moved out from under region A; nothing about
+ region_a_calculator was ever reassigned)
+was_last_calculation_surcharge_applied() after ORD-3002: true -- answers for ORD-3002, not for the ORD-3001 receipt still held above
 
 == Simplified (AFTER): plain dependency injection of RateSettings ==
 Domestic total (surcharge 1.00): $102.50
+Domestic surcharge applied: false
 International total (surcharge 1.35): $144.00
+International surcharge applied: true
 Domestic total, re-read after pricing international: $102.50
+(unchanged: domestic and international each hold their own
+ RateSettings value, so pricing one never moves the other)
 ```
 
 Region A's quote moves from $110.00 to $130.00 with no code touching its calculator, and the domestic total stays at $102.50. Under `cpp20` the output is identical. No `std::expected` variant of `price()` exists: an exception already says what went wrong, and a second error channel with no force behind it would be speculative generality.

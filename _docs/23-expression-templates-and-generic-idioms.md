@@ -105,7 +105,7 @@ It asks the root for each field, and the tree asks its operands down to the thre
 
 ### Counting the temporaries
 
-The example keeps a construction counter and an eager comparison type, `NaiveRouteMetrics`, whose operators each return a new object. The same weighted sum gives equal results both ways:
+A shared construction counter and an eager comparison type, `NaiveRouteMetrics`, whose operators each return a new object, make the cost countable. The same weighted sum gives equal results both ways:
 
 | Path | Objects constructed |
 | --- | --- |
