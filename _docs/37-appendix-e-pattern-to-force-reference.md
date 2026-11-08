@@ -5,31 +5,28 @@ layout: tutorial
 sectionid: docs
 part: appendices
 appendix: "E"
-description: "A completeness ledger for the whole book: every GoF pattern, SOLID principle, and C++ idiom mapped to the force that justifies reaching for it, each linked to the chapter that builds it. Scan it to find the tool for a force in front of you, or to confirm the catalogue is complete."
+description: "A completeness ledger: every GoF pattern, SOLID principle, and C++ idiom mapped to the force that justifies reaching for it, each linked to where it is built. Scan it to find the tool for a force in front of you, or to confirm the catalogue is complete."
 ---
 
-## How to read this ledger
+## Learning objectives
 
-A pattern is a response to a force, a pressure in the design that the plain,
-direct solution handles badly. This book teaches patterns in that order:
-recognize the force, then name the pattern that answers it. This appendix inverts
-the book so you can scan from the force back to the tool.
+By the end of this appendix you can:
 
-Each row names a pattern, principle, or idiom, states the force that justifies
-reaching for it, and links the chapter that builds it against a runnable example.
-The right-hand column is the test: if no force in that column is present in the
-code in front of you, applying the pattern is not a neutral choice, it is the
-over-engineering the anti-patterns chapter warns about. Match the mechanism to
-the force actually present, not to the force a textbook example implies.
+- Find the pattern, principle or idiom that answers a force in the code in front of you.
+- Confirm that a pattern you're about to apply has a force behind it.
+- Jump to where each one is built against a runnable example.
 
-The ledger covers all twenty-three Gang of Four patterns, the five SOLID
-principles, and the C++ idioms the book treats as first-class patterns in their
-own right.
+## Why this matters
+
+A pattern answers a force: a pressure in the design that the plain, direct solution handles badly. The chapters go from force to pattern; this ledger runs the other way, from the force back to the tool.
+
+Each row names a pattern, principle or idiom, the force that justifies it, and where it's built. The middle column is the check. If none of its forces is present, the pattern is the over-engineering [Anti-patterns and pattern misuse]({{ '/docs/26-anti-patterns/' | relative_url }}) describes. Match the mechanism to the force you have, not the one a textbook example implies.
+
+The ledger covers the twenty-three Gang of Four patterns, the five SOLID principles, and the C++ idioms treated as patterns in their own right.
 
 ## Principles (SOLID)
 
-The principles are not patterns; they are the forces-and-tradeoffs vocabulary the
-patterns are judged against.
+The principles aren't patterns. They're the vocabulary the patterns are judged against.
 
 | Principle | Reach for it when | Chapter |
 |-----------|-------------------|---------|
@@ -41,7 +38,7 @@ patterns are judged against.
 
 ## Foundational C++ idioms
 
-The substrate the rest of the catalogue is built on.
+Every other entry builds on these two.
 
 | Idiom | Reach for it when | Chapter |
 |-------|-------------------|---------|
@@ -90,7 +87,7 @@ The substrate the rest of the catalogue is built on.
 
 ## Idiomatic C++ expressions
 
-Patterns that are specific to C++ rather than general object-oriented design.
+Patterns specific to C++ rather than general object-oriented design.
 
 | Idiom | Reach for it when | Chapter |
 |-------|-------------------|---------|

@@ -5,32 +5,43 @@ layout: tutorial
 sectionid: docs
 part: appendices
 appendix: "G"
-description: "A code-first review of John Lakos's physical-design discipline for C++, the component, levelization, and insulation, on the book's shipping domain."
+description: "A code-first review of John Lakos's physical-design discipline for C++, the component, levelization, and insulation, on the shipping domain."
 ---
 
-## How to read this appendix
+## Learning objectives
 
-Every principle and pattern in this book so far has been about logical design: which class does what, which interface a client programs against, which object collaborates with which. Physical design asks a different question: which file includes which other file, and what does that cost at compile time, at link time, and in the test matrix. The answer only matters because of four facts specific to C++. Separate compilation means a `.cpp` file is translated on its own, so every fact it needs from elsewhere arrives through a header it includes. Header inclusion is textual: `#include` is a copy-paste before the compiler ever sees a type. The one-definition rule requires every translation unit that sees a type's definition to see the identical definition, so a header that two files include differently is a silent bug waiting on a build machine. And the link model resolves symbols after every translation unit has been compiled separately, so a cycle between two headers is not caught by the compiler that reads either one, only by the linker, or by a test harness that discovers it cannot build one component without the other.
+By the end of this appendix you can:
 
-Java, Python, and C# do not have this set of forces. A Java class file carries its own metadata and a module system resolves dependencies without re-parsing source text; Python imports a module once and caches it; C# assemblies are linked against metadata, not textual headers. None of the three forces, a header, a one-definition rule, or a build-time link step, exists in the way C++ has all three at once. The vocabulary in this appendix, component, levelization, insulation, is C++-specific for that reason. It has no sibling-language equivalent because no sibling language generates the failure modes it answers.
+- Split a god header into well-formed components.
+- Break an include cycle by escalation, demotion, an opaque pointer, a manager class or dumb data.
+- Tell insulation from encapsulation and pick PImpl, a protocol class or a procedural interface.
+- Cut compile-time coupling with forward declarations and include-what-you-use.
 
-The source for all three is John Lakos's *Large-Scale C++ Volume I: Process and Architecture*. Lakos distinguishes physical design from logical design as sharply as this book distinguishes a pattern from a principle: logical design is what a UML diagram shows, and physical design is what the build system has to do to turn source into a working program. A design can be logically correct, every class well-named, every responsibility singular, and still be physically unbuildable in isolation, untestable component by component, and expensive to change because one header touches half the codebase. The sections below follow Lakos's spine: the component as the unit of physical design, the include graph and the levelization discipline that keeps it a DAG, insulation as a stronger guarantee than encapsulation, and the smaller habits that keep compile-time coupling down day to day.
+## Why this matters
+
+Logical design decides which class does what. Physical design decides which file includes which, and what that costs at compile time, at link time and in what can be tested alone. Four facts make it a C++ concern:
+
+| Fact | Consequence |
+| --- | --- |
+| Separate compilation | A `.cpp` is translated alone; every outside fact arrives through a header it includes. |
+| Textual inclusion | `#include` copies text before the compiler sees a type, so a header's cost is paid in every file that includes it. |
+| One-definition rule | Every translation unit that sees a type's definition must see the identical one; a header seen differently is an ODR violation the compiler needn't diagnose. |
+| Separate linking | Symbols resolve after every translation unit compiles, so no single compile shows the component graph. A dependency cycle surfaces as components that can't be built or tested apart. |
+
+Java, Python and C# load metadata or cached modules, not textual headers, so they don't have this combination of forces, and the vocabulary here (component, levelization, insulation) is C++-specific. The source is John Lakos's *Large-Scale C++ Volume I: Process and Architecture*. A design can be logically clean, every class well-named and singly responsible, and still be unbuildable in isolation and expensive to change because one header touches half the codebase.
 
 ## The component
 
-A component is one header and its matching source file, treated as a single, indivisible unit of physical design. `rate_quote.h` and `rate_quote.cpp` are a component. The pairing matters because a component is also the unit of testing, the unit of reuse, and the unit a build system compiles, links, and ships independently of its neighbors. A class is a logical idea; a component is where that idea lives on disk, and the two should correspond one to one for exactly one class, plus the small helpers that class cannot function without.
+A component is one header and its matching source file, treated as one unit: `rate_quote.h` and `rate_quote.cpp`. It's the unit of testing, reuse and building. A class is a logical idea; the component is where it lives on disk, one class per component plus the helpers that class can't work without.
 
-Lakos states four rules for what makes a pair of files a well-formed component, and all four are checkable without reading a single line of implementation.
+| Rule | Example | What it catches |
+| --- | --- | --- |
+| Logical and physical names match | `carrier_gateway.h` declares `CarrierGateway` | `shipping_utils.h` declaring `Invoice` |
+| The `.cpp` includes its own header first | `carrier_gateway.cpp` starts with `#include "carrier_gateway.h"` | A header that compiles only because `<string>` happened to come earlier |
+| One primary class | Helpers allowed: an iterator, a small value type a method returns | Two independently useful classes that can't be tested, reused or linked apart |
+| One test driver | Lakos names it `carrier_gateway.t.cpp`; the examples use one GoogleTest target per component | Changes to `CarrierGateway` with no single place to add a case |
 
-**Logical and physical name cohesion.** The component's file name and its primary class name derive from each other. `carrier_gateway.h` declares `CarrierGateway`. A reader who knows the class name can guess the file name, and a reader scanning file names in a directory listing already knows what each one declares. A header named `shipping_utils.h` that happens to declare `Invoice` breaks this on sight.
-
-**A component includes its own header first.** The convention, enforced by eye or by a lint rule, is that `carrier_gateway.cpp`'s first substantive `#include` is `"carrier_gateway.h"`, before any system header, before any other project header. This is not a style preference; it is a self-sufficiency proof. If `carrier_gateway.h` secretly depends on `<string>` having already been included by something earlier in the file, putting it first is exactly what exposes that: the header fails to compile on its own, which is the bug the convention exists to catch before a client discovers it by including `carrier_gateway.h` in a different order and getting a wall of unrelated errors.
-
-**One primary class per component.** A component may declare small, tightly coupled helper types the primary class cannot be used without, an iterator, a small value type returned by one of its methods, but it does not declare a second, independently useful class. Two independently useful classes in one component cannot be tested, reused, or linked separately, which defeats the reason components exist.
-
-**One test driver per component.** Lakos's convention names this file `<component>.t.cpp`, for example `carrier_gateway.t.cpp`. This book's examples use GoogleTest fixtures under `examples/`, which is the same discipline under different file-naming machinery: exactly one test binary's worth of cases exists for exactly one component, so a change to `CarrierGateway` has one place to add a case and one test target to run while iterating on it.
-
-The before-and-after below shows what these four rules protect against.
+A god header breaks all four:
 
 ```cpp
 // Violates component discipline: shipping_types.h is a god header
@@ -72,6 +83,8 @@ private:
 #endif
 ```
 
+Split into components:
+
 ```cpp
 // Honors component discipline: three components, each with its own
 // header, source file, and test driver. rate_quote.cpp includes
@@ -101,19 +114,21 @@ RateQuote::RateQuote(std::string carrier_code, long cents)
     : carrier_code_(std::move(carrier_code)), cents_(cents) {}
 ```
 
-`invoice.h`/`invoice.cpp` and `manifest.h`/`manifest.cpp` follow the identical shape, each with its own `.t.cpp` driver. A client that needs only `RateQuote` compiles and links only `rate_quote.cpp`; a client that needs all three pays for all three, by choice, not by accident of one shared header.
+`invoice.h`/`invoice.cpp` and `manifest.h`/`manifest.cpp` take the same shape, each with its own driver. A client that needs only `RateQuote` compiles and links only `rate_quote.cpp`.
 
 ## Physical dependencies and levelization
 
-Component A physically depends on component B when A cannot compile, link, or run its tests without B present. This is a stricter, more measurable claim than "A uses B logically." A physical dependency shows up as an `#include`, as a symbol resolved at link time, or as a test fixture that has to construct a real B because no seam exists to substitute one.
+Component A physically depends on B when A can't compile, link or run its tests without B. That's stricter and more measurable than "A uses B": it shows up as an `#include`, a symbol resolved at link time, or a test that must build a real B because no seam exists.
 
-Draw every component as a node and every physical dependency as a directed edge, and the result is the include graph. Lakos's central claim about this graph is that it must be a directed acyclic graph. A cycle, A depends on B and B depends on A, means neither component can be compiled, linked, or tested without the other already existing, which makes "without the other" a meaningless phrase: there is no smaller unit left to test in isolation. A cycle does not merely complicate the build, it erases the testability and independent-reuse properties that components exist to provide.
+Draw components as nodes and physical dependencies as edges, and you have the include graph. Lakos's central rule: it must be a directed acyclic graph. If A depends on B and B on A, neither can be compiled, linked or tested without the other, and there's no smaller unit left to test in isolation.
 
-Where the graph is acyclic, Lakos assigns level numbers. A component that depends on nothing else within its group is level 1. A component whose heaviest dependency is level N−1 is level N. The practical payoff is a testing order: level 1 components are tested first, with no fakes required for anything below them because nothing is below them; level 2 components are tested next, against real level-1 dependencies that are already known-good; and so on up the graph. A codebase with well-defined levels has a build and test order a script can compute from the include graph alone.
+In an acyclic graph, a component that depends on nothing in its group is level 1, and a component whose highest dependency is level N-1 is level N. Levels give a test order: level 1 first, with nothing below to fake; level 2 next, against level-1 components already known good; and so on. A script can compute the order from the include graph.
 
-A `Shipment` that needs its assigned `Carrier`'s service area to validate a destination, and a `Carrier` that needs a shipment's weight and dimensions to quote a rate, is a natural place for a cycle to form: each class seems to legitimately need a fact that lives on the other. Lakos names several techniques for breaking exactly this shape. The three most directly applicable to a `Shipment`/`Carrier` pair are below.
+`Shipment` and `Carrier` invite a cycle: a shipment validates its destination against a carrier's service area, and a carrier quotes from a shipment's weight.
 
-**Escalation.** Move the operation that needs both types up into a new, higher-level component that depends on both peers, instead of letting either peer depend on the other.
+### Escalation
+
+Move the operation that needs both types into a higher-level component that depends on both peers.
 
 ```cpp
 // Before: Shipment depends on Carrier to validate itself, and
@@ -170,7 +185,9 @@ long quote_rate_cents(const Carrier& carrier, const Shipment& shipment) {
 }
 ```
 
-**Demotion.** When the mutual dependency is really about one shared fact, move that fact down into a new, lower-level component both peers can depend on without depending on each other.
+### Demotion
+
+When the mutual dependency is one shared fact, move that fact into a lower-level component both peers include.
 
 ```cpp
 // Before: Carrier needs Shipment's packaging category, and Shipment
@@ -201,7 +218,9 @@ public:
 };
 ```
 
-**Opaque pointers.** When one peer only ever holds a pointer or reference to the other, forward-declare it instead of including its header, and move the include into the `.cpp` where the pointer is dereferenced.
+### Opaque pointer
+
+When one peer only holds a pointer or reference to the other, forward-declare it and move the include into the `.cpp` that dereferences it.
 
 ```cpp
 // Before: shipment.h includes carrier.h to hold a pointer, which
@@ -240,21 +259,33 @@ long Shipment::quoted_rate_cents() const {
 }
 ```
 
+### Manager class and dumb data
+
 {% include excalidraw.html name="39-levelization-before-after" caption="Figure G.1: Shipment and Carrier as a cyclic include graph, redrawn as a levelized DAG after escalating the shared operation into a manager-class coordinator." %}
 
-A manager class is the technique Figure G.1 draws directly: a new `ShipmentCarrierCoordinator` at level 2 owns the operation that needs both peers, and `Shipment` and `Carrier` at level 1 never name each other. Escalation and the manager class overlap; the manager class is escalation specifically into a stateful owning component rather than a stateless free function, useful once the coordinating logic needs to hold its own data, a cache of recent quotes, for example, rather than just compute from its two arguments.
+A manager class is escalation into a stateful component. In Figure G.1, `ShipmentCarrierCoordinator` at level 2 owns the operation that needs both peers, and `Shipment` and `Carrier` at level 1 never name each other. Prefer it over a free function once the coordinating logic holds its own data, such as a cache of recent quotes.
 
-A fifth technique, dumb data, does not fit the `Shipment`/`Carrier` pair as cleanly but belongs in the same list: one component carries a value the other interprets without either depending on the other's type. A `TrackingRecord` that stores a carrier-specific status code as a plain integer, leaving `Carrier` to interpret what the integer means, is dumb data. `TrackingRecord` never needs to know `Carrier` exists to store the code; only the component that interprets it needs to depend on `Carrier`.
+Dumb data: one component carries a value another interprets. A `TrackingRecord` stores a carrier-specific status code as a plain integer and never needs to know `Carrier` exists; only the component that interprets the code depends on `Carrier`.
 
-The tension across every technique here is the same: breaking a cycle always adds a component, a forward declaration, or an indirection that was not there before. A codebase with one real two-way relationship and no plan to grow past it can tolerate a documented, intentional merge of the two types into one component instead of paying for three files to express what one file could. Levelization earns its cost once a third component needs one of the two peers without wanting the other, which a cyclic pair cannot support no matter how the cycle is drawn.
+| Technique | Use when | Adds |
+| --- | --- | --- |
+| Escalation | An operation needs both peers | A higher-level component |
+| Demotion | The peers share one fact | A lower-level component |
+| Opaque pointer | One peer only points at the other | A forward declaration; the include moves to the `.cpp` |
+| Manager class | The coordinating logic holds state | A stateful higher-level component |
+| Dumb data | One side stores a value the other interprets | Untyped data at the boundary |
+
+Every technique adds a component, a declaration or an indirection. A codebase with one real two-way relationship and no plan to grow can merge the two types into one component and document it. Levelization pays off once a third component needs one peer without the other, which a cyclic pair can't support.
 
 ## Insulation versus encapsulation
 
-These two words are often used as if they mean the same thing, and Lakos is precise about why they do not. Encapsulation hides an implementation detail from logical access: a private data member cannot be read or written by a client's code, so no client can depend on it for correctness. But a private data member still sits inside the class definition, inside the header, where every client includes it. Add a field, remove a field, or change a field's type, and every translation unit that includes that header has to recompile, even though no client's logic touches the field directly. The member was encapsulated. It was never insulated.
+Encapsulation hides a detail from logical access: a client can't read a private member, so its correctness can't depend on it. But the member still sits in the header. Add, remove or retype it, and every translation unit that includes the header recompiles. The member is encapsulated, not insulated.
 
-Insulation is a stronger guarantee: a change to an implementation detail does not force a client to recompile at all. The detail does not merely sit behind a private access specifier, it sits in a different file, reachable only through a layer that does not change when the detail does. Insulation costs something encapsulation does not: an indirection, a heap allocation for a hidden object, or a virtual call through an abstract interface, paid on every use in exchange for a compile that the hidden change never triggers.
+Insulation means a change to the detail doesn't recompile clients at all, because the detail lives in another file behind a layer that doesn't change. The price is paid on every use: an indirection, a heap allocation for the hidden object, or a virtual call.
 
-This book already builds the PImpl, handle-body idiom in full elsewhere: a class exposes a stable header containing only a pointer to a forward-declared implementation class, and that class's definition, along with every private member and private method it holds, lives entirely in the `.cpp`. In Lakos's taxonomy, PImpl is exactly one insulation technique among several, the one that keeps the stable type's identity (its name, its public method signatures) in the header while hiding everything about how it stores and computes.
+### PImpl
+
+The stable header holds a pointer to a forward-declared implementation class, whose definition and private members live in the `.cpp`. [Type erasure and PImpl]({{ '/docs/22-type-erasure-and-pimpl/' | relative_url }}) builds it in full; for Lakos it's one insulation technique among several, the one that keeps the type's name and public signatures in the header.
 
 ```cpp
 // carrier_gateway.h: stable, included by every client. Changing
@@ -272,7 +303,9 @@ private:
 };
 ```
 
-A second technique reaches further: a protocol class is a pure abstract base class that declares only public virtual methods and a virtual destructor, with no data members at all. The header carries the interface; a concrete class implementing it lives entirely in a `.cpp`, reachable only through a factory function the header also declares.
+### Protocol class
+
+A pure abstract base with only public virtual methods and a virtual destructor, no data members. The concrete class lives in the `.cpp`, reachable through a factory the header declares.
 
 ```cpp
 // carrier_gateway.h: a protocol class. No concrete type, no data
@@ -305,7 +338,9 @@ std::unique_ptr<CarrierGateway> make_carrier_gateway(std::string_view carrier_co
 }
 ```
 
-A third technique drops the class entirely: a procedural interface exposes free functions over an opaque handle, usually a `void*` or an incomplete struct pointer, the shape C libraries use and the shape a C++ library reaches for when it needs to be callable across a shared-library boundary with no C++ ABI assumptions at all.
+### Procedural interface
+
+Free functions over an opaque handle, the shape C libraries use. A C++ library reaches for it to be callable across a shared-library boundary with no C++ ABI assumptions.
 
 ```cpp
 // carrier_gateway.h: fully insulating procedural interface. The
@@ -320,11 +355,17 @@ void carrier_gateway_close(CarrierGatewayHandle* handle);
 
 {% include excalidraw.html name="39-insulation-firewall" caption="Figure G.2: a client depends only on a stable interface; the hidden implementation behind the firewall changes without forcing a recompile on the far side." %}
 
-The shared cost across all three techniques is in Figure G.2: a heap allocation for the hidden object, a virtual dispatch through the protocol class's vtable, or a function-call indirection through the opaque handle, every time a client calls through the firewall. None of that cost shows up in the encapsulated-but-not-insulated version, where the compiler can see the real type and often inline straight through it. Insulation is worth paying for at a boundary that changes independently of its clients: a public library's ABI, a plugin boundary, a component shipped as a prebuilt binary to a team that cannot recompile it on demand. It is a poor trade inside a single compilation unit's worth of code that always builds together; there, the private data member that is encapsulated but not insulated is the right amount of hiding, and the extra indirection buys nothing a client ever needed.
+| Technique | Header exposes | Per-call cost |
+| --- | --- | --- |
+| PImpl | The class name and public signatures | Heap allocation and a pointer indirection |
+| Protocol class | Only the interface and a factory | Virtual dispatch |
+| Procedural interface | Free functions and an incomplete handle type | A function call through the handle |
+
+The encapsulated-only version has none of these costs; the compiler sees the real type and often inlines through it. Insulate at a boundary that changes independently of its clients: a public library's ABI, a plugin boundary, a prebuilt binary shipped to a team that can't recompile on demand. Inside code that always builds together, a private member is the right amount of hiding.
 
 ## Reducing compile-time coupling
 
-Short of a full insulation technique, a handful of smaller habits keep a header's physical footprint close to what it logically needs. The most common win is a forward declaration in place of an `#include`, whenever a header only needs a pointer or a reference to a type, never its size, its layout, or a value member of that type.
+Short of full insulation, the common win is a forward declaration in place of an `#include`, wherever a header needs only a pointer or reference to a type.
 
 ```cpp
 // Before: manifest.h includes carrier.h and <vector> just to hold a
@@ -366,16 +407,18 @@ private:
 void Manifest::assign_carrier(Carrier* carrier) { carrier_ = carrier; }
 ```
 
-The practice this supports is include-what-you-use: a header or source file includes exactly the headers its own declarations need, never a header it only happens to receive transitively through some other include. A file relying on a transitive include breaks the moment the component providing that include decides it no longer needs it, which is an invisible dependency until the build fails somewhere unrelated. The companion failure mode is transitive-include bloat: a small header that includes one heavy header, `<vector>` dragged in by a type that is only ever passed by pointer, for instance, forces every file that includes the small header to pay the heavy header's full parse cost, multiplied by however many translation units include it.
-
-A forward declaration has a real limit. It cannot back a value member, because the compiler needs the complete type to know the member's size and alignment. It cannot back a base class, for the same reason, and it cannot support calling any method on the forward-declared type, only naming a pointer or reference to it. The moment any of those needs arrives, the real include has to come back, in the header this time, because the information belongs there.
+| Practice | Rule |
+| --- | --- |
+| Include what you use | A file includes the headers its own declarations need, never relying on a transitive include. A transitive include disappears when its provider stops needing it, and the build breaks somewhere unrelated. |
+| Avoid transitive-include bloat | A small header that pulls in a heavy one makes every includer pay the heavy header's parse cost, multiplied by every translation unit. |
+| Know where a forward declaration stops | It can't back a value member or a base class, which need the complete type for size and layout, and it can't support a method call. Those need the real include in the header. |
 
 ## When this is overkill
 
-Lakos's full hierarchy extends well above the component: components group into packages, packages into package groups, and package groups into units of release, each with its own naming convention, down to the three-letter package prefix that keeps symbols link-time-unique across an entire enterprise codebase. A small codebase, one binary, one team, no shared libraries crossing an organizational boundary, gets the real benefit from the component and levelization discipline in this appendix and has little use for the package-group ceremony above it; that structure exists to coordinate dependencies across teams and release schedules that a single-binary project does not have.
+Lakos's hierarchy continues above the component: components into packages, packages into package groups, package groups into units of release, down to three-letter package prefixes that keep symbols unique across an enterprise. A codebase with one binary, one team and no shared libraries crossing an organizational boundary gets its benefit from components and levelization. The package-group structure coordinates teams and release schedules that such a project doesn't have.
 
 ## For deeper coverage
 
 - John Lakos, [*Large-Scale C++ Volume I: Process and Architecture*](https://www.informit.com/store/large-scale-c-plus-plus-volume-i-process-and-architecture-9780201717068) (Addison-Wesley, 2019): the source for the component, levelization, and insulation discipline reviewed in this appendix. Volume II was never published; implementation-level detail beyond what this appendix covers is not attributable to Lakos's published work.
 
-- The full reading list behind this book's opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.
+- The full reading list behind these opinions lives on the [bibliography page]({{ '/bibliography/' | relative_url }}); each citation there is a pointer to the full book, not a substitute for reading it.
