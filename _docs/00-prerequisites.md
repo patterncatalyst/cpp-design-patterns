@@ -34,7 +34,7 @@ The reference platform is Fedora 44 with the toolchain installed on the host. Pa
 | GCC | optional | Alternate compiler. The examples are verified against clang. |
 | CMake | 3.28 or newer (verified with 4.3) | Describes each example's targets and tests. Every `CMakeLists.txt` declares `cmake_minimum_required(VERSION 3.28)`. |
 | Ninja | any current release | The generator every preset names. Fast incremental rebuilds. |
-| Conan | 2.x (2.25.2 or newer) | Resolves the one third-party dependency, GoogleTest 1.17.0, and writes the CMake toolchain file the presets load. |
+| Conan | 2.x | Resolves the one third-party dependency, GoogleTest 1.17.0, and writes the CMake toolchain file the presets load. |
 
 To build with GCC, override the compiler when you configure: `cmake --preset cpp23 -DCMAKE_CXX_COMPILER=g++`. Nothing else changes.
 
@@ -60,7 +60,7 @@ Make sure `~/.local/bin` is on your `PATH`, then check:
 
 ```bash
 conan --version
-# Conan version 2.33.0
+# Conan version 2.30.0
 ```
 
 ## The one-time step: `conan profile detect`
@@ -114,8 +114,8 @@ Checking local toolchain for Design Patterns with C++...
 
 OK: clang++ -> clang version 22.1.8 (Fedora 22.1.8-4.fc44)
 OK: cmake -> cmake version 4.3.0
-OK: ninja -> 1.13.2
-OK: conan -> Conan version 2.33.0
+OK: ninja -> 1.13.0.git.kitware.jobserver-pipe-1
+OK: conan -> Conan version 2.30.0
 
 All prerequisites found.
 ```
