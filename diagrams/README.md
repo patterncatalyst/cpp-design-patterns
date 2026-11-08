@@ -7,11 +7,11 @@ Figures for this book are pairs of files in this directory:
 ## Style
 
 Diagrams are heavy (every chapter gets at least one), trending toward a
-**C4-style** standard, and carry **no UML** — no class diagrams, no
+**C4-style** standard, and carry **no UML**: no class diagrams, no
 arrows-with-stereotypes notation. Use `lgtm-diagram-generator`'s default
 amber house theme (this project does not override the palette). Emphasis
 or "ink" boxes that call out a decision point are **light fill with dark
-text** — never a dark-filled box with light text.
+text**, never a dark-filled box with light text.
 
 ## Naming and embedding
 
