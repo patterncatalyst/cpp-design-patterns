@@ -284,6 +284,7 @@ SHIP-4471 via Northline Freight to Columbus, OH [Expedited], 2 package(s), insur
 The second clone still weighs 14.75 kg after the first changed to 9.25 kg. Under `cpp20` the output stops before the `std::print` block.
 
 - **Validate in a setter.** In a scratch copy, make `ManifestBuilder::carrier()` throw when `shipment_id` is still empty. One case fails, and the demo's rejection now reads `Rejected: shipment_id first`, an ordering rule instead of the missing field.
+- **Move instead of exchange.** In a scratch copy, change `build()` to `return std::move(manifest_);`. The builder-reuse case fails: the second manifest keeps the first one's `Overnight` priority and insured value.
 
 ## For deeper coverage
 

@@ -59,10 +59,12 @@ TEST(ManifestBuilderTest, ThrowsWhenNoPackageHasBeenAdded) {
 TEST(ManifestBuilderTest, BuildMovesStateOutLeavingTheBuilderReadyForTheNextManifest) {
     ManifestBuilder builder;
     builder.shipment_id("SHIP-1004").carrier("Northline Freight").destination("Columbus, OH");
+    builder.priority(ShippingPriority::Overnight).insured_value_cents(250000);
     builder.add_package(manifest::make_package("bulk-dry-goods", 5.0, 15000));
 
     const manifest::ShipmentManifest first = builder.build();
     EXPECT_EQ(first.shipment_id, "SHIP-1004");
+    EXPECT_EQ(first.priority, ShippingPriority::Overnight);
 
     // The builder was reset by the first build(); assembling a second
     // manifest from scratch must not see any leftover state (in
@@ -75,4 +77,7 @@ TEST(ManifestBuilderTest, BuildMovesStateOutLeavingTheBuilderReadyForTheNextMani
 
     EXPECT_EQ(second.shipment_id, "SHIP-1005");
     ASSERT_EQ(second.packages.size(), 1u);
+    // Optional fields from the first manifest must not carry over.
+    EXPECT_EQ(second.priority, ShippingPriority::Standard);
+    EXPECT_EQ(second.insured_value_cents, 0);
 }
