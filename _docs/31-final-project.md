@@ -2,7 +2,7 @@
 title: "Final project: composing patterns into a system"
 order: 31
 part: "putting-it-together"
-description: "The book's final project: a shipment dispatch console that composes Strategy, Factory, State, Command, and Observer into one coherent system, taught against the seams where the patterns meet rather than re-teaching any one of them from scratch."
+description: "A shipment dispatch console that composes Strategy, Factory, State, Command and Observer into one system, taught at the seams where the patterns meet rather than re-teaching any one of them."
 duration: "35 min"
 ---
 
@@ -10,60 +10,33 @@ duration: "35 min"
 
 By the end of this chapter you can:
 
-- Compose Strategy, Factory, State, Command, and Observer into one running
-  system instead of five unrelated demonstrations, and name the object
-  that owns each pattern's role.
-- Identify the seams where two patterns meet: where a Factory hands back a
-  Strategy, where a Command invokes a Strategy, where a Command drives a
-  State machine, and where a State transition fires an Observer event.
-- Design a single composition root that wires every pattern together
-  without any collaborator needing to know about the others.
-- Write an integration test that proves the composed system works end to
-  end, a full lifecycle run with a computed rate, fired notifications, and
-  a reversed correction, rather than five isolated unit tests that never
-  touch each other.
-- Recognize when composing this many patterns into one system is
-  over-engineering for a smaller problem, and say what a smaller system
-  should do instead.
+- Compose Strategy, Factory, State, Command and Observer into one running system, and name the object that owns each role.
+- Identify the seams where two patterns meet: Factory handing back a Strategy, Command driving State, Command invoking Strategy, and State firing Observer.
+- Design one composition root that wires every pattern without any collaborator knowing about the others.
+- Write an integration test that drives the composed system end to end: a computed rate, fired notifications and a reversed correction.
+- Recognize when composing this many patterns over-engineers a smaller problem, and what a smaller system should do instead.
 
 {% include excalidraw.html name="31-final-project" caption="Figure 31.1: ShipmentDispatcher as the composition root, with Factory handing back a Strategy-bearing CarrierProfile, Command driving both State and Strategy at their seams, and State notifying Observer on every transition." %}
 
 ## Why this matters
 
-Every pattern in this book up to this point has been taught the same way:
-one force, one worked example, one focused test suite. That's the right
-way to learn what Strategy buys you, or what Command's undo costs, in
-isolation. It's also not how any of these patterns show up in a real
-system. A real shipment dispatch console does not have a "Strategy
-chapter" and a separate "State chapter" running side by side and never
-talking to each other. It has one `Shipment` whose lifecycle fires events
-that something else reacts to, one rate calculation that something else
-invokes on demand, and one carrier-selection step that hands the right
-pieces to everything downstream of it. The patterns meet at seams, and a
-team that has only ever seen each pattern taught alone is unprepared for
-the moment two of them have to cooperate inside the same method.
+Each pattern so far came with one force, one example and its own tests. That's how to learn what Strategy buys or what Command's undo costs. It isn't how patterns appear in a real system. A shipment dispatch console has one `Shipment` whose lifecycle fires events something else reacts to, one rate calculation invoked on demand, and one carrier-selection step that hands the right pieces downstream. The patterns meet at seams, and the hard part is the moment two of them cooperate inside one method.
 
-This final project builds that system. It composes five patterns, Strategy
-for rate selection, Factory for carrier creation, State for the shipment
-lifecycle, Command for reversible operator actions, and Observer for
-lifecycle notifications, into one `ShipmentDispatcher` that a warehouse
-operator's console could plausibly run. The worked example in this chapter
-does not re-explain what Strategy is or why State rejects an illegal
-transition; it assumes a reader already knows that, by name, and spends
-its words instead on the four places these patterns touch: a Factory
-handing back a Strategy, a Command invoking a Strategy, a Command driving
-a State machine, and a State transition firing an Observer notification.
-Those four seams, not the five patterns individually, are what this
-chapter is about.
+The final project composes five patterns into one `ShipmentDispatcher` a warehouse operator's console could run:
+
+| Pattern | Role in the dispatcher |
+| --- | --- |
+| Strategy | Rate selection |
+| Factory | Carrier creation |
+| State | The shipment lifecycle |
+| Command | Reversible operator actions |
+| Observer | Lifecycle notifications |
+
+It assumes you know each pattern by name and spends its words on the four places they touch.
 
 ## The domain: a shipment dispatch console
 
-The system lives in `examples/31-final-project`. A `Shipment` carries an
-id, a carrier name, a destination zone, a weight in kilograms, and a
-quoted rate in cents. It also carries a status: `Created`, `PickedUp`,
-`InTransit`, or `Delivered`. Three events, `PickUp`, `Dispatch`, and
-`Deliver`, move it forward one step at a time. `Shipment::advance()`
-enforces that order directly:
+The system lives in `examples/31-final-project`. A `Shipment` carries an id, a carrier name, a destination zone, a weight in kilograms and a quoted rate in cents, plus a status: `Created`, `PickedUp`, `InTransit` or `Delivered`. Three events, `PickUp`, `Dispatch` and `Deliver`, move it forward one step at a time, and `Shipment::advance()` enforces the order:
 
 {% raw %}
 ```cpp
@@ -92,22 +65,11 @@ void Shipment::advance(ShipmentEvent event) {
 ```
 {% endraw %}
 
-That's the whole State component: a context that owns its current status,
-rejects an event that does not apply, and only calls `notify()` once a
-transition succeeds. `Shipment` is also the Observer component's
-subject. It holds a list of `LifecycleObserver*` subscribers and fans a
-transition out to every one of them the moment `advance()` accepts it.
-Putting both roles on one type is not an accident of a small example. It
-is the first seam this chapter cares about: the State machine's success
-condition and the Observer's trigger condition are the same event, with
-nothing in between them to get out of sync.
+That's the whole State component: a context that owns its status, rejects an event that doesn't apply, and calls `notify()` only after a transition succeeds. `Shipment` is also the Observer subject, holding a list of `LifecycleObserver*` subscribers and fanning each accepted transition out to all of them. Both roles sit on one type so the State machine's success and the Observer's trigger are the same event, with nothing between them to drift out of sync.
 
 ## Seam one: Factory hands back a Strategy
 
-`CarrierFactory::create()` takes a `CarrierRequest`, a carrier code and a
-destination zone, and returns a `CarrierProfile`: a carrier name, a
-service-level commitment in hours, and a `std::unique_ptr<RateStrategy>`
-already pointed at the correct concrete implementation.
+`CarrierFactory::create()` takes a `CarrierRequest`, a carrier code and a destination zone, and returns a `CarrierProfile`: a carrier name, a service-level commitment in hours, and a `std::unique_ptr<RateStrategy>` already pointing at the right concrete strategy.
 
 ```cpp
 if (request.carrier_code == "SKYHAUL") {
@@ -123,10 +85,7 @@ if (request.carrier_code == "SKYHAUL") {
 }
 ```
 
-Nothing calling `CarrierFactory` ever names `WeightTieredRateStrategy` or
-`FlatRateStrategy` directly. `ShipmentDispatcher::open_shipment()` asks for
-a carrier by code, gets back a `CarrierProfile`, and immediately asks that
-profile's `rate_strategy` for the shipment's opening quote:
+No caller names `WeightTieredRateStrategy` or `FlatRateStrategy`. `ShipmentDispatcher::open_shipment()` asks for a carrier by code and immediately asks the profile's `rate_strategy` for the opening quote:
 
 ```cpp
 carrier_profile_ = factory_.create(request);
@@ -135,19 +94,11 @@ shipment_.emplace(std::move(shipment_id), carrier_profile_->carrier_name,
 shipment_->set_quoted_rate_cents(carrier_profile_->rate_strategy->quote(*shipment_));
 ```
 
-This is the seam where Factory and Strategy meet: Factory's whole
-job is choosing which Strategy a caller gets, and the caller never has to
-know the choice was made. A new carrier with a third pricing rule needs
-one new `RateStrategy` subclass and one new branch inside
-`CarrierFactory::create()`. `ShipmentDispatcher` does not change at all,
-because it was never written against a concrete strategy in the first
-place.
+The Factory chooses which Strategy a caller gets, and the caller never learns a choice was made. A carrier with a third pricing rule needs one new `RateStrategy` subclass and one new branch in `CarrierFactory::create()`. `ShipmentDispatcher` doesn't change, because it was never written against a concrete strategy.
 
 ## Seam two: Command drives State
 
-`AdvanceLifecycleCommand` wraps exactly one call to `Shipment::advance()`.
-Its `execute()` records the status before the call so its `undo()` has
-something to restore:
+`AdvanceLifecycleCommand` wraps one call to `Shipment::advance()`, recording the status first so `undo()` can restore it:
 
 ```cpp
 void AdvanceLifecycleCommand::execute() {
@@ -161,20 +112,9 @@ void AdvanceLifecycleCommand::undo() {
 }
 ```
 
-It's tempting to assume Command's undo for a State transition should call
-some reverse event, an "un-pick-up," to walk the machine backward. Real
-carriers do not support that operation, and neither does this one.
-`restore_status_for_undo()` is a separate, narrower entry point that skips
-the transition table and sets the status back to whatever it was. That's
-the same technique this book's Command material uses for any action with
-no clean arithmetic inverse: capture a snapshot before the change, restore
-the snapshot instead of computing an inverse operation. The snapshot still
-notifies every subscribed Observer, because an operator correcting a
-mis-scanned pickup is itself a real event a dashboard should see, not a
-rewind no one hears about.
+Undo doesn't fire a reverse event. Carriers don't support an "un-pick-up", and neither does this machine. `restore_status_for_undo()` is a narrower entry point that skips the transition table and sets the status back: capture a snapshot, restore it, the usual Command technique for an action with no clean inverse. The restore still notifies every Observer, because an operator correcting a mis-scanned pickup is an event a dashboard should see.
 
-`ShipmentDispatcher::make_advance_command()` is where this seam becomes
-visible at the call site:
+`ShipmentDispatcher::make_advance_command()` is the seam at the call site:
 
 ```cpp
 std::unique_ptr<ShipmentCommand> ShipmentDispatcher::make_advance_command(ShipmentEvent event) {
@@ -182,19 +122,11 @@ std::unique_ptr<ShipmentCommand> ShipmentDispatcher::make_advance_command(Shipme
 }
 ```
 
-An operator console only reaches `shipment.advance()` through a command
-the dispatcher builds; the dispatcher's `CommandHistory` is what runs it.
-That indirection is what makes every lifecycle change undoable by
-construction, rather than undoable only for the operations someone
-remembered to wrap.
+The console reaches `advance()` only through a command the dispatcher builds and its `CommandHistory` runs. That makes every lifecycle change undoable by construction, not only the ones someone remembered to wrap.
 
 ## Seam three: Command invokes Strategy
 
-A warehouse rescale corrects a shipment's recorded weight after it was
-already quoted. `AdjustWeightCommand` is where Command and Strategy meet
-directly: its `execute()` does not just set a new number, it asks the same
-`RateStrategy` the carrier was built with for a fresh quote at the
-corrected weight.
+A warehouse rescale corrects a shipment's weight after it was quoted. `AdjustWeightCommand::execute()` sets the new weight and asks the same `RateStrategy` the carrier was built with for a fresh quote:
 
 ```cpp
 void AdjustWeightCommand::execute() {
@@ -207,16 +139,9 @@ void AdjustWeightCommand::execute() {
 }
 ```
 
-`undo()` does not call the strategy a second time. It restores the exact
-`previous_weight_kg_` and `previous_quoted_rate_cents_` captured before the
-correction ran, which is both cheaper and more correct than recomputing:
-recomputing assumes the strategy is a pure function of the shipment's
-current fields, and while that happens to be true here, a snapshot does
-not depend on that assumption holding for every future `RateStrategy`
-someone adds.
+`undo()` doesn't call the strategy again. It restores the captured weight and quote. That's cheaper, and it doesn't assume the strategy is a pure function of the shipment's fields, which holds here but might not for every future `RateStrategy`.
 
-`ShipmentDispatcher::make_adjust_weight_command()` closes over the exact
-same strategy object the factory built for this shipment's carrier:
+`ShipmentDispatcher::make_adjust_weight_command()` hands the command the strategy object the factory built for this carrier:
 
 ```cpp
 std::unique_ptr<ShipmentCommand> ShipmentDispatcher::make_adjust_weight_command(double new_weight_kg) {
@@ -224,16 +149,11 @@ std::unique_ptr<ShipmentCommand> ShipmentDispatcher::make_adjust_weight_command(
 }
 ```
 
-That single line is the whole point of composing Factory and Strategy
-before composing Command on top of them: a weight correction and a
-shipment's opening quote are always priced by the identical rule, because
-they're, literally, the same `RateStrategy` instance.
+A weight correction and the opening quote are always priced by the same rule, because they use the same `RateStrategy` instance.
 
 ## Seam four: State fires Observer
 
-The fourth seam already appeared in `Shipment::advance()` above: a legal
-transition calls `notify()`, and `notify()` walks every subscribed
-`LifecycleObserver` and calls `on_transitioned()` on each one.
+A legal transition in `Shipment::advance()` calls `notify()`, which calls `on_transitioned()` on every subscribed `LifecycleObserver`:
 
 ```cpp
 void Shipment::notify(ShipmentStatus from, ShipmentStatus to) {
@@ -243,37 +163,15 @@ void Shipment::notify(ShipmentStatus from, ShipmentStatus to) {
 }
 ```
 
-The demo program's `ConsolePrintingObserver` prints a line to the
-terminal. A real deployment might wire the same interface to a customer
-notification service, a tracking dashboard, and a billing ledger, three
-subscribers that never reference each other and never reference the
-`AdvanceLifecycleCommand` that triggered the event three calls up the
-stack. The observer does not know, and should not need to know, that a
-Command was involved at all. It only knows a `Shipment` changed status.
-That separation is what lets the Command and State seam described above
-evolve independently of how many subscribers are listening, or what any
-one of them does with the notification.
+The demo's `ConsolePrintingObserver` prints a line. A deployment might wire the same interface to a customer notification service, a tracking dashboard and a billing ledger, none referencing the others or the `AdvanceLifecycleCommand` three calls up the stack. An observer knows only that a `Shipment` changed status. So the Command and State seam can change without regard to how many subscribers listen or what they do.
 
 ## The composition root
 
-`ShipmentDispatcher` is the one type in this example that knows about all
-five patterns at once. Every other component in the system only ever sees
-the interface directly above or below it: `CarrierFactory` does not know
-about `Shipment`, `AdjustWeightCommand` does not know about
-`CarrierFactory`, and `LifecycleObserver` implementations do not know
-`ShipmentCommand` exists. `ShipmentDispatcher` is where `open_shipment()`
-calls the factory, `make_advance_command()` and
-`make_adjust_weight_command()` wire a command to the shipment and, where
-relevant, to the factory-built strategy, and `apply()` and `undo_last()`
-run every command through a `CommandHistory`.
+`ShipmentDispatcher` is the only type that knows all five patterns. Every other component sees only the interface next to it: `CarrierFactory` doesn't know `Shipment`, `AdjustWeightCommand` doesn't know `CarrierFactory`, and observers don't know `ShipmentCommand` exists. In the dispatcher, `open_shipment()` calls the factory, `make_advance_command()` and `make_adjust_weight_command()` wire a command to the shipment and, where needed, the factory-built strategy, and `apply()` and `undo_last()` run every command through a `CommandHistory`.
 
 ## Factory's rejection path: C++20 versus C++23
 
-`CarrierFactory` is the one component in this system with a real
-C++20/23 difference worth showing, because its rejection path is exactly
-the kind of caller-facing contract this book's idiomatic-expressions
-material cares about: how a lookup failure is reported should not change
-which concrete `RateStrategy` a caller ends up with.
+`CarrierFactory` is the one component with a C++20/23 difference: how it reports an unknown carrier code. The choice of failure reporting doesn't change which `RateStrategy` a caller gets.
 
 {% include codetabs.html langs="C++20|C++23" %}
 
@@ -301,28 +199,17 @@ std::expected<CarrierProfile, CarrierFactoryError> CarrierFactory::try_create(co
 }
 ```
 
-> **AI sidebar.** Ask an LLM pairing partner to "add retry logic around the
-> carrier lookup" or "cache the rate strategy for performance" on a system
-> like this one, and it will often happily hand back a patch that touches
-> `ShipmentDispatcher`, `CarrierFactory`, and `AdjustWeightCommand` all at
-> once, because from the model's point of view they're just three nearby
-> files in the same directory. What it will not do on its own is notice
-> that `AdjustWeightCommand` holds a `const RateStrategy&` precisely so a
-> cached or swapped strategy stays valid for the lifetime of a command that
-> might still be sitting on the undo stack, or that `CarrierFactory`
-> returning a `CarrierProfile` by value, rather than a shared pointer, is
-> what keeps one shipment's pricing rule from leaking into another's.
-> Before accepting a generated change to a composed system like this one,
-> trace which seam the change crosses. A change that looks local
-> to one file can break an invariant two patterns away from it, and the
-> four seams named above are the places to check first.
+<blockquote class="ai-sidebar" markdown="1">
+**Specifying a change to a composed system.** "Add a new carrier" doesn't say which seam the change may cross, and a patch can touch `ShipmentDispatcher`, `CarrierFactory` and `AdjustWeightCommand` together because they're nearby files. Confine it to one seam:
+
+> In `examples/31-final-project`, add a carrier code `"PARCELPOST"` to `CarrierFactory::create()` returning a `CarrierProfile` with `carrier_name` "Parcel Post", `sla_hours` 96 and a `FlatRateStrategy` of 650 cents. Don't edit `ShipmentDispatcher`, `AdjustWeightCommand`, `AdvanceLifecycleCommand` or any `LifecycleObserver`. Keep `CarrierProfile` returned by value with its `std::unique_ptr<RateStrategy>`, and keep `AdjustWeightCommand` holding a `const RateStrategy&`. Add a `CarrierFactoryTest` case for the new code, and keep `try_create()` reporting `CarrierFactoryError::UnknownCarrierCode` for unknown codes.
+
+Check with `ctest --preset cpp23 -R 'CarrierFactory|ShipmentDispatcherIntegration'`, and confirm the diff touches only `carrier_factory.cpp` and `tests/carrier_factory_test.cpp`.
+</blockquote>
 
 ## Build, run, observe
 
-Every command below runs with the local clang, CMake, Ninja, and Conan
-toolchain from the prerequisites; there's no container anywhere in this
-loop. From the repository root, the root superbuild picks up
-`examples/31-final-project` automatically:
+From the repository root, the superbuild picks up `examples/31-final-project`:
 
 {% include excalidraw.html name="31-final-project-sequence" caption="Figure 31.2: The time-ordered sequence of one shipment's run, with the same RateStrategy instance quoting the opening rate at step 2 and the corrected rate at step 5." %}
 
@@ -331,29 +218,9 @@ scripts/build.sh cpp23 && scripts/verify.sh cpp23
 scripts/build.sh cpp20 && scripts/verify.sh cpp20
 ```
 
-`CarrierFactory::try_create()` only exists under C++23, so the two presets
-discover a different number of gtest cases through `gtest_discover_tests`.
-Observed locally on Fedora 44 / clang 22.1.8:
+All 34 tests pass under `cpp23` and all 32 under `cpp20`; the difference is `CarrierFactory::try_create()`, which exists only under C++23. Six of the seven test files each cover one component's own contract: lifecycle transitions, the two rate strategies, the factory lookup, the command history and each command's execute and undo. The integration file drives the whole dispatcher through one run: a factory-built strategy prices the opening quote, two lifecycle commands fire notifications in order, a weight correction re-quotes through the same strategy, and undoing it restores the weight and the quote exactly.
 
-```
-100% tests passed, 0 tests failed out of 34   # cpp23
-100% tests passed, 0 tests failed out of 32   # cpp20
-```
-
-Five of the six test files each check one pattern's own contract: the
-lifecycle's legal and illegal transitions, the two rate strategies'
-arithmetic, the factory's carrier lookup, and each command's execute and
-undo. The sixth,
-`tests/shipment_dispatcher_integration_test.cpp`, is this example's actual
-point. It never repeats a single-pattern check; it drives the whole
-dispatcher through a lifecycle run, confirms a factory-built strategy
-priced the opening quote, confirms two lifecycle commands fire Observer
-notifications in order, confirms a weight-correction command recomputes
-through that same strategy, and confirms undoing that command restores
-both the weight and the quote exactly, all inside one running system.
-
-To see the composition play out rather than read about it, run the
-example's own demo script:
+To watch the composition run:
 
 ```sh
 examples/31-final-project/demo.sh cpp23
@@ -383,63 +250,22 @@ examples/31-final-project/demo.sh cpp23
   rejected: illegal transition: event 'PickUp' does not apply to status 'Delivered'
 ```
 
-Every number in that output traces back to one of the four seams above:
-the opening quote comes from Factory handing back Strategy, the two
-`[observer]` lines come from State firing Observer, the corrected and
-restored quotes come from Command invoking and then snapshotting around
-Strategy, and the final rejection comes from State's own transition table
-refusing an event that no longer applies. Running
-`examples/31-final-project/demo.sh cpp20` prints identical output; nothing
-in the demo path depends on a C++23-only feature.
+Each line traces to a seam: the opening quote to Factory handing back Strategy, the `[observer]` lines to State firing Observer, the corrected and restored quotes to Command invoking Strategy and snapshotting around it, and the final rejection to State's transition table. The `cpp20` demo prints the same output.
 
 ## When not to use it
 
-Composing five patterns into one system is a cost, not a default, and the
-same forces that justify any one of these patterns on its own are what
-decide whether composing several of them is worth paying for here.
+Composing five patterns is a cost, not a default. Each pattern needs its own present requirement:
 
-A shipment that never changes status, never needs an undo, and prices
-against a single carrier does not need a `ShipmentDispatcher` at all. A
-function that takes a weight and a carrier code and returns a cents value
-solves that problem completely, and wrapping it in Strategy, Factory, and
-a composition root to match is solving a problem the system does not have
-yet. This is the same speculative-generality trap this book's anti-pattern
-material warns against, just distributed across five classes instead of
-one.
+| If the system... | Then drop |
+| --- | --- |
+| Never changes status, never undoes, prices against one carrier | `ShipmentDispatcher` entirely; a function from weight and carrier code to cents does the job |
+| Has exactly one carrier | Factory; construct the one `RateStrategy` directly |
+| Never reverses an operation, and a mistaken correction is easy to re-enter | Command and `CommandHistory`; call a plain function |
+| Has one subscriber, or none, for status changes | Observer; call the one consumer directly |
 
-A system with exactly one carrier does not need Factory at all; a single
-concrete `RateStrategy` constructed directly is simpler and says
-everything the Factory indirection would have said, with one less seam to
-reason about. Reach for Factory when a second carrier, and a second
-concrete strategy behind it, is a real, current requirement, not a
-plausible future one.
-
-A system where no operation ever needs reversing does not need Command's
-`execute()`/`undo()` ceremony. If a weight correction is rare, low-stakes,
-and easy to re-enter by hand if someone gets it wrong, a plain function
-call does the job a `ShipmentCommand` subclass would, without a
-`CommandHistory` to maintain.
-
-Finally, composing patterns for the sake of demonstrating range is itself
-a smell. This chapter's five patterns are each justified by a specific,
-present requirement of a shipment dispatch console: a rate rule that
-varies by carrier contract, carrier-specific construction, a lifecycle
-with illegal transitions to reject, operator actions that need to be
-reversible, and more than one subscriber that cares about a status change.
-A smaller system that needs only two or three of those things should
-compose only those two or three, and a system that needs none of them
-should stay a handful of functions. These four seams matter because they
-mark where real coupling has to exist between patterns; they are not a
-checklist to complete on every project that happens to involve more than
-one pattern.
+Wrapping a one-carrier price function in Strategy, Factory and a composition root is speculative generality spread across five classes. Composing patterns to show range is a smell. Here each pattern answers a present requirement of a dispatch console: a rate rule that varies by carrier contract, carrier-specific construction, a lifecycle with illegal transitions, reversible operator actions, and more than one subscriber to a status change. A system that needs two of those should compose two. The four seams mark where coupling between patterns has to exist; they aren't a checklist for every project that uses more than one pattern.
 
 ## For deeper coverage
 
-- Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley):
-  the canonical description of every pattern this chapter composes,
-  including the forces each one answers in isolation before this chapter
-  puts them together.
-- Robert C. Martin, [*Agile Software Development, Principles, Patterns, and Practices*](https://www.pearson.com/store/p/agile-software-development-principles-patterns-and-practices/P200000003363/9780135974445) (Prentice Hall): the SOLID reasoning behind why
-  `ShipmentDispatcher` is the only type that depends on all five patterns
-  at once, while every other component in this chapter's system depends
-  on exactly one abstraction and nothing further.
+- Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides, [*Design Patterns: Elements of Reusable Object-Oriented Software*](https://www.pearson.com/en-us/subject-catalog/p/design-patterns-elements-of-reusable-object-oriented-software/P200000009480) (Addison-Wesley): the canonical description of each composed pattern and the forces it answers on its own.
+- Robert C. Martin, [*Agile Software Development, Principles, Patterns, and Practices*](https://www.pearson.com/store/p/agile-software-development-principles-patterns-and-practices/P200000003363/9780135974445) (Prentice Hall): the SOLID reasoning behind `ShipmentDispatcher` being the only type that depends on all five patterns while every other component depends on one abstraction.
