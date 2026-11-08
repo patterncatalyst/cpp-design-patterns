@@ -291,11 +291,12 @@ Assemble an object from small collaborators instead of inheriting purely to reus
 
 ```cpp
 // Violates the principle: inheritance reused for convenience, not
-// for an is-a relationship, reaching into the base's internals.
+// for an is-a relationship. Every public TrackingRecord member is now
+// part of PriorityTrackingRecord's interface too.
 class PriorityTrackingRecord : public TrackingRecord {
 public:
     void record_priority_event(TrackingEvent event) {
-        events_.push_back(std::move(event));  // reaches into base state
+        record_event(std::move(event));  // inherited only to reuse it
         is_priority_ = true;
     }
 private:

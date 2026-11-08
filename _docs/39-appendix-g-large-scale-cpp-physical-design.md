@@ -176,11 +176,11 @@ public:
 #include "carrier.h"
 #include "shipment.h"
 
-bool is_valid_for(const Shipment& shipment, const Carrier& carrier) {
+inline bool is_valid_for(const Shipment& shipment, const Carrier& carrier) {
     return carrier.services_zone(shipment.destination_zone());
 }
 
-long quote_rate_cents(const Carrier& carrier, const Shipment& shipment) {
+inline long quote_rate_cents(const Carrier& carrier, const Shipment& shipment) {
     return carrier.base_rate_cents(shipment.weight_kg());
 }
 ```
@@ -368,10 +368,11 @@ The encapsulated-only version has none of these costs; the compiler sees the rea
 Short of full insulation, the common win is a forward declaration in place of an `#include`, wherever a header needs only a pointer or reference to a type.
 
 ```cpp
-// Before: manifest.h includes carrier.h and <vector> just to hold a
-// pointer and a count, dragging both headers' full transitive
-// include sets into every file that includes manifest.h.
+// Before: manifest.h includes carrier.h just to hold a pointer,
+// dragging carrier.h's full transitive include set into every file
+// that includes manifest.h.
 #include "carrier.h"
+#include <string>
 #include <vector>
 
 class Manifest {
